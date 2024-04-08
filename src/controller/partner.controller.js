@@ -110,32 +110,106 @@ exports.loginPartner = asyncHandler(async (req, res) => {
         );
 });
 
-exports.addHotel = asyncHandler(async(req, res) => {
+exports.addHotel = asyncHandler(async (req, res) => {
     const { userId, hotelName, address } = req.body;
-    const existedUser = await Hotel.findOne({
-        $or: [{ email }, { phoneNumber }],
-    });
-    if (existedUser) {
-        throw new ApiError(409, responseMessage.userMessage.userExist);
-    }
-    const user = await Hotel.create({
+    const hotel = await Hotel.create({
         userId,
         hotelName,
-        address
+        address,
     });
-    const createdUser = await Hotel.findById(user._id).select(
-        "-password -refreshToken",
-    );
-    if (!createdUser) {
-        throw new ApiError(500, responseMessage.userMessage.userNotCreated);
+    if (!hotel) {
+        throw new ApiError(500, responseMessage.userMessage.hotelNotCreated);
     }
     return res
         .status(201)
         .json(
             new ApiResponse(
                 200,
-                createdUser,
-                responseMessage.userMessage.userCreated,
+                hotel,
+                responseMessage.userMessage.hotelCreated,
+            ),
+        );
+});
+
+exports.updateHotel = asyncHandler(async (req, res) => {
+    const { hotelId,hotelName, address,hotelStatus} = req.body;
+    const hotelImage = await Hotel.findByIdAndUpdate(
+        hotelId,
+        {
+            $set: {
+                hotelName: hotelName,
+                address: address,
+                hotelStatus:hotelStatus
+            },
+        },
+        {
+            new: true,
+        },
+    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                hotelImage,
+                responseMessage.userMessage.hotelUpdated,
+            ),
+        );
+});
+
+exports.deleteHotel = asyncHandler(async (req, res) => {
+    const { hotelId } = req.query;
+    const deletedHotel = await Hotel.findByIdAndDelete(hotelId);
+    if (!deletedHotel.local_imagePath) {
+        throw new ApiError(
+            404,
+            responseMessage.userMessage.hotelNotFound,
+        );
+    }
+    deleteFile(deletedHotel.local_imagePath);
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "ok",
+                responseMessage.userMessage.hotelDeletedSuccessfully,
+            ),
+        );
+});
+
+exports.uploadHotelImage = asyncHandler(async (req, res) => {
+    const { hotelId } = req.body;
+    // console.log(req.file);
+    const { filename } = req.file;
+    const local_filePath = `upload/${filename}`;
+    let document_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    if (process.env.NODE_ENV !== "production") {
+        document_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+    }
+    const savedHotel = await Hotel.findById(hotelId);
+    if (savedHotel) {
+        deleteFile(savedHotel.local_imagePath);
+    }
+    const hotelDocument = await Hotel.findByIdAndUpdate(
+        hotelId,
+        {
+            $set: {
+                image_url: document_url,
+                local_imagePath: local_filePath,
+            },
+        },
+        {
+            new: true,
+        },
+    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                hotelDocument,
+                responseMessage.userMessage.hotelImageUploadedSuccessfully,
             ),
         );
 });

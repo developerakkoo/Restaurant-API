@@ -6,9 +6,9 @@ const { generateTokens } = require("../utils/generateToken");
 const DeliveryBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
 const userAddress = require("../models/userAddress.model");
+const Hotel = require("../models/hotel.model");
 const HotelDishes = require("../models/hotelDish.model");
 const Partner = require("../models/partner.model");
-const Hotel = require("../models/hotel.model");
 const User = require("../models/user.model");
 const { responseMessage } = require("../constant");
 const { deleteFile } = require("../utils/deleteFile");
@@ -241,11 +241,26 @@ exports.getAllPartner = asyncHandler(async (req, res) => {
         };
     }
     const dataCount = await Partner.countDocuments();
-    const users = await Partner.find(dbQuery)
-        .select(["-password", "-refreshToken"])
-        .skip(skip)
-        .limit(pageSize);
-    // .populate(["driverOrderId", "customerOrderId"]);
+    let partnerAggregation = [
+        { $match: dbQuery },
+        { $skip: skip },
+        {
+            $limit: pageSize,
+        },
+    ];
+    if (populate && populate.toLowerCase() === "true") {
+        partnerAggregation.splice(1, 0, {
+            // Insert $lookup stage after $match
+            $lookup: {
+                as: "hotels",
+                from: "hotels",
+                foreignField: "userId",
+                localField: "_id",
+            },
+        });
+    }
+
+    const users = await Partner.aggregate(hotelAggregation).exec();
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
@@ -308,7 +323,7 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
 
     const dataCount = await DeliveryBoy.countDocuments(dbQuery);
 
-    let deliveryBoyAggregation = [
+    let hotelAggregation = [
         {
             $match: dbQuery,
         },
@@ -322,10 +337,9 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             $limit: pageSize,
         },
     ];
-
     // Conditionally add $lookup stage if populate is true
     if (populate && populate.toLowerCase() === "true") {
-        deliveryBoyAggregation.splice(1, 0, {
+        hotelAggregation.splice(1, 0, {
             // Insert $lookup stage after $match
             $lookup: {
                 as: "userDocuments",
@@ -335,10 +349,7 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             },
         });
     }
-
-    const deliveryBoys = await DeliveryBoy.aggregate(
-        deliveryBoyAggregation,
-    ).exec();
+    const deliveryBoys = await DeliveryBoy.aggregate(hotelAggregation).exec();
 
     const startItem = skip + 1;
     const endItem = Math.min(
@@ -529,4 +540,129 @@ exports.updatePartnerStatus = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.partnerStatusUpdatedSuccessfully,
             ),
         );
+});
+
+exports.updateHotelStatus = asyncHandler(async (req, res) => {
+    const { hotelId, status } = req.body;
+    const hotel = await Hotel.findByIdAndUpdate(
+        hotelId,
+        {
+            $set: {
+                hotelStatus: status,
+            },
+        },
+        {
+            new: true,
+        },
+    );
+    if (!hotel) {
+        return res
+            .status(404)
+            .json(
+                new ApiResponse(
+                    404,
+                    null,
+                    responseMessage.userMessage.hotelNotFound,
+                ),
+            );
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                hotel,
+                responseMessage.userMessage.hotelUpdatedSuccessfully,
+            ),
+        );
+});
+
+exports.getAllHotel = asyncHandler(async (req, res) => {
+    let dbQuery = {};
+    const { q, startDate, populate, status } = req.query;
+    const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
+    const pageNumber = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const skip = (pageNumber - 1) * pageSize;
+    // Search based on user query
+    if (q) {
+        dbQuery = {
+            $or: [
+                { hotelName: { $regex: `^${q}`, $options: "i" } },
+                { hotelName: { $regex: `^${q}` } },
+            ],
+        };
+    }
+
+    // Sort by status
+    if (status) {
+        dbQuery.status = status;
+    }
+
+    // Sort by date range
+    if (startDate) {
+        const sDate = new Date(startDate);
+        const eDate = new Date(endDate);
+        sDate.setHours(0, 0, 0, 0);
+        eDate.setHours(23, 59, 59, 999);
+        dbQuery.createdAt = {
+            $gte: sDate,
+            $lte: eDate,
+        };
+    }
+
+    const dataCount = await Hotel.countDocuments(dbQuery);
+
+    let hotelAggregation = [
+        {
+            $match: dbQuery,
+        },
+        {
+            $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
+        },
+        {
+            $skip: skip,
+        },
+        {
+            $limit: pageSize,
+        },
+    ];
+
+    // Conditionally add $lookup stage if populate is true
+    if (populate && populate.toLowerCase() === "true") {
+        hotelAggregation.splice(1, 0, {
+            // Insert $lookup stage after $match
+            $lookup: {
+                as: "hotelOwner",
+                from: "partners",
+                foreignField: "_id",
+                localField: "userId",
+            },
+        });
+    }
+
+    const hotel = await Hotel.aggregate(hotelAggregation).exec();
+
+    const startItem = skip + 1;
+    const endItem = Math.min(
+        startItem + pageSize - 1,
+        startItem + hotel.length - 1,
+    );
+    const totalPages = Math.ceil(dataCount / pageSize);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                content: hotel,
+                startItem,
+                endItem,
+                currentPage: pageNumber,
+                totalPages,
+                pageSize: hotel.length,
+                totalDoc: dataCount,
+            },
+            responseMessage.userDataFetchedSuccessfully,
+        ),
+    );
 });

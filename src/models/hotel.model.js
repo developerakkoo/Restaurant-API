@@ -15,10 +15,12 @@ const hotelSchema = new Schema(
         image_url: {
             type: String,
             required: true,
+            default: "_",
         },
         local_imagePath: {
             type: String,
             required: true,
+            default: "_",
         },
         address: {
             type: String,

@@ -36,7 +36,7 @@ module.exports = {
     },
     responseMessage: {
         userMessage: {
-            userFetchedSuccessfully:"User fetched successfully",
+            userFetchedSuccessfully: "User fetched successfully",
             userExist:
                 "A user with this phone number or email already exists. Please use a different phone number or email. Thank you!",
             userNotCreated:
@@ -63,17 +63,30 @@ module.exports = {
             addressNotUpdated: "Address not updated",
             addressNotFound: "Address not found",
             addressFetchedSuccessfully: "Address fetched successfully",
-            documentUploadedSuccessfully:"Document uploaded successfully",
-            profileImageUploadedSuccessfully:"Profile image uploaded successfully",
-            documentNotFound:"Document not found.",
-            documentDeletedSuccessfully:"Document deleted successfully",
-            documentUpdatedSuccessfully:"Document updated successfully",
-            documentStatusUpdatedSuccessfully:"Document status updated successfully",
-            documentsFetchedSuccessfully:"Documents fetched successfully",
-            deliveryBoyNotFound:"Delivery boy not found",
-            deliveryBoyStatusUpdatedSuccessfully:"Delivery Boy status updated successfully",
-            userStatusUpdatedSuccessfully:"User status updated successfully",
-            partnerStatusUpdatedSuccessfully:"Partner status updated successfully",
+            documentUploadedSuccessfully: "Document uploaded successfully",
+            profileImageUploadedSuccessfully:
+                "Profile image uploaded successfully",
+            documentNotFound: "Document not found.",
+            documentDeletedSuccessfully: "Document deleted successfully",
+            documentUpdatedSuccessfully: "Document updated successfully",
+            documentStatusUpdatedSuccessfully:
+                "Document status updated successfully",
+            documentsFetchedSuccessfully: "Documents fetched successfully",
+            deliveryBoyNotFound: "Delivery boy not found",
+            deliveryBoyStatusUpdatedSuccessfully:
+                "Delivery Boy status updated successfully",
+            userStatusUpdatedSuccessfully: "User status updated successfully",
+            partnerStatusUpdatedSuccessfully:
+                "Partner status updated successfully",
+            hotelCreated: "Hotel registered successfully.",
+            hotelNotCreated:
+                "Something went wrong while registering the hotel. Please try again later or contact support for assistance. Thank you.",
+            hotelNotFound: "Hotel not found",
+            hotelUpdatedSuccessfully: "Hotel updated successfully",
+            hotelDeletedSuccessfully: "Hotel deleted successfully",
+            hotelFetchedSuccessfully: "Hotel fetched successfully",
+            hotelStatusUpdatedSuccessfully: "Hotel status updated successfully",
+            hotelImageUploadedSuccessfully: "Hotel image uploaded successfully",
         },
         adminMessage: {
             adminExist: "Admin is already exist",

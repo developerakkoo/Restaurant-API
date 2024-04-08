@@ -1,17 +1,39 @@
 const router = require("express").Router();
 const adminController = require("../controller/admin.controller");
 const deliveryBoyController = require("../controller/deliveryBoy.controller");
+const PartnerController = require("../controller/partner.controller");
 const authController = require("../controller/auth.controller");
 const validateData = require("../validators/admin.validator");
 const { dataValidationResult } = require("../validators/validationResult");
+const { upload } = require("../middleware/fileHandler.middleware");
 
 router.post("/logout", authController.logoutUser);
 
 router.get("/get/all-users", adminController.getAllUsers);
 
-router.get("/get/all-deliveryBoy", adminController.getAllDeliveryBoy);
+/*Partner */
 
 router.get("/get/all-partners", adminController.getAllPartner);
+
+/* Hotel */
+
+router.post("/hotel/register", PartnerController.addHotel);
+
+router.get("/get/all-hotels", adminController.getAllHotel);
+
+router.post(
+    "/hotel/upload/image",
+    upload.single("document"),
+    PartnerController.uploadHotelImage,
+);
+
+router.delete("/hotel/delete", PartnerController.deleteHotel);
+
+router.put("/hotel/update", PartnerController.updateHotel);
+
+/* Delivery boy */
+
+router.get("/get/all-deliveryBoy", adminController.getAllDeliveryBoy);
 
 router.delete("/delete/delivery-boy/document", adminController.deletedDocument);
 
