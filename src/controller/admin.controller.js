@@ -7,7 +7,8 @@ const DeliveryBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
 const userAddress = require("../models/userAddress.model");
 const Hotel = require("../models/hotel.model");
-const HotelDishes = require("../models/hotelDish.model");
+const HotelDish = require("../models/hotelDish.model");
+const Category = require("../models/category.model");
 const Partner = require("../models/partner.model");
 const User = require("../models/user.model");
 const { responseMessage } = require("../constant");
@@ -630,15 +631,135 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
 
     // Conditionally add $lookup stage if populate is true
     if (populate && populate.toLowerCase() === "true") {
-        hotelAggregation.splice(1, 0, {
-            // Insert $lookup stage after $match
-            $lookup: {
-                as: "hotelOwner",
-                from: "partners",
-                foreignField: "_id",
-                localField: "userId",
+        // Add a lookup stage to fetch hotel owner details
+        hotelAggregation.splice(
+            1,
+            0,
+            {
+                $lookup: {
+                    as: "hotelOwner",
+                    from: "partners",
+                    foreignField: "_id",
+                    localField: "userId",
+                    pipeline: [
+                        {
+                            $project: {
+                                name: 1,
+                                profile_image: 1,
+                                email: 1,
+                                phoneNumber: 1,
+                                status: 1,
+                            },
+                        },
+                    ],
+                },
             },
-        });
+            // Add a lookup stage to fetch hotel stars data
+            {
+                $lookup: {
+                    as: "hotelstars",
+                    from: "hotelstars",
+                    foreignField: "hotelId",
+                    localField: "_id",
+                    //adding a pipeline for getting user who start the hotel
+                    pipeline: [
+                        {
+                            $lookup: {
+                                as: "user",
+                                from: "users",
+                                foreignField: "_id",
+                                localField: "userId",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            name: 1,
+                                            profile_image: 1,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        // Unwind the user array to work with individual user object
+                        {
+                            $unwind: "$user",
+                        },
+                    ],
+                },
+            },
+            // Unwind the hotelstars array to work with individual star ratings
+            {
+                $unwind: "$hotelstars",
+            },
+            // Group by hotel details and calculate star counts
+            {
+                $group: {
+                    _id: {
+                        hotelId: "$_id",
+                        hotelName: "$hotelName",
+                        image_url: "$image_url",
+                        address: "$address",
+                        hotelOwner: "$hotelOwner",
+                    },
+                    // Count the total number of stars for each hotel
+                    totalCount: { $sum: 1 },
+                    "1starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$hotelstars.star", 1] }, 1, 0],
+                        },
+                    },
+                    "2starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$hotelstars.star", 2] }, 1, 0],
+                        },
+                    },
+                    // Similar counts for other star ratings
+                    "3starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$hotelstars.star", 3] }, 1, 0],
+                        },
+                    },
+                    "4starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$hotelstars.star", 4] }, 1, 0],
+                        },
+                    },
+                    "5starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$hotelstars.star", 5] }, 1, 0],
+                        },
+                    },
+                    // Push each star data into an array
+                    starData: { $push: "$hotelstars" },
+                },
+            },
+            // Unwind the hotelOwner array to flatten it
+            {
+                $unwind: "$_id.hotelOwner",
+            },
+            // Project the final result with necessary fields
+            {
+                $project: {
+                    _id: 0,
+                    hotelId: "$_id.hotelId",
+                    hotelName: "$_id.hotelName",
+                    image_url: "$_id.image_url",
+                    address: "$_id.address",
+                    // Structure star counts
+                    starCounts: {
+                        "1starCount": "$1starCount",
+                        "2starCount": "$2starCount",
+                        "3starCount": "$3starCount",
+                        "4starCount": "$4starCount",
+                        "5starCount": "$5starCount",
+                        totalCount: "$totalCount",
+                    },
+                    // Include the array of star data
+                    ratingData: "$starData",
+                    // Flatten the partner/hotelOwner array
+                    partner: "$_id.hotelOwner",
+                },
+            },
+        );
     }
 
     const hotel = await Hotel.aggregate(hotelAggregation).exec();
@@ -662,7 +783,162 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                 pageSize: hotel.length,
                 totalDoc: dataCount,
             },
-            responseMessage.userDataFetchedSuccessfully,
+            responseMessage.hotelFetchedSuccessfully,
         ),
     );
+});
+
+exports.addCategory = asyncHandler(async (req, res) => {
+    const { categoryName } = req.body;
+    const category = await Category.findOne({ categoryName });
+    if (category) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    responseMessage.userMessage.categoryAlreadyExist,
+                ),
+            );
+    }
+    const newCategory = await Category.create({
+        name: categoryName,
+    });
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                newCategory,
+                responseMessage.userMessage.categoryCreatedSuccessfully,
+            ),
+        );
+});
+
+exports.uploadCategoryImage = asyncHandler(async (req, res) => {
+    const { categoryId } = req.body;
+    // console.log(req.file);
+    const { filename } = req.file;
+    const local_filePath = `upload/${filename}`;
+    let document_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    if (process.env.NODE_ENV !== "production") {
+        document_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+    }
+    const savedCategory = await Category.findById(categoryId);
+    if (savedCategory) {
+        deleteFile(savedCategory?.local_imagePath);
+    }
+    const categoryDocument = await Category.findByIdAndUpdate(
+        categoryId,
+        {
+            $set: {
+                image_url: document_url,
+                local_imagePath: local_filePath,
+            },
+        },
+        {
+            new: true,
+        },
+        { validateBeforeSave: false },
+    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                categoryDocument,
+                responseMessage.userMessage.categoryImageUploadedSuccessfully,
+            ),
+        );
+});
+
+exports.getAllCategory = asyncHandler(async (req, res) => {
+    let dbQuery = {};
+    const { search } = req.query;
+    const pageNumber = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Search based on user query
+    if (search) {
+        dbQuery = {
+            $or: [{ name: { $regex: `^${search}`, $options: "i" } }],
+        };
+    }
+    const dataCount = await Category.countDocuments();
+    const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
+
+    const startItem = skip + 1;
+    const endItem = Math.min(
+        startItem + pageSize - 1,
+        startItem + category.length - 1,
+    );
+    const totalPages = Math.ceil(dataCount / pageSize);
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                content: category,
+                startItem,
+                endItem,
+                totalPages,
+                pagesize: category.length,
+                totalDoc: dataCount,
+            },
+            responseMessage.userMessage.categoryFetchedSuccessfully,
+        ),
+    );
+});
+
+exports.getCategoryById = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+    const category = await Category.findById(categoryId);
+    if (!category) {
+        return res
+            .status(404)
+            .json(
+                new ApiResponse(
+                    404,
+                    null,
+                    responseMessage.userMessage.categoryNotFound,
+                ),
+            );
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                category,
+                responseMessage.userMessage.categoryFetchedSuccessfully,
+            ),
+        );
+});
+
+exports.deleteCategory = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+    const category = await Category.findById(categoryId);
+    if (!category) {
+        return res
+            .status(404)
+            .json(
+                new ApiResponse(
+                    404,
+                    null,
+                    responseMessage.userMessage.categoryNotFound,
+                ),
+            );
+    }
+    deleteFile(category?.local_imagePath);
+    await Category.findByIdAndDelete(categoryId);
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "ok",
+                responseMessage.userMessage.categoryDeletedSuccessfully,
+            ),
+        );
 });

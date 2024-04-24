@@ -51,7 +51,7 @@ const verify_access_token = (req,res, next) => {
  * @throws {ApiError} Throws an ApiError if verification fails
  * 
  * @description This asynchronous function verifies the refresh token provided in the request headers.
- * It checks for the refresh token in different user types (Customer, Driver, Admin, Sealer) and
+ * It checks for the refresh token in different user types (Customer, Driver, Admin, partner) and
  * verifies it using the JWT_REFRESH_SECRET_KEY. If successful, it attaches the decoded user data to the
  * request object and calls the next middleware. If unsuccessful, it returns an appropriate error response.
  * The errorHandler middleware will catch any errors at the central place and return an appropriate response to the client.

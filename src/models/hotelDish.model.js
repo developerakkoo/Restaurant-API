@@ -22,15 +22,24 @@ const dishSchema = new Schema(
             required: true,
             default: "_",
         },
+        local_imagePath: {
+            type: String,
+            required: true,
+            default: "_",
+        },
         dishType: {
             type: String,
             required: true,
             enum: ["veg", "non-veg"],
         },
-        local_imagePath: {
-            type: String,
+        partnerPrice: {
+            type: Number,
             required: true,
-            default: "_",
+        },
+        userPrice: {
+            type: Number,
+            required: true,
+            default: 0,
         },
         spicLevel: {
             type: Number,
@@ -38,11 +47,17 @@ const dishSchema = new Schema(
             default: 0,
             enum: [0, 1, 3], // no-spicey, medium-spicey, so-spicey
         },
+        stock: {
+            type: Number,
+            required: true,
+            default: 1,
+            enum: [0, 1], // out of stock, available
+        },
         status: {
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1], // out of stock, available
+            enum: [0, 1, 2, 3], // pending,blocked, approved, rejected,
         },
     },
     { timestamps: true },
@@ -50,3 +65,5 @@ const dishSchema = new Schema(
 
 dishSchema.index({ name: "text" });
 module.exports = mongoose.model("HotelDish", dishSchema);
+
+// TODO: 1) complete dish, dish start operations and admin api 2) complete order flow

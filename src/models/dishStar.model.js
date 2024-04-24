@@ -8,6 +8,11 @@ const dishStarSchema = new Schema(
             ref: "HotelDish",
             required: true,
         },
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
         description: {
             type: String,
             required: true,
@@ -16,8 +21,7 @@ const dishStarSchema = new Schema(
         star: {
             type: Number,
             required: true,
-            default: 0,
-            enum: [1, 2, 3, 4], // pending, approved, rejected
+            enum: [1, 2, 3, 4, 5],
         },
     },
     { timestamps: true },
