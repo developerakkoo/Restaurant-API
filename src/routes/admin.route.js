@@ -19,6 +19,8 @@ router.get("/get/all-users", adminController.getAllUsers);
 
 router.get("/get/all-partners", adminController.getAllPartner);
 
+router.get("/get/partner/byId/:partnerId", PartnerController.getPartnerById);
+
 /* Hotel */
 
 router.post("/hotel/register", PartnerController.addHotel);
@@ -45,7 +47,7 @@ router.post(
     HotelController.uploadDishImage,
 );
 
-router.get('/get-dish/:dishId',HotelController.getDishById);
+router.get("/get-dish/:dishId", HotelController.getDishById);
 
 router.put(
     "/hotel/dish/update",

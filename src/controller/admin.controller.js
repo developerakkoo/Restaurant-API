@@ -168,7 +168,7 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
     ];
 
     // Conditionally add $lookup stage if populate is true
-    if (populate && populate.toLowerCase() === "true") {
+    if (populate && Number(populate) === 1) {
         usersAggregation.splice(1, 0, {
             // Insert $lookup stage after $match
             $lookup: {
@@ -246,10 +246,13 @@ exports.getAllPartner = asyncHandler(async (req, res) => {
         { $match: dbQuery },
         { $skip: skip },
         {
+            $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
+        },
+        {
             $limit: pageSize,
         },
     ];
-    if (populate && populate.toLowerCase() === "true") {
+    if (populate && Number(populate) === 1) {
         partnerAggregation.splice(1, 0, {
             // Insert $lookup stage after $match
             $lookup: {
@@ -261,7 +264,7 @@ exports.getAllPartner = asyncHandler(async (req, res) => {
         });
     }
 
-    const users = await Partner.aggregate(hotelAggregation).exec();
+    const users = await Partner.aggregate(partnerAggregation).exec();
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
@@ -324,7 +327,7 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
 
     const dataCount = await DeliveryBoy.countDocuments(dbQuery);
 
-    let hotelAggregation = [
+    let deliveryBoyAggregation = [
         {
             $match: dbQuery,
         },
@@ -339,8 +342,8 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
         },
     ];
     // Conditionally add $lookup stage if populate is true
-    if (populate && populate.toLowerCase() === "true") {
-        hotelAggregation.splice(1, 0, {
+    if (populate && Number(populate) === 1) {
+        deliveryBoyAggregation.splice(1, 0, {
             // Insert $lookup stage after $match
             $lookup: {
                 as: "userDocuments",
@@ -350,7 +353,7 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             },
         });
     }
-    const deliveryBoys = await DeliveryBoy.aggregate(hotelAggregation).exec();
+    const deliveryBoys = await DeliveryBoy.aggregate(deliveryBoyAggregation).exec();
 
     const startItem = skip + 1;
     const endItem = Math.min(
@@ -630,7 +633,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
     ];
 
     // Conditionally add $lookup stage if populate is true
-    if (populate && populate.toLowerCase() === "true") {
+    if (populate && Number(populate) === 1) {
         // Add a lookup stage to fetch hotel owner details
         hotelAggregation.splice(
             1,
