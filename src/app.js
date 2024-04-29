@@ -9,7 +9,7 @@ const { BASE_URL } = require("./constant");
 const morganMiddleware = require("./logger/morgan.logger");
 const { errorHandler } = require("./middleware/error.middlewares");
 const cookieParser = require("cookie-parser");
-const {apiRateLimiter} = require("./utils/apiRateLimiter");
+const { apiRateLimiter } = require("./utils/apiRateLimiter");
 const path = require("path");
 
 app.use(cors());
@@ -62,6 +62,9 @@ const {
     verify_access_token,
     verify_refresh_token,
 } = require("./middleware/verifyJwtToken.middleware");
+const {
+    adminPrivilegesRequired,
+} = require("./middleware/userAccess.middleware");
 const { adminRoutes } = require("./routes/admin.route");
 const { authRoutes } = require("./routes/auth.route");
 const { userRoutes } = require("./routes/user.route");
@@ -71,15 +74,16 @@ const { hotelStarRoutes } = require("./routes/hotel.route");
 
 /*Api Logger */
 app.use(morganMiddleware);
+app.use("/upload", express.static(path.join(__dirname, "upload")));
 
 app.use(`${BASE_URL}/auth`, authRoutes);
 app.use(verify_access_token);
 app.use(`${BASE_URL}/user`, userRoutes);
-app.use(`${BASE_URL}/admin`, adminRoutes);
 app.use(`${BASE_URL}/partner`, partnerRoutes);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
 app.use(`${BASE_URL}/hotel`, hotelStarRoutes);
 // Serve uploaded files as static content
-app.use("/upload", express.static(path.join(__dirname, "upload")));
+app.use(adminPrivilegesRequired);
+app.use(`${BASE_URL}/admin`, adminRoutes);
 app.use(errorHandler);
 module.exports = { app };
