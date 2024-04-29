@@ -2,6 +2,10 @@ const router = require("express").Router();
 const userDataValidator = require("../validators/user.validator");
 const userController = require("../controller/user.controller");
 const authController = require("../controller/auth.controller");
+const {
+    getPromoCode,
+    getAllPromoCodes,
+} = require("../controller/promoCode.controller");
 
 router.post("/logout", authController.logoutUser);
 
@@ -18,5 +22,10 @@ router.put("/select-address", userController.selectAddresses);
 router.put("/update-address", userController.updateAddress);
 
 router.delete("/delete-address/:addressId", userController.deleteAddress);
+
+/* Promo code routes*/
+router.get("/promoCode/get/:promoCodeId", getPromoCode);
+
+router.get("/promoCode/get-all", getAllPromoCodes);
 
 module.exports = { userRoutes: router };

@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { app } = require("./app");
 const { connectDB } = require("./db/index.db");
-const User = require('./models/user.model');
+const User = require("./models/user.model");
 const {
     createUser,
     createPartner,
@@ -19,22 +19,28 @@ connectDB()
                 createPartner(10);
                 createDeliveryBoy(10);
             }
-            console.log(`Server is running at port : ${PORT}`);
+            console.log(
+                `Server is running at port : ${PORT} in ${process.env.NODE_ENV} environment`,
+            );
             const io = require("./utils/socket").init(server);
-            io.on('connection',async(socket)=>{
-    
-                let userId = socket.handshake.auth.token
+            io.on("connection", async (socket) => {
+                let userId = socket.handshake.auth.token;
                 // console.log('User connected',userId);
-    
-                await User.findByIdAndUpdate(userId,{$set:{isOnline:true}},{new:true}); //update user status to online
-                socket.broadcast.emit('onlineUsers',{user:userId});
-                socket.on('disconnect',async()=>{
-                
-                    const userId = socket.handshake.auth.token
-                    await User.findByIdAndUpdate(userId,{$set:{isOnline:false}}); //update user status to offline
-                    socket.broadcast.emit('offlineUsers',{user:userId});
+
+                await User.findByIdAndUpdate(
+                    userId,
+                    { $set: { isOnline: true } },
+                    { new: true },
+                ); //update user status to online
+                socket.broadcast.emit("onlineUsers", { user: userId });
+                socket.on("disconnect", async () => {
+                    const userId = socket.handshake.auth.token;
+                    await User.findByIdAndUpdate(userId, {
+                        $set: { isOnline: false },
+                    }); //update user status to offline
+                    socket.broadcast.emit("offlineUsers", { user: userId });
                     // console.log('User Disconnected');
-                })
+                });
             });
         });
     })

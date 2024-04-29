@@ -6,6 +6,7 @@ const PartnerController = require("../controller/partner.controller");
 const authController = require("../controller/auth.controller");
 const validateData = require("../validators/admin.validator");
 const { dataValidationResult } = require("../validators/validationResult");
+const promoCodeController = require("../controller/promoCode.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
 const {
     adminPrivilegesRequired,
@@ -14,6 +15,8 @@ const {
 router.post("/logout", authController.logoutUser);
 
 router.get("/get/all-users", adminController.getAllUsers);
+
+router.use(adminPrivilegesRequired);
 
 /*Partner */
 
@@ -131,6 +134,20 @@ router.delete(
     "/category/delete/:categoryId",
     adminPrivilegesRequired,
     adminController.deleteCategory,
+);
+
+/* Promo code routes*/
+router.post("/promoCode/add", promoCodeController.addPromoCode);
+
+router.put("/promoCode/update/:promoCodeId", promoCodeController.updatedPromoCode);
+
+router.get("/promoCode/get/:promoCodeId", promoCodeController.getPromoCode);
+
+router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
+
+router.delete(
+    "/promoCode/delete/:promoCodeId",
+    promoCodeController.deletePromoCode,
 );
 
 module.exports = { adminRoutes: router };
