@@ -6,6 +6,7 @@ const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
+const { Types } = require("mongoose");
 
 /**
  *  @function registerPartner
@@ -132,14 +133,14 @@ exports.addHotel = asyncHandler(async (req, res) => {
 });
 
 exports.updateHotel = asyncHandler(async (req, res) => {
-    const { hotelId,hotelName, address,hotelStatus} = req.body;
+    const { hotelId, hotelName, address, hotelStatus } = req.body;
     const hotelImage = await Hotel.findByIdAndUpdate(
         hotelId,
         {
             $set: {
                 hotelName: hotelName,
                 address: address,
-                hotelStatus:hotelStatus
+                hotelStatus: hotelStatus,
             },
         },
         {
@@ -161,10 +162,7 @@ exports.deleteHotel = asyncHandler(async (req, res) => {
     const { hotelId } = req.query;
     const deletedHotel = await Hotel.findByIdAndDelete(hotelId);
     if (!deletedHotel.local_imagePath) {
-        throw new ApiError(
-            404,
-            responseMessage.userMessage.hotelNotFound,
-        );
+        throw new ApiError(404, responseMessage.userMessage.hotelNotFound);
     }
     deleteFile(deletedHotel.local_imagePath);
     return res
@@ -210,6 +208,46 @@ exports.uploadHotelImage = asyncHandler(async (req, res) => {
                 200,
                 hotelDocument,
                 responseMessage.userMessage.hotelImageUploadedSuccessfully,
+            ),
+        );
+});
+
+exports.getPartnerById = asyncHandler(async (req, res) => {
+    const { partnerId } = req.params;
+    const { populate } = req.query;
+    let partnerAggregation = [
+        {
+            $match: {
+                _id: new Types.ObjectId(partnerId), // Convert dishId to ObjectId if needed
+            },
+        },
+        {
+            $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
+        },
+    ];
+    if (populate && Number(populate) === 1) {
+        partnerAggregation.splice(1, 0, {
+            // Insert $lookup stage after $match
+            $lookup: {
+                as: "hotels",
+                from: "hotels",
+                foreignField: "userId",
+                localField: "_id",
+            },
+        });
+    }
+
+    const partner = await Partner.aggregate(partnerAggregation).exec();
+    if (!partner) {
+        throw new ApiError(404, responseMessage.userMessage.userNotFound);
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                partner,
+                responseMessage.userMessage.userFetchedSuccessfully,
             ),
         );
 });

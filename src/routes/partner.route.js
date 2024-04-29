@@ -3,6 +3,7 @@ const partnerController = require("../controller/partner.controller");
 const authController = require("../controller/auth.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
 
+
 router.post("/logout", authController.logoutUser);
 
 router.post("/hotel/register", partnerController.addHotel);
