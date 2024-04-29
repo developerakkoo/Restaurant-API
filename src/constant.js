@@ -93,6 +93,7 @@ module.exports = {
             starFetchedSuccessfully: "Star fetched successfully",
             starUpdatedSuccessfully: "Star updated successfully",
             starNotAdded: "Star not added",
+            starNotFound:"Star not found",
             categoryNotFound: "Category not found",
             categoryCreatedSuccessfully: "Category created successfully",
             categoryUpdatedSuccessfully: "Category updated successfully",
