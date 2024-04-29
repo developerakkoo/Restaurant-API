@@ -66,4 +66,3 @@ const dishSchema = new Schema(
 dishSchema.index({ name: "text" });
 module.exports = mongoose.model("HotelDish", dishSchema);
 
-// TODO: 1) complete dish, dish start operations and admin api 2) complete order flow
