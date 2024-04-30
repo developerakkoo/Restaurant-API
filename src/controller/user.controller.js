@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const Cart = require("../models/cart.model");
 const userAddress = require("../models/userAddress.model");
 const { responseMessage } = require("../constant");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -6,7 +7,6 @@ const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
-
 
 /**
  *  @function registerUser
@@ -27,12 +27,14 @@ exports.registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, responseMessage.userMessage.userExist);
     }
     const user = await User.create({ name, email, phoneNumber, password });
-    const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken",
-    );
+    const createdUser = await User.findById(user._id)
+        .select("-password -refreshToken")
+        .lean();
     if (!createdUser) {
         throw new ApiError(500, responseMessage.userMessage.userNotCreated);
     }
+    const cart = await Cart.create({ userId: createdUser._id });
+    createdUser.cartId = cart._id;
     return res
         .status(201)
         .json(
