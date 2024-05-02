@@ -115,10 +115,25 @@ module.exports = {
                 "Product deleted from cart successfully",
             cartFetchedSuccessfully: "Cart fetched successfully",
             cartNotFound: "Cart not found",
-            ALREADY_FAVORITED:"Already added to favorites",
-            NOT_FAVORITED:"Not found",
-            FAVORITED_SUCCESSFULLY:"Added to favorites successfully",
+            emptyCart: "cart is empty",
+            ALREADY_FAVORITED: "Already added to favorites",
+            NOT_FAVORITED: "Not found",
+            FAVORITED_SUCCESSFULLY: "Added to favorites successfully",
             removeFromFavorite: "Removed from favorites successfully",
+            ORDER_PLACED_SUCCESSFULLY: "Order placed successfully",
+            ORDER_UPDATED_SUCCESSFULLY: "Order updated successfully",
+            ORDER_DELETED_SUCCESSFULLY: "Order deleted successfully",
+            ORDER_FETCHED_SUCCESSFULLY: "Order fetched successfully",
+            ORDER_NOT_FOUND: "Order not found",
+            ORDER_STATUS_UPDATED_SUCCESSFULLY:
+                "Order status updated successfully",
+            AMOUNT_REQUIRED_FOR_PAYMENT:
+                "Amount required for initiating payment",
+            PAYMENT_INITIATED_SUCCESSFULLY: "Payment initiated successfully",
+            ORDER_ALREADY_ASSIGNED:
+                "Sorry order already assigned delivery partner",
+            sendOrderPickUpRequestToDeliveryBoys:
+                "Request  sent to all delivery boy's",
         },
         adminMessage: {
             adminExist: "Admin is already exist",

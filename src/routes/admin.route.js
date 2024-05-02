@@ -3,6 +3,7 @@ const adminController = require("../controller/admin.controller");
 const deliveryBoyController = require("../controller/deliveryBoy.controller");
 const HotelController = require("../controller/hotel.controller");
 const PartnerController = require("../controller/partner.controller");
+const orderController = require("../controller/order.controller");
 const authController = require("../controller/auth.controller");
 const validateData = require("../validators/admin.validator");
 const { dataValidationResult } = require("../validators/validationResult");
@@ -14,9 +15,9 @@ const {
 
 router.post("/logout", authController.logoutUser);
 
-router.get("/get/all-users", adminController.getAllUsers);
-
 router.use(adminPrivilegesRequired);
+
+router.get("/get/all-users", adminController.getAllUsers);
 
 /*Partner */
 
@@ -139,7 +140,10 @@ router.delete(
 /* Promo code routes*/
 router.post("/promoCode/add", promoCodeController.addPromoCode);
 
-router.put("/promoCode/update/:promoCodeId", promoCodeController.updatedPromoCode);
+router.put(
+    "/promoCode/update/:promoCodeId",
+    promoCodeController.updatedPromoCode,
+);
 
 router.get("/promoCode/get/:promoCodeId", promoCodeController.getPromoCode);
 
@@ -148,6 +152,17 @@ router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 router.delete(
     "/promoCode/delete/:promoCodeId",
     promoCodeController.deletePromoCode,
+);
+
+/* Order Routes*/
+
+router.get("/order/get-all", orderController.getAllOrders);
+
+router.put("/order/update", orderController.updateOrder);
+
+router.post(
+    "/order/send-pickup-request/deliveryBoy",
+    adminController.sendOrderPickUpRequestToDeliveryBoys,
 );
 
 module.exports = { adminRoutes: router };

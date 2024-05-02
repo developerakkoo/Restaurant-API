@@ -2,6 +2,7 @@ require("dotenv").config();
 const { app } = require("./app");
 const { connectDB } = require("./db/index.db");
 const User = require("./models/user.model");
+const jwt = require("jsonwebtoken");
 const {
     createUser,
     createPartner,
@@ -24,8 +25,11 @@ connectDB()
             );
             const io = require("./utils/socket").init(server);
             io.on("connection", async (socket) => {
-                let userId = socket.handshake.auth.token;
-                // console.log('User connected',userId);
+                let { userId } = await jwt.verify(
+                    socket.handshake.auth.token,
+                    process.env.JWT_ACCESS_SECRET_KEY,
+                );
+                console.log("User connected", userId);
 
                 await User.findByIdAndUpdate(
                     userId,

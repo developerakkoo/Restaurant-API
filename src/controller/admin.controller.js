@@ -13,6 +13,8 @@ const Partner = require("../models/partner.model");
 const User = require("../models/user.model");
 const { responseMessage } = require("../constant");
 const { deleteFile } = require("../utils/deleteFile");
+const { getIO } = require("../utils/socket");
+const Order = require("../models/order.model");
 const moment = require("moment");
 
 /**
@@ -353,7 +355,9 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             },
         });
     }
-    const deliveryBoys = await DeliveryBoy.aggregate(deliveryBoyAggregation).exec();
+    const deliveryBoys = await DeliveryBoy.aggregate(
+        deliveryBoyAggregation,
+    ).exec();
 
     const startItem = skip + 1;
     const endItem = Math.min(
@@ -945,3 +949,19 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
             ),
         );
 });
+
+exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
+    async (req, res) => {
+        const { deliveryBoys, orderId } = req.body;
+        const order = await Order.findById(orderId);
+        deliveryBoys.forEach((userId) => {
+            getIO().emit(userId, {
+                message: "Your message here",
+                data: order,
+            });
+        });
+        res.status(200).json(
+            new ApiResponse(200, "ok", responseMessage.userMessage.sendOrderPickUpRequestToDeliveryBoys),
+        );
+    },
+);

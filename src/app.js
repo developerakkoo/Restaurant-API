@@ -62,32 +62,33 @@ const {
     verify_access_token,
     verify_refresh_token,
 } = require("./middleware/verifyJwtToken.middleware");
-const {
-    adminPrivilegesRequired,
-} = require("./middleware/userAccess.middleware");
-const { adminRoutes } = require("./routes/admin.route");
+
 const { authRoutes } = require("./routes/auth.route");
 const { userRoutes } = require("./routes/user.route");
-const { partnerRoutes } = require("./routes/partner.route");
-const { deliverBoyRoutes } = require("./routes/deliveryBoy.route");
-const { hotelStarRoutes } = require("./routes/hotel.route");
 const { cartRoutes } = require("./routes/cart.route");
+const { adminRoutes } = require("./routes/admin.route");
+const { orderRoutes } = require("./routes/order.route");
+const { hotelStarRoutes } = require("./routes/hotel.route");
+const { partnerRoutes } = require("./routes/partner.route");
 const { favoriteRoutes } = require("./routes/favorite.route");
+const { deliverBoyRoutes } = require("./routes/deliveryBoy.route");
 
 /*Api Logger */
 app.use(morganMiddleware);
-app.use("/upload", express.static(path.join(__dirname, "upload")));
 
 app.use(`${BASE_URL}/auth`, authRoutes);
 app.use(verify_access_token);
 app.use(`${BASE_URL}/user`, userRoutes);
-app.use(`${BASE_URL}/user/cart`, cartRoutes);
-app.use(`${BASE_URL}/partner`, partnerRoutes);
-app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
-app.use(`${BASE_URL}/hotel`, hotelStarRoutes);
-app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
-// Serve uploaded files as static content
-app.use(adminPrivilegesRequired);
 app.use(`${BASE_URL}/admin`, adminRoutes);
+app.use(`${BASE_URL}/order`, orderRoutes);
+app.use(`${BASE_URL}/user/cart`, cartRoutes);
+app.use(`${BASE_URL}/hotel`, hotelStarRoutes);
+app.use(`${BASE_URL}/partner`, partnerRoutes);
+app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
+app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
+// Serve uploaded files as static content
+app.use("/upload", express.static(path.join(__dirname, "upload")));
+
 app.use(errorHandler);
+
 module.exports = { app };

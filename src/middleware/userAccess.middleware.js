@@ -4,6 +4,7 @@ const { responseMessage } = require("../constant");
 
 
 exports.adminPrivilegesRequired = asyncHandler(async (req, res, next) => {
+    
     if (req.user.userType !== 1) {
         return res
             .status(403)

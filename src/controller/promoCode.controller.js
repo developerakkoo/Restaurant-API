@@ -136,3 +136,5 @@ exports.deletePromoCode = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, null, "Promo code deleted successfully"));
 });
+
+//TODO: apply promo code route
