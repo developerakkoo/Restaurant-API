@@ -1,3 +1,4 @@
+const moment = require("moment");
 const promoCode = require("../models/promoCode.model");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -137,4 +138,67 @@ exports.deletePromoCode = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, null, "Promo code deleted successfully"));
 });
 
-//TODO: apply promo code route
+exports.applyPromoCode = asyncHandler(async (req, res) => {
+    const { code, orderAmount, userId } = req.body;
+
+    const isPromoCodeExist = await promoCode.findOne({ code });
+    if (!isPromoCodeExist || !isPromoCodeExist.isActive) {
+        throw new ApiError(400, "Invalid promo code");
+    }
+    if (
+        moment(isPromoCodeExist.expiry, "DD-MM-YYYY").isBefore(
+            moment(),
+            "DD-MM-YYYY",
+        )
+    ) {
+        throw new ApiError(400, "Promo code expired");
+    }
+
+    let offer;
+    if (orderAmount < isPromoCodeExist.minOrderAmount) {
+        throw new ApiError(
+            400,
+            "Order total needs to be greater than the minimum order amount",
+        );
+    }
+
+    switch (isPromoCodeExist.codeType) {
+        case 1:
+            offer = {
+                offer: `FREE_DELIVERY ${isPromoCodeExist.offer}`,
+                offerData: isPromoCodeExist.offer,
+            };
+            break;
+        case 2:
+            offer = {
+                offer: `GET_OFF ${isPromoCodeExist.offer}`,
+                offerData: isPromoCodeExist.offer,
+            };
+            break;
+        case 3:
+            const userOrderExist = await Order.findOne({ userId });
+            if (userOrderExist) {
+                throw new ApiError(
+                    400,
+                    "This code is only valid on the first order",
+                );
+            }
+            offer = {
+                offer: `NEW_USER ${isPromoCodeExist.offer}`,
+                offerData: isPromoCodeExist.offer,
+            };
+            break;
+        default:
+            throw new ApiError(400, "Invalid promo code type");
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                { isPromoCodeExist, offerYouGet: offer },
+                "Promo code applied successfully",
+            ),
+        );
+});

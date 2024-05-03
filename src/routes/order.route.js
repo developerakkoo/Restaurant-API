@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const orderController = require("../controller/order.controller");
+const { applyPromoCode } = require("../controller/promoCode.controller");
 
 router.post("/initiate/payment", orderController.initiatePayment);
 
@@ -15,5 +16,7 @@ router.get(
 );
 
 router.get("/get/all-order/userId/:userId", orderController.getOrdersByUserId);
+
+router.post("/apply/promoCode", applyPromoCode);
 
 module.exports = { orderRoutes: router };

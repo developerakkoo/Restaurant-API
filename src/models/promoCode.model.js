@@ -7,6 +7,10 @@ const promoCodeSchema = new Schema(
             type: String,
             required: true,
         },
+        offer: {
+            type: String,
+            required: true,
+        },
         code: {
             type: String,
             required: true,
