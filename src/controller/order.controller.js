@@ -366,7 +366,7 @@ exports.initiatePayment = asyncHandler(async (req, res, next) => {
         if (err) {
             return res
                 .status(400)
-                .json(new ApiResponse(40, null, error.message));
+                .json(new ApiResponse(40, null, err.message));
         }
         return res
             .status(201)

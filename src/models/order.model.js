@@ -73,7 +73,7 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1, 2, 3], // received =0 being prepared = 1 , delivery assigned = 2, delivery =3
+            enum: [0, 1, 2, 3,4], // received =0 being prepared = 1 , delivery assigned = 2, delivered =3 cancel order
         },
     },
     { timestamps: true },
