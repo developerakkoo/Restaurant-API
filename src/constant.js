@@ -134,6 +134,14 @@ module.exports = {
                 "Sorry order already assigned delivery partner",
             sendOrderPickUpRequestToDeliveryBoys:
                 "Request  sent to all delivery boy's",
+            trackRecordAdded: "User tracked record added",
+            trackRecordUpdated: "User tracked record updated",
+            trackRecordDeleted: "User tracked record deleted",
+            trackRecordNotFound: "User tracked record not found",
+            trackRecordAlreadyExists:
+                "User tracked record already exists for today",
+            trackRecordFetchedSuccessfully:
+                "User tracked record fetched successfully",
         },
         adminMessage: {
             adminExist: "Admin is already exist",

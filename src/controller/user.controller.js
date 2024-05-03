@@ -1,12 +1,14 @@
 const User = require("../models/user.model");
 const Cart = require("../models/cart.model");
-const userAddress = require("../models/userAddress.model");
 const { responseMessage } = require("../constant");
+const UserTrack = require("../models/userTrack.model");
+const userAddress = require("../models/userAddress.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
+const moment = require("moment");
 
 /**
  *  @function registerUser
@@ -313,6 +315,39 @@ exports.deletedImage = asyncHandler(async (req, res) => {
                 200,
                 "",
                 responseMessage.userMessage.documentDeletedSuccessfully,
+            ),
+        );
+});
+
+exports.addUserTrackRecord = asyncHandler(async (req, res) => {
+    const { userId } = req.body;
+    const today = moment().format("DD-MM-YYYY");
+    const recordExists = await UserTrack.findOne({
+        userId,
+        date: today,
+    });
+    if (recordExists) {
+        return res
+            .status(400)
+            .json(
+                new ApiError(
+                    400,
+                    null,
+                    responseMessage.userMessage.trackRecordAlreadyExists,
+                ),
+            );
+    }
+    const userTrackRecord = await UserTrack.create({
+        userId: userId,
+        date: today,
+    });
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                userTrackRecord,
+                responseMessage.userMessage.trackRecordAdded,
             ),
         );
 });

@@ -28,4 +28,8 @@ router.get("/promoCode/get/:promoCodeId", getPromoCode);
 
 router.get("/promoCode/get-all", getAllPromoCodes);
 
+/* track user */
+
+router.post("/track/add", userController.addUserTrackRecord);
+
 module.exports = { userRoutes: router };
