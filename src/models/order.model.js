@@ -49,7 +49,7 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
         },
-        gst:{
+        gst: {
             type: Number,
             required: true,
         },
@@ -69,15 +69,24 @@ const orderSchema = new Schema(
             type: String,
             required: true,
         },
+        compensationPaidToDeliveryBoy: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+        compensationPaidToHotelPartner: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
         orderStatus: {
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1, 2, 3,4], // received =0 being prepared = 1 , delivery assigned = 2, delivered =3 cancel order
+            enum: [0, 1, 2, 3, 4], // received =0 being prepared = 1 , delivery assigned = 2, delivered =3 cancel order=4
         },
     },
     { timestamps: true },
 );
-
 
 module.exports = mongoose.model("Order", orderSchema);

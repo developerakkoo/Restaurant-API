@@ -142,6 +142,8 @@ module.exports = {
                 "User tracked record already exists for today",
             trackRecordFetchedSuccessfully:
                 "User tracked record fetched successfully",
+            orderChartData: "Order chart data fetched successfully",
+            revenueChartData: "Revenue chart data fetched successfully",
         },
         adminMessage: {
             adminExist: "Admin is already exist",
@@ -149,6 +151,8 @@ module.exports = {
                 "Something went wrong while registering the Admin",
             adminRegisterSuccessfully: "Admin registered Successfully",
             adminPrivilegesRequired: "Access Denied: Admin Privileges Required",
+            customerMapChartDataFetchedSuccessfully:
+                "Customer Map Chart Data Fetched Successfully",
         },
         validationResultMessage: "Received data is not valid",
         userDataFetchedSuccessfully: "User data fetched successfully",

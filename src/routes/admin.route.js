@@ -19,6 +19,16 @@ router.use(adminPrivilegesRequired);
 
 router.get("/get/all-users", adminController.getAllUsers);
 
+/* Dashboard routes*/
+router.get("/get/dashboard-data", adminController.getDashboardStats);
+
+router.get("/get/customerMapChartData", adminController.customerMapChartData);
+
+router.get("/get/orderChartData", adminController.orderChartData);
+
+router.get("/get/revenueChartData", adminController.totalRevenueData);
+
+
 /*Partner */
 
 router.get("/get/all-partners", adminController.getAllPartner);

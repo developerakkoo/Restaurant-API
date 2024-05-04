@@ -16,6 +16,7 @@ const { deleteFile } = require("../utils/deleteFile");
 const { getIO } = require("../utils/socket");
 const Order = require("../models/order.model");
 const moment = require("moment");
+const userTrackModel = require("../models/userTrack.model");
 
 /**
  *  @function registerAdmin
@@ -345,15 +346,44 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
     ];
     // Conditionally add $lookup stage if populate is true
     if (populate && Number(populate) === 1) {
-        deliveryBoyAggregation.splice(1, 0, {
-            // Insert $lookup stage after $match
-            $lookup: {
-                as: "userDocuments",
-                from: "userdocuments",
-                foreignField: "userId",
-                localField: "_id",
+        deliveryBoyAggregation.splice(
+            1,
+            0,
+            {
+                // Insert $lookup stage after $match
+                $lookup: {
+                    as: "userDocuments",
+                    from: "userdocuments",
+                    foreignField: "userId",
+                    localField: "_id",
+                },
             },
-        });
+            {
+                $lookup: {
+                    as: "totalDeliveredOrders",
+                    from: "orders",
+                    foreignField: "assignedDeliveryBoy",
+                    localField: "_id",
+                    pipeline: [
+                        {
+                            $match: {
+                                // Add conditions to exclude compensated orders
+                                compensationPaidToDeliveryBoy: { $ne: true }, // Assuming "compensationPaid" field exists and is a boolean
+                            },
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                totalDelivery: { $sum: 1 },
+                                totalDeliveryPrice: {
+                                    $sum: "$totalPrice",
+                                },
+                            },
+                        },
+                    ],
+                },
+            },
+        );
     }
     const deliveryBoys = await DeliveryBoy.aggregate(
         deliveryBoyAggregation,
@@ -961,7 +991,200 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
             });
         });
         res.status(200).json(
-            new ApiResponse(200, "ok", responseMessage.userMessage.sendOrderPickUpRequestToDeliveryBoys),
+            new ApiResponse(
+                200,
+                "ok",
+                responseMessage.userMessage.sendOrderPickUpRequestToDeliveryBoys,
+            ),
         );
     },
 );
+
+exports.getDashboardStats = asyncHandler(async (req, res) => {
+    const { sort = "dayOfMonth" } = req.query;
+    const startDate = moment().startOf(sort); // Today's date at 00:00:00
+    const endDate = moment().endOf(sort);
+    const DateFilterPipeline = [
+        {
+            $match: {
+                createdAt: {
+                    $gte: startDate.toDate(),
+                    $lte: endDate.toDate(),
+                },
+            },
+        },
+        {
+            $group: {
+                _id: null,
+                data: { $sum: 1 }, // Count the number of documents
+            },
+        },
+    ];
+
+    const [
+        totalOrders,
+        totalDeliveredOrders,
+        totalCanceledOrders,
+        totalUsers,
+        totalPartners,
+        totalDeliveryBoys,
+        totalRevenue,
+    ] = await Promise.all([
+        Order.countDocuments(DateFilterPipeline[0].$match),
+        Order.countDocuments({
+            ...DateFilterPipeline[0].$match,
+            orderStatus: 3,
+        }),
+        Order.countDocuments({
+            ...DateFilterPipeline[0].$match,
+            orderStatus: 4,
+        }),
+        User.countDocuments(DateFilterPipeline[0].$match),
+        Partner.countDocuments(DateFilterPipeline[0].$match),
+        DeliveryBoy.countDocuments(DateFilterPipeline[0].$match),
+        Order.aggregate([
+            {
+                $match: DateFilterPipeline[0].$match,
+            },
+            {
+                $group: {
+                    _id: null,
+                    sum_totalPrice: {
+                        $sum: "$totalPrice",
+                    },
+                },
+            },
+        ]),
+    ]);
+
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                totalOrders,
+                totalDeliveredOrders,
+                totalCanceledOrders,
+                totalUsers,
+                totalPartners,
+                totalDeliveryBoys,
+                totalRevenue:
+                    totalRevenue.length > 0
+                        ? totalRevenue[0].sum_totalPrice
+                        : 0,
+            },
+            "Dashboard data fetched successfully",
+        ),
+    );
+});
+
+exports.customerMapChartData = asyncHandler(async (req, res) => {
+    const { sort = "dayOfMonth" } = req.query;
+    const startDate = moment().startOf(sort); // Today's date at 00:00:00
+    const endDate = moment().endOf(sort);
+    const pipeline = [
+        {
+            $project: {
+                sortField: {
+                    [`$${sort}`]: "$createdAt",
+                },
+            },
+        },
+        {
+            $group: {
+                _id: "$sortField",
+                userCount: {
+                    $sum: 1,
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                [sort]: "$_id",
+                userCount: 1,
+            },
+        },
+    ];
+
+    const data = await userTrackModel.aggregate(pipeline);
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            data,
+            responseMessage.userMessage.customerMapChartDataFetchedSuccessfully,
+        ),
+    );
+});
+
+exports.orderChartData = asyncHandler(async (req, res) => {
+    const { sort = "dayOfMonth" } = req.query;
+    const startDate = moment().startOf(sort); // Today's date at 00:00:00
+    const endDate = moment().endOf(sort);
+    const pipeline = [
+        {
+            $project: {
+                sortField: {
+                    [`$${sort}`]: "$createdAt",
+                },
+            },
+        },
+        {
+            $group: {
+                _id: "$sortField",
+                userCount: {
+                    $sum: 1,
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                [sort]: "$_id",
+                orderCount: 1,
+            },
+        },
+    ];
+    const data = await Order.aggregate(pipeline);
+    res.status(200).json(
+        new ApiResponse(200, data, responseMessage.userMessage.orderChartData),
+    );
+});
+
+exports.totalRevenueData = asyncHandler(async (req, res) => {
+    const { sort = "dayOfMonth" } = req.query;
+    const startDate = moment().startOf(sort); // Today's date at 00:00:00
+    const endDate = moment().endOf(sort);
+    const pipeline = [
+        {
+            $project: {
+                totalPrice: 1,
+                sortField: {
+                    [`$${sort}`]: "$createdAt",
+                },
+            },
+        },
+        {
+            $group: {
+                _id: "$sortField",
+                revenue: {
+                    $sum: "$totalPrice",
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                [sort]: "$_id",
+                revenue: 1,
+            },
+        },
+    ];
+    const data = await Order.aggregate(pipeline);
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            data,
+            responseMessage.userMessage.revenueChartData,
+        ),
+    );
+});
