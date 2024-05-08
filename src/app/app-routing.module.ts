@@ -13,7 +13,7 @@ const routes: Routes = [
       import('./pages/login/login.module').then((m) => m.LoginPageModule),
   },
   {
-    path: 'register',
+    path: '',
     loadChildren: () =>
       import('./pages/register/register.module').then(
         (m) => m.RegisterPageModule
@@ -28,7 +28,7 @@ const routes: Routes = [
   },
   
   {
-    path: '',
+    path: 'address',
     loadChildren: () => import('./pages/address/address.module').then( m => m.AddressPageModule)
   },
 ];

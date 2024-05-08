@@ -78,10 +78,16 @@ ion-tab-bar{
 .no-padding{
   margin: 0;
 }
+.title{
+  font-size: 14px;
+  font-weight: 700;
+}
 
 .sub-title{
   font-size: 18px;
 }
+
+
 .poppins-thin {
     font-family: "Poppins", sans-serif;
     font-weight: 100;
@@ -105,7 +111,7 @@ ion-tab-bar{
     font-weight: 200;
     font-style: italic;
   }
-  
+  top
   .poppins-light {
     font-family: "Poppins", sans-serif;
     font-weight: 300;
@@ -200,11 +206,8 @@ ion-tab-bar{
     background-color: var(--ion-color-primary);
   }
 
-  .button-primary:hover{
-    -webkit-animation: scale-down-center 0.4s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-            animation: scale-down-center 0.4s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
-  }
-  .button-bounce {
+  .button-primary:active{
+ 
     animation: bounce; /* referring directly to the animation's @keyframe declaration */
     animation-duration: 2s; /* don't forget to set a duration! */
   }

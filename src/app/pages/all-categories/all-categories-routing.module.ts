@@ -6,8 +6,15 @@ import { AllCategoriesPage } from './all-categories.page';
 const routes: Routes = [
   {
     path: '',
-    component: AllCategoriesPage
-  }
+    component: AllCategoriesPage,
+  },
+  {
+    path: 'category-detail',
+    loadChildren: () =>
+      import('./category-detail/category-detail.module').then(
+        (m) => m.CategoryDetailPageModule
+      ),
+  },
 ];
 
 @NgModule({

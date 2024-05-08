@@ -1,0 +1,115 @@
+.container{
+    padding: 10px;
+}
+
+.sort-list-container{
+    width: auto;
+    scroll-behavior: smooth;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: inline-flex;
+    gap: 8px;
+}
+.badge.active{
+    height: 40px;
+    width: 80px;
+    padding: 4px;
+    border-radius: 14px;
+    background-color: #ffe2c8;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    
+}
+
+.badge{
+    height: 40px;
+    width: 80px;
+    padding: 4px;
+    border-radius: 14px;
+    background-color: #f1f1f1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.badge.active img{
+    height: 22px;
+    fill: #FF7700;
+}
+
+.badge p {
+    font-size: 12px;
+}
+
+.badge.active p {
+    font-size: 12px;
+    color: #FF7700;
+}
+
+.ion-item{
+    height: 200px;
+}
+
+.hotel-thumbnail{
+    height: 80px;
+    width: 80px;
+    border-radius: 8px;
+}
+.hotel-item-container{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  
+  ion-item .rating-container .rating{
+    font-size: 10px;
+    margin: 0;
+  }
+.rating{
+    margin: 0;
+    font-size: 14px;
+}
+.rating-container{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+}
+.sub-title{
+    font-size: 12px;
+}
+
+ion-icon{
+    font-size:10px;
+}
+
+.sort-badge{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #E7FFF1;
+    height: 20px;
+    width: 57px;
+    border-radius: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-top: 6px;
+}
+
+.sort-badge p {
+    font-size: 12px;
+    color: #00C54F;
+}
+
+ion-item:active{
+    -webkit-animation: scale-down-center 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+    animation: scale-down-center 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+}

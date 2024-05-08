@@ -1,0 +1,98 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Biryani </ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="home"></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+ <div class="container">
+  <swiper-container [slidesPerView]="3.9">
+    <swiper-slide> <div class="badge active">
+      <p>Sort by</p><img src="./../../../../assets/icon/chevron-down-outline.svg" alt="" srcset="">
+     </div>
+  
+     
+     
+     
+     </swiper-slide>
+    <swiper-slide>
+      <div class="badge">
+        <p>Freeship</p>
+       </div>
+    </swiper-slide>
+    <swiper-slide>
+      <div class="badge">
+        <p>Favorite</p>
+       </div>
+    </swiper-slide>
+    <swiper-slide>
+      <div class="badge">
+        <p>Near you</p>
+       </div>
+    </swiper-slide>
+    <swiper-slide>
+      <div class="badge">
+        <p>Fastest</p>
+       </div>
+    </swiper-slide>
+  </swiper-container>
+
+<!-- Hotel Items list -->
+<ion-list class="ion-margin-top">
+  <ion-item lines="none" class="ion-margin-top">
+    
+      <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+
+   <div class="hotel-item-container">
+    <ion-label class="ion-margin-start">
+      <p class="title">Hana Chiken</p>
+      <p class="sub-title">Fried Chiken</p>
+    </ion-label>
+    <div class="ion-margin-start rating-container">
+      <p class="rating">15 mins. 4.8</p><ion-icon color="warning" slot="end" name="star"></ion-icon>
+    </div>
+    <div class="sort-badge ion-margin-start">
+      <p>Freeship</p>
+    </div>
+   </div>
+  </ion-item>
+  <ion-item lines="none" class="ion-margin-top">
+    
+    <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+
+ <div class="hotel-item-container">
+  <ion-label class="ion-margin-start">
+    <p class="title">Bamsu Restaturant</p>
+    <p class="sub-title">Fried Chiken</p>
+  </ion-label>
+  <div class="ion-margin-start rating-container">
+    <p class="rating">15 mins. 4.8</p><ion-icon color="warning" slot="end" name="star"></ion-icon>
+  </div>
+  <div class="sort-badge ion-margin-start">
+    <p>Freeship</p>
+  </div>
+ </div>
+</ion-item>
+<ion-item lines="none" class="ion-margin-top">
+    
+  <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+
+<div class="hotel-item-container">
+<ion-label class="ion-margin-start">
+  <p class="title">Neighbour Milk</p>
+  <p class="sub-title">Fried Chiken</p>
+</ion-label>
+<div class="ion-margin-start rating-container">
+  <p class="rating">15 mins. 4.8</p><ion-icon color="warning" slot="end" name="star"></ion-icon>
+</div>
+<div class="sort-badge ion-margin-start">
+  <p>Freeship</p>
+</div>
+</div>
+</ion-item>
+</ion-list>
+ </div>
+</ion-content>
