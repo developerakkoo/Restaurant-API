@@ -1,0 +1,76 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Delivery Address</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <div class="search-container">
+      <img src="assets/icon/search-outline.svg" alt="" srcset="" />
+      <input
+        class="searchbar"
+        type="text"
+        placeholder="Search for address."
+      />
+    </div>
+
+
+    <ion-list>
+      <ion-item detail lines="full">
+        <ion-icon color="primary" name="navigate-circle-outline" slot="start"></ion-icon>
+        <ion-label>Current Location</ion-label>
+      </ion-item>
+    </ion-list>
+
+    <ion-list>
+      <ion-list-header>
+        <ion-label>Recent Addresses</ion-label>
+      </ion-list-header>
+      <ion-item detail lines="full">
+        <ion-icon color="primary" name="location-outline" slot="start"></ion-icon>
+        <ion-label>
+          Dange Chowk
+          <p>Pune,Maharashtra</p>
+        </ion-label>
+      </ion-item>
+      <ion-item detail lines="full">
+        <ion-icon color="primary" name="location-outline" slot="start"></ion-icon>
+        <ion-label>
+         Baner Avenue
+          <p>Pune,Maharashtra</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+    <ion-list>
+      <ion-list-header>
+        <ion-label>Saved Addresses</ion-label>
+      </ion-list-header>
+      <ion-item  lines="full">
+        <ion-icon color="primary" name="home-outline" slot="start"></ion-icon>
+        <ion-label>
+          Home
+          <p>Chhatrapati Shivaji Maharaj Chowk,Pune,Maharashtra</p>
+        </ion-label>
+        <ion-icon color="medium" name="pencil-outline" slot="end"></ion-icon>
+
+      </ion-item>
+      <ion-item  lines="full">
+        <ion-icon color="primary" name="business-outline" slot="start"></ion-icon>
+        <ion-label>
+         Work
+          <p>Gera's Imperium Rise, Wipro circle,Pune,Maharashtra</p>
+        </ion-label>
+        <ion-icon color="medium" name="pencil-outline" slot="end"></ion-icon>
+
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>
+<ion-footer class="ion-no-border">
+  <ion-toolbar>
+   <ion-button mode="ios" (click)="openModalAddAddress()" expand="block" fill="clear" shape="round">
+    ADD NEW ADDRESS
+   </ion-button>
+  </ion-toolbar>
+</ion-footer>

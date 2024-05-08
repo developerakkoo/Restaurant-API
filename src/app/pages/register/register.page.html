@@ -1,0 +1,122 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar style="--background: #fff;">
+    <ion-icon color="primary" size="large" class="ion-padding-start" slot="start" name="arrow-back-outline"></ion-icon>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+   
+    <ion-text
+      color="dark"
+      class="ion-text-center animate__animated animate__fadeIn"
+    >
+      <h1 class="poppins-semibold">Sign up</h1>
+    </ion-text>
+    <br />
+    <ion-input
+    class="animate__animated animate__fadeIn"
+    color="medium"
+    labelPlacement="stacked"
+    label="Full name"
+    placeholder="Robin"
+    fill="outline"
+  >
+    <ion-icon
+      color="primary"
+      slot="start"
+      name="mail-outline"
+      aria-hidden="true"
+    ></ion-icon>
+  </ion-input>
+<br>
+    <ion-input
+      class="animate__animated animate__fadeIn"
+      color="medium"
+      labelPlacement="stacked"
+      label="Email"
+      placeholder="email@domain.com"
+      fill="outline"
+    >
+      <ion-icon
+        color="primary"
+        slot="start"
+        name="mail-outline"
+        aria-hidden="true"
+      ></ion-icon>
+    </ion-input>
+
+    <br />
+    <ion-input
+      class="animate__animated animate__fadeIn"
+      color="medium"
+      labelPlacement="stacked"
+      label="Password"
+      type="password"
+      fill="outline"
+    >
+      <ion-icon
+        color="primary"
+        slot="start"
+        name="lock-closed-outline"
+        aria-hidden="true"
+      ></ion-icon>
+      <ion-button fill="clear" slot="end" aria-label="Show/hide">
+        <ion-icon
+          slot="icon-only"
+          name="eye-outline"
+          aria-hidden="true"
+        ></ion-icon>
+      </ion-button>
+    </ion-input>
+    <ion-text
+      class="ion-text-right animate__animated animate__fadeIn"
+      color="primary"
+    >
+      <p class="no-margin">Forgot password?</p>
+    </ion-text>
+
+    <br />
+
+    <button (click)="registerHandler()" class="button-primary animate__animated animate__fadeIn">
+      {{registerButtonText}}
+    <ion-spinner *ngIf="isRegistering" size="small" name=""></ion-spinner>
+    </button>
+    <!-- <ion-button
+      [class]="classNames"
+      (click)="loginHandler()"
+      expand="block"
+      mode="ios"
+      (ionBlur)="buttonBlurEvent($event)"
+      (ionFocus)="buttonFocusEvent($event)"
+    >
+      Sign In
+    </ion-button> -->
+    <br />
+
+    <div class="line-container animate__animated animate__fadeIn">
+      <div class="line"></div>
+      <p class="or">OR</p>
+      <div class="line"></div>
+    </div>
+
+    <div class="social-buttons animate__animated animate__fadeIn">
+      <div class="button-facebook">
+        <img src="assets/icon/facebook.svg" alt="" srcset="" />
+      </div>
+      <div class="button-google">
+        <img src="assets/icon/google.svg" alt="" srcset="" />
+      </div>
+      <div class="button-apple">
+        <img src="assets/icon/apple.svg" alt="" srcset="" />
+      </div>
+    </div>
+
+    <br />
+
+    <div class="footer animate__animated animate__fadeIn">
+      <p class="poppins-regular">Do you already have an account?</p>
+      <span class="poppins-bold">Sign In</span>
+    </div>
+  </div>
+</ion-content>

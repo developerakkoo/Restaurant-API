@@ -1,17 +1,164 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Tab 1
-    </ion-title>
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar  class="animate__animated animate__fadeIn">
+    <div class="header">
+      <div class="container-image">
+        <ion-avatar>
+          <img src="assets/icon/user.png" />
+        </ion-avatar>
+      </div>
+      <div class="container-address">
+        <ion-label>
+          <p class="poppins-regular">Delivery address</p>
+          <div (click)="openModalAddress()" class="icon-container">
+            <img class="icon" src="assets/icon/pin-outline.svg" alt="" />
+            <h6 class="poppins-extrabold">Hinjewadi Phase 2 Pune</h6>
+            <img
+              class="icon"
+              src="assets/icon/arrow-ios-downward-outline.svg"
+              alt=""
+            />
+          </div>
+        </ion-label>
+      </div>
+    </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 1</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <div class="container animate__animated animate__fadeIn">
+    <div class="search-container">
+      <img src="assets/icon/search-outline.svg" alt="" srcset="" />
+      <input
+        class="searchbar"
+        type="text"
+        placeholder="Search for food/restaurant etc."
+      />
+    </div>
 
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+    <ion-list class="ion-margin-top" class="list-style animate__animated animate__fadeIn">
+      <ion-list-header>
+        <ion-label class="poppins-semibold sub-title" color="dark"
+          >Categories</ion-label
+        >
+        <ion-button (click)="openModalCategory()">View All</ion-button>
+      </ion-list-header>
+    </ion-list>
+
+    <div class="category-container animate__animated animate__fadeIn">
+      <div class="category-box">
+        <img src="assets/Pizza.png" alt="" srcset="" />
+        <p>Pizza</p>
+      </div>
+      <div class="category-box">
+        <img src="assets/chinese.png" alt="" srcset="" />
+        <p>Chinese</p>
+      </div>
+      <div class="category-box">
+        <img src="assets/thali.png" alt="" srcset="" />
+        <p>Thali Dish</p>
+      </div>
+      <div class="category-box">
+        <img src="assets/Biryani.png" alt="" srcset="" />
+        <p>Biryani</p>
+      </div>
+    </div>
+
+    <swiper-container class="animate__animated animate__fadeIn" [autoplay]="true" [slidesPerView]="1.2" [loop]="true">
+      <swiper-slide>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title color="light">Order from these restaurants and save</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-button color="warning" mode="ios" expand="block" fill="solid" shape="round">
+              TAP FOR DETAILS
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      </swiper-slide>
+      <swiper-slide>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title color="light">Order from these restaurants and save</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-button color="warning" mode="ios" expand="block" fill="solid" shape="round">
+              TAP FOR DETAILS
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      </swiper-slide>
+      <swiper-slide><ion-card>
+        <ion-card-header>
+          <ion-card-title color="light">Order from these restaurants and save</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-button color="warning" mode="ios" expand="block" fill="solid" shape="round">
+            TAP FOR DETAILS
+          </ion-button>
+        </ion-card-content>
+      </ion-card></swiper-slide>
+     
+    </swiper-container>
+
+    <ion-list class="ion-margin-top" class="list-style animate__animated animate__fadeIn">
+      <ion-list-header>
+        <ion-label class="poppins-semibold sub-title" color="dark"
+          >Offers near you</ion-label
+        >
+        <ion-button>View All</ion-button>
+      </ion-list-header>
+    </ion-list>
+
+
+    <swiper-container class="animate__animated animate__fadeIn" [autoplay]="true" [slidesPerView]="1.2" [loop]="true">
+      <swiper-slide>
+        <ion-card>
+          <ion-card-header>
+            <div class="card-header">
+              <div class="offer-badge">
+                <img src="./../../assets/noto_fire.png" alt="" srcset=""><span>10% off</span>
+              </div>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+         <ion-label color="light">
+          <h4>Hotel Bhoj Rajdhani</h4>
+         </ion-label>
+          </ion-card-content>
+        </ion-card>
+      </swiper-slide>
+      <swiper-slide>
+        <ion-card>
+          <ion-card-header>
+            <div class="card-header">
+              <div class="offer-badge">
+                <img src="./../../assets/noto_fire.png" alt="" srcset=""><span>10% off</span>
+              </div>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+         <ion-label color="light">
+          <h4>Hotel Bhoj Rajdhani</h4>
+         </ion-label>
+          </ion-card-content>
+        </ion-card>
+      </swiper-slide>
+      <swiper-slide><ion-card>
+        <ion-card-header>
+          <div class="card-header">
+            <div class="offer-badge">
+              <img src="./../../assets/noto_fire.png" alt="" srcset=""><span>10% off</span>
+            </div>
+          </div>
+        </ion-card-header>
+        <ion-card-content>
+       <ion-label color="light">
+        <h4>Hotel Bhoj Rajdhani</h4>
+       </ion-label>
+        </ion-card-content>
+      </ion-card></swiper-slide>
+     
+    </swiper-container>
+  </div>
 </ion-content>

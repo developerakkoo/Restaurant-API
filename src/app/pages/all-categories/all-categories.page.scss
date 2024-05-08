@@ -1,0 +1,75 @@
+.container{
+    padding: 6px;
+}
+
+ion-avatar{
+    height: 45px;
+    width: auto;
+}
+
+ion-icon{
+    padding: 20px;
+}
+
+.container-address{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: nowrap;
+}
+.container-address h6{
+    color: black;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+.category-container{
+    margin-top: 20px;
+    height:auto;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.category-circle{
+    background-color: #fee7ee;
+    height: 100px;
+    width: 100px;
+    border-radius: 50%;
+    display: flex;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.category-circle:active{
+    background-color: #fee7ee;
+    height: 100px;
+    width: 100px;
+    border-radius: 50%;
+    display: flex;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    transform: scale(1.1);
+    animation: normal;
+}
+
+.category-circle img{
+    height: 55px;
+    width: auto;
+}
+.category-circle p {
+    margin: 0;
+    color: black;
+    font-size: 14px;
+    word-wrap: break-word;
+}

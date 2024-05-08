@@ -1,0 +1,54 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>All Categories</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+ <div class="container">
+  <div class="search-container">
+    <img src="assets/icon/search-outline.svg" alt="" srcset="" />
+    <input
+      class="searchbar"
+      type="text"
+      placeholder="Search for category."
+    />
+  </div>
+
+  <div class="category-container">
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/Biryani.png" alt="">
+      <p>Biryani</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/Pizza.png" alt="">
+      <p>Pizza</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/chinese.png" alt="">
+      <p>Chinese</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/thali.png" alt="">
+      <p>Biryani</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/Biryani.png" alt="">
+      <p>Thali</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/Biryani.png" alt="">
+      <p>Rolls</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/Biryani.png" alt="">
+      <p>Tea</p>
+    </div>
+    <div class="category-circle" (click)="dismiss()">
+      <img src="./../../../assets/Biryani.png" alt="">
+      <p>Coffee</p>
+    </div>
+  </div>
+
+ </div>
+</ion-content>
