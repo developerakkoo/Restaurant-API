@@ -156,5 +156,10 @@ module.exports = {
         },
         validationResultMessage: "Received data is not valid",
         userDataFetchedSuccessfully: "User data fetched successfully",
+        NOTIFICATION_SENT: "Notification sent",
+        NOTIFICATION_FETCHED_SUCCESSFULLY: "Notification fetched successfully",
+        NOTIFICATION_NOT_FOUND: "Notification not found",
+        NOTIFICATION_DELETED_SUCCESSFULLY: "Notification deleted successfully",
+        NOTIFICATION_MARKED_AS_READ_SUCCESSFULLY:"Notification marked as read"
     },
 };

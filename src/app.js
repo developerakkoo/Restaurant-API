@@ -72,6 +72,7 @@ const { hotelStarRoutes } = require("./routes/hotel.route");
 const { partnerRoutes } = require("./routes/partner.route");
 const { favoriteRoutes } = require("./routes/favorite.route");
 const { deliverBoyRoutes } = require("./routes/deliveryBoy.route");
+const { notificationRoutes } = require("./routes/notification.route");
 
 /*Api Logger */
 app.use(morganMiddleware);
@@ -86,6 +87,7 @@ app.use(`${BASE_URL}/hotel`, hotelStarRoutes);
 app.use(`${BASE_URL}/partner`, partnerRoutes);
 app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
+app.use(`${BASE_URL}/notification`, notificationRoutes);
 // Serve uploaded files as static content
 app.use("/upload", express.static(path.join(__dirname, "upload")));
 
