@@ -13,8 +13,14 @@ const notificationSchema = new Schema(
         },
         message: {
             type: String,
-            required: true,
+            default: "",
         },
+        isImage: {
+            type: Boolean,
+            default: false,
+        },
+        image_url: String,
+        local_filePath: String,
         read: {
             type: Boolean,
             default: false,

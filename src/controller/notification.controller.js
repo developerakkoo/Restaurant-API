@@ -4,6 +4,8 @@ const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { responseMessage } = require("../constant");
 const { getIO } = require("../utils/socket");
+const { deleteFile } = require("../utils/deleteFile");
+const { NotBeforeError } = require("jsonwebtoken");
 
 exports.sendNotification = asyncHandler(async (req, res) => {
     const { senderId, receiverId, message } = req.body;
@@ -11,6 +13,33 @@ exports.sendNotification = asyncHandler(async (req, res) => {
         senderId,
         receiverId,
         message,
+    });
+    getIO().emit(receiverId, notification);
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                notification,
+                responseMessage.NOTIFICATION_SENT,
+            ),
+        );
+});
+
+exports.sendMultimediaNotification = asyncHandler(async (req, res) => {
+    const { senderId, receiverId } = req.body;
+    const { filename } = req.file;
+    const local_filePath = `upload/${filename}`;
+    let image_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    if (process.env.NODE_ENV !== "production") {
+        image_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+    }
+    const notification = await Notification.create({
+        senderId,
+        receiverId,
+        isImage: true,
+        image_url,
+        local_filePath
     });
     getIO().emit(receiverId, notification);
     return res
@@ -87,6 +116,9 @@ exports.deleteNotificationById = asyncHandler(async (req, res) => {
     const notification = await Notification.findById(notificationId);
     if (!notification) {
         throw new ApiError(404, responseMessage.NOTIFICATION_NOT_FOUND);
+    }
+    if (notification.isImage === true) {
+        deleteFile(notification.local_filePath)
     }
     await notification.deleteOne();
     return res
