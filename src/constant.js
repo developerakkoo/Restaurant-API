@@ -160,6 +160,7 @@ module.exports = {
         NOTIFICATION_FETCHED_SUCCESSFULLY: "Notification fetched successfully",
         NOTIFICATION_NOT_FOUND: "Notification not found",
         NOTIFICATION_DELETED_SUCCESSFULLY: "Notification deleted successfully",
-        NOTIFICATION_MARKED_AS_READ_SUCCESSFULLY:"Notification marked as read"
+        NOTIFICATION_MARKED_AS_READ_SUCCESSFULLY:"Notification marked as read",
+        GET_CHAT_LIST_SUCCESS:"Chat list fetched successfully",
     },
 };

@@ -5,14 +5,54 @@ const { ApiError } = require("../utils/ApiErrorHandler");
 const { responseMessage } = require("../constant");
 const { getIO } = require("../utils/socket");
 const { deleteFile } = require("../utils/deleteFile");
-const { NotBeforeError } = require("jsonwebtoken");
+const chatModel = require("../models/chat.model");
+
+exports.getMyChatList = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const chatList = await chatModel.find({ members: userId }).populate({
+        path: "members",
+        select: "name profile_image isOnline",
+    });
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                chatList,
+                responseMessage.GET_CHAT_LIST_SUCCESS,
+            ),
+        );
+});
+
+exports.checkChatExist = asyncHandler(async (req, res, next) => {
+    const { senderId, receiverId } = req.body;
+
+    // Check if a chat exists with both senderId and receiverId in any order and exactly two members
+    let chat = await chatModel.findOne({
+        $and: [
+            { members: { $all: [senderId, receiverId] } },
+            { members: { $size: 2 } },
+        ],
+    });
+
+    if (chat) {
+        req.body.chatId = chat._id;
+        return this.sendNotification(req, res);
+    }
+
+    // If no chat exists, create a new one
+    chat = await chatModel.create({ members: [senderId, receiverId] });
+    req.body.chatId = chat._id;
+    next();
+});
 
 exports.sendNotification = asyncHandler(async (req, res) => {
-    const { senderId, receiverId, message } = req.body;
+    const { chatId, senderId, receiverId, message } = req.body;
     const notification = await Notification.create({
         senderId,
         receiverId,
         message,
+        chatId,
     });
     getIO().emit(receiverId, notification);
     return res
@@ -27,7 +67,7 @@ exports.sendNotification = asyncHandler(async (req, res) => {
 });
 
 exports.sendMultimediaNotification = asyncHandler(async (req, res) => {
-    const { senderId, receiverId } = req.body;
+    const { chatId, senderId, receiverId } = req.body;
     const { filename } = req.file;
     const local_filePath = `upload/${filename}`;
     let image_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
@@ -35,11 +75,12 @@ exports.sendMultimediaNotification = asyncHandler(async (req, res) => {
         image_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
     }
     const notification = await Notification.create({
+        chatId,
         senderId,
         receiverId,
         isImage: true,
         image_url,
-        local_filePath
+        local_filePath,
     });
     getIO().emit(receiverId, notification);
     return res
@@ -74,7 +115,7 @@ exports.getAllNotificationByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const notifications = await Notification.find({
         $or: [{ senderId: userId }, { receiverId: userId }],
-    });
+    }).sort({ createdAt: -1 });
     if (!notifications) {
         throw new ApiError(404, responseMessage.NOTIFICATION_NOT_FOUND);
     }
@@ -118,7 +159,7 @@ exports.deleteNotificationById = asyncHandler(async (req, res) => {
         throw new ApiError(404, responseMessage.NOTIFICATION_NOT_FOUND);
     }
     if (notification.isImage === true) {
-        deleteFile(notification.local_filePath)
+        deleteFile(notification.local_filePath);
     }
     await notification.deleteOne();
     return res

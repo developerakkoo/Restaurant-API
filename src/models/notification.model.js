@@ -3,6 +3,11 @@ const Schema = mongoose.Schema;
 
 const notificationSchema = new Schema(
     {
+        chatId:{
+            type: Schema.Types.ObjectId,
+            ref: "Chat",
+            required: true,
+        },
         senderId: {
             type: Schema.Types.ObjectId,
             required: true,

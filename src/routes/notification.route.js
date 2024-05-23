@@ -2,11 +2,18 @@ const router = require("express").Router();
 const notificationController = require("../controller/notification.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
 
-router.post("/send", notificationController.sendNotification);
+router.get("/get/chat-list/:userId",notificationController.getMyChatList)
+
+router.post(
+    "/send",
+    notificationController.checkChatExist,
+    notificationController.sendNotification,
+);
 
 router.post(
     "/multimedia-send",
     upload.single("image"),
+    notificationController.checkChatExist,
     notificationController.sendMultimediaNotification,
 );
 
