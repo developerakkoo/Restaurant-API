@@ -4,95 +4,154 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="home"></ion-back-button>
     </ion-buttons>
+    <ion-button id="open-modal" fill="clear" slot="end">
+      <ion-icon slot="icon-only" name="filterw"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
- <div class="container">
-  <swiper-container [slidesPerView]="3.9">
-    <swiper-slide> <div class="badge active">
-      <p>Sort by</p><img src="./../../../../assets/icon/chevron-down-outline.svg" alt="" srcset="">
-     </div>
-  
-     
-     
-     
-     </swiper-slide>
-    <swiper-slide>
-      <div class="badge">
-        <p>Freeship</p>
-       </div>
-    </swiper-slide>
-    <swiper-slide>
-      <div class="badge">
-        <p>Favorite</p>
-       </div>
-    </swiper-slide>
-    <swiper-slide>
-      <div class="badge">
-        <p>Near you</p>
-       </div>
-    </swiper-slide>
-    <swiper-slide>
-      <div class="badge">
-        <p>Fastest</p>
-       </div>
-    </swiper-slide>
-  </swiper-container>
+  <div class="container">
 
-<!-- Hotel Items list -->
-<ion-list class="ion-margin-top">
-  <ion-item lines="none" class="ion-margin-top">
     
-      <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
 
-   <div class="hotel-item-container">
-    <ion-label class="ion-margin-start">
-      <p class="title">Hana Chiken</p>
-      <p class="sub-title">Fried Chiken</p>
-    </ion-label>
-    <div class="ion-margin-start rating-container">
-      <p class="rating">15 mins. 4.8</p><ion-icon color="warning" slot="end" name="star"></ion-icon>
-    </div>
-    <div class="sort-badge ion-margin-start">
-      <p>Freeship</p>
-    </div>
-   </div>
-  </ion-item>
-  <ion-item lines="none" class="ion-margin-top">
-    
-    <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+     
+        <ion-searchbar mode="ios" placeholder="Filter Pizza" inputmode="text" type="text" (ionChange)="onSearchChange($event)" [debounce]="250" showCancelButton="always"></ion-searchbar>
 
- <div class="hotel-item-container">
-  <ion-label class="ion-margin-start">
-    <p class="title">Bamsu Restaturant</p>
-    <p class="sub-title">Fried Chiken</p>
-  </ion-label>
-  <div class="ion-margin-start rating-container">
-    <p class="rating">15 mins. 4.8</p><ion-icon color="warning" slot="end" name="star"></ion-icon>
+
+    <!-- Hotel Items list -->
+    <ion-list class="ion-margin-top">
+      <ion-item lines="none" class="ion-margin-top" routerLink="/all-categories/category-detail/hotel-detail">
+        <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+
+        <div class="hotel-item-container">
+          <ion-label class="ion-margin-start">
+            <p class="title">Hana Chiken</p>
+            <p class="sub-title">Fried Chiken</p>
+          </ion-label>
+          <div class="ion-margin-start rating-container">
+            <p class="rating">15 mins. 4.8</p>
+            <ion-icon color="warning" slot="end" name="star"></ion-icon>
+          </div>
+          <div class="sort-badge ion-margin-start">
+            <p>Freeship</p>
+          </div>
+        </div>
+      </ion-item>
+      <ion-item lines="none" class="ion-margin-top">
+        <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+
+        <div class="hotel-item-container">
+          <ion-label class="ion-margin-start">
+            <p class="title">Bamsu Restaturant</p>
+            <p class="sub-title">Fried Chiken</p>
+          </ion-label>
+          <div class="ion-margin-start rating-container">
+            <p class="rating">15 mins. 4.8</p>
+            <ion-icon color="warning" slot="end" name="star"></ion-icon>
+          </div>
+          <div class="sort-badge ion-margin-start">
+            <p>Freeship</p>
+          </div>
+        </div>
+      </ion-item>
+      <ion-item lines="none" class="ion-margin-top">
+        <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+
+        <div class="hotel-item-container">
+          <ion-label class="ion-margin-start">
+            <p class="title">Neighbour Milk</p>
+            <p class="sub-title">Fried Chiken</p>
+          </ion-label>
+          <div class="ion-margin-start rating-container">
+            <p class="rating">15 mins. 4.8</p>
+            <ion-icon color="warning" slot="end" name="star"></ion-icon>
+          </div>
+          <div class="sort-badge ion-margin-start">
+            <p>Freeship</p>
+          </div>
+        </div>
+      </ion-item>
+    </ion-list>
   </div>
-  <div class="sort-badge ion-margin-start">
-    <p>Freeship</p>
-  </div>
- </div>
-</ion-item>
-<ion-item lines="none" class="ion-margin-top">
-    
-  <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
 
-<div class="hotel-item-container">
-<ion-label class="ion-margin-start">
-  <p class="title">Neighbour Milk</p>
-  <p class="sub-title">Fried Chiken</p>
-</ion-label>
-<div class="ion-margin-start rating-container">
-  <p class="rating">15 mins. 4.8</p><ion-icon color="warning" slot="end" name="star"></ion-icon>
-</div>
-<div class="sort-badge ion-margin-start">
-  <p>Freeship</p>
-</div>
-</div>
-</ion-item>
-</ion-list>
- </div>
+  <ion-modal
+    #modal
+    trigger="open-modal"
+    [initialBreakpoint]="0.95"
+    [breakpoints]="[0, 0.75, 0.5, 0.95]"
+  >
+    <ng-template>
+      <ion-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="10" offset="1">
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Sort By</ion-label>
+                  <ion-button>Reset</ion-button>
+                </ion-list-header>
+                <div class="chip">
+                  <div class="icon-start">
+                    <img src="assets/sort-01.svg" alt="" srcset="" />
+                  </div>
+                  <div class="text">Budget Delivery</div>
+                </div>
+                <div class="chip">
+                  <div class="icon-start">
+                    <img src="assets/sort-01.svg" alt="" srcset="" />
+                  </div>
+                  <div class="text">Budget Delivery</div>
+                </div>
+                <div class="chip">
+                  <div class="icon-start">
+                    <img src="assets/sort-01.svg" alt="" srcset="" />
+                  </div>
+                  <div class="text">Budget Delivery</div>
+                </div>
+                <div class="chip">
+                  <div class="icon-start">
+                    <img src="assets/sort-01.svg" alt="" srcset="" />
+                  </div>
+                  <div class="text">Budget Delivery</div>
+                </div>
+              </ion-list>
+
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Delivery Fee</ion-label>
+                </ion-list-header>
+
+                <ion-chip color="primary" mode="ios" outline="true">
+                  <ion-label>Free Delivery</ion-label>
+                </ion-chip>
+                <ion-chip color="primary" mode="ios" outline="true">
+                  <ion-label>Upto 30RS</ion-label>
+                </ion-chip>
+                <ion-chip color="primary" mode="ios" outline="true">
+                  <ion-label>Upto 50RS</ion-label>
+                </ion-chip>
+              </ion-list>
+
+              <ion-list>
+                <ion-list-header>
+                  <ion-label>Distance</ion-label>
+                </ion-list-header>
+
+                <ion-chip color="primary" mode="ios" outline="true">
+                  <ion-label>Upto 1 KM</ion-label>
+                </ion-chip>
+                <ion-chip color="primary" mode="ios" outline="true">
+                  <ion-label>Upto 3 KM</ion-label>
+                </ion-chip>
+                <ion-chip color="primary" mode="ios" outline="true">
+                  <ion-label>Upto 5KM</ion-label>
+                </ion-chip>
+              </ion-list>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

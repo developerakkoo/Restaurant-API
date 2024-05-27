@@ -88,7 +88,7 @@
 }
 
 ion-icon{
-    font-size:10px;
+    font-size:20px;
 }
 
 .sort-badge{
@@ -112,4 +112,43 @@ ion-icon{
 ion-item:active{
     -webkit-animation: scale-down-center 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
     animation: scale-down-center 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+}
+
+ion-chip{
+    margin-right: 10px;
+
+}
+.swiper-container{
+    display: inline-flex;
+    gap:2px;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    width: 100vw;
+}
+
+.chip{
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    width: 76vw;
+    height: 48px;
+    border: 1px solid lightgray;
+    border-radius: 23px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+}
+
+.chip:active{
+    border-color: var(--ion-color-primary);
+    background-color: #ffc4c8;
+}
+.icon-start{
+
+}
+
+.text{
+    font-size: 12px;
 }

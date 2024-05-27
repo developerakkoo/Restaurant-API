@@ -31,6 +31,10 @@ const routes: Routes = [
     path: 'address',
     loadChildren: () => import('./pages/address/address.module').then( m => m.AddressPageModule)
   },
+  {
+    path: 'all-menu',
+    loadChildren: () => import('./all-categories/category-detail/all-menu/all-menu.module').then( m => m.AllMenuPageModule)
+  },
 ];
 @NgModule({
   imports: [

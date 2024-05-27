@@ -12,4 +12,7 @@ export class CategoryDetailPage implements OnInit {
   ngOnInit() {
   }
 
+  onSearchChange(ev:any){
+    
+  }
 }
