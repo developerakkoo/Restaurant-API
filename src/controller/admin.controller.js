@@ -1152,8 +1152,8 @@ exports.orderChartData = asyncHandler(async (req, res) => {
 
 exports.totalRevenueData = asyncHandler(async (req, res) => {
     const { sort = "dayOfMonth" } = req.query;
-    const startDate = moment().startOf(sort); // Today's date at 00:00:00
-    const endDate = moment().endOf(sort);
+    // const startDate = moment().startOf(sort); // Today's date at 00:00:00
+    // const endDate = moment().endOf(sort);
     const pipeline = [
         {
             $project: {
