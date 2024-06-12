@@ -1,5 +1,5 @@
 module.exports = {
-    DB_NAME: "dropeat_test",
+    DB_NAME: "dropeatTest",
     BASE_URL: "/api/v1",
     hash: 14,
     generateSeed: false, // set to false if noo need
