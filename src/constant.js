@@ -1,5 +1,5 @@
 module.exports = {
-    DB_NAME: "foodolic",
+    DB_NAME: "dropeat_test",
     BASE_URL: "/api/v1",
     hash: 14,
     generateSeed: false, // set to false if noo need
