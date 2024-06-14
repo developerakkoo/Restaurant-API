@@ -68,6 +68,17 @@ router.post("/partner/register", partnerController.registerPartner);
 
 router.post("/partner/login", partnerController.loginPartner);
 
+/* Forgot password*/
+router.get("/user-forgot-password", (req, res, next) => {
+    res.render("forgot-password");
+});
+
+
+router.post("/user-forgot-password", authController.forgotPassword);
+
+router.get("/rest-password/:id/:token", authController.getResetPassword);
+
+router.post("/rest-password/:id/:token", authController.ResetPassword);
 
 /** Common Routes  */
 
