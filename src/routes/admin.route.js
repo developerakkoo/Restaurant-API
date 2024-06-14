@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const bannerController = require("../controller/banner.controller");
 const adminController = require("../controller/admin.controller");
 const deliveryBoyController = require("../controller/deliveryBoy.controller");
 const HotelController = require("../controller/hotel.controller");
@@ -27,7 +28,6 @@ router.get("/get/customerMapChartData", adminController.customerMapChartData);
 router.get("/get/orderChartData", adminController.orderChartData);
 
 router.get("/get/revenueChartData", adminController.totalRevenueData);
-
 
 /*Partner */
 
@@ -174,5 +174,36 @@ router.post(
     "/order/send-pickup-request/deliveryBoy",
     adminController.sendOrderPickUpRequestToDeliveryBoys,
 );
+
+/* Banner Routes*/
+
+router.post(
+    "/banner/add",
+    upload.single("image"),
+    adminPrivilegesRequired,
+    bannerController.addBanner,
+);
+
+router.put(
+    "/banner/update/image",
+    adminPrivilegesRequired,
+    upload.single("image"),
+    bannerController.updateBannerImage,
+);
+
+router.put(
+    "/banner/update/:bannerId",
+    adminPrivilegesRequired,
+    bannerController.updateBanner,
+);
+
+router.get("/banner/get/:type", bannerController.getBanner);
+
+adminPrivilegesRequired,
+    router.delete(
+        "/banner/delete/:bannerId",
+        adminPrivilegesRequired,
+        bannerController.deleteBanner,
+    );
 
 module.exports = { adminRoutes: router };
