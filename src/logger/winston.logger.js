@@ -1,5 +1,5 @@
 const winston = require("winston");
-const {DB_NAME} = require('../constant');
+const { DB_NAME } = require("../constant");
 
 /**
  * Requiring `winston-mongodb` will expose
@@ -53,25 +53,24 @@ winston.addColors(colors);
 
 // Chose the aspect of your log customizing the log format.
 const format = winston.format.combine(
-  winston.format.errors({stack:true}),
+    winston.format.errors({ stack: true }),
     // Add the message timestamp with the preferred format
     winston.format.timestamp({ format: "DD MMM, YYYY - HH:mm:ss:ms" }),
     // Tell Winston that the logs must be colored
     winston.format.colorize({ all: true }),
     winston.format.json(),
     // Define the format of the message showing the timestamp, the level and the message
-    winston.format.printf(
-        (info) => `[${info.timestamp}] ${info.level}: ${info.message}`,
-        // (info) => console.log( info)
+    winston.format.printf((info) =>
+        console.log(`[${info.timestamp}] ${info.level}: ${info.message}`),
     ),
 );
 
 // Define which transports the logger must use to print out messages.
 // In this example, we are using three different transports
 const transports = [
-  // mongoDBTransport,
-  // Allow the use the console to print the messages
-  new winston.transports.Console(),
+    // mongoDBTransport,
+    // Allow the use the console to print the messages
+    new winston.transports.Console(),
 ];
 
 // Create the logger instance that has to be exported
@@ -79,7 +78,7 @@ const transports = [
 const logger = winston.createLogger({
     level: level(),
     levels,
-    format,//:winston.format.combine(winston.format.timestamp({ format: "DD MMM, YYYY - HH:mm:ss:ms" }),winston.format.json()),
+    format, //:winston.format.combine(winston.format.timestamp({ format: "DD MMM, YYYY - HH:mm:ss:ms" }),winston.format.json()),
     transports,
 });
 

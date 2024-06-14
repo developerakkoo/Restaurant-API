@@ -5,7 +5,7 @@ const helmet = require("helmet");
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-const { BASE_URL } = require("./constant");
+const { BASE_URL, API_VERSION } = require("./constant");
 const morganMiddleware = require("./logger/morgan.logger");
 const { errorHandler } = require("./middleware/error.middlewares");
 const cookieParser = require("cookie-parser");
@@ -54,6 +54,12 @@ app.use(
     }),
 );
 
+// Set the views directory
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+
+// Serve uploaded files as static content
+app.use("/upload", express.static(path.join(__dirname, "upload")));
 /*Api rate limiter */
 app.use(apiRateLimiter);
 
@@ -73,10 +79,20 @@ const { partnerRoutes } = require("./routes/partner.route");
 const { favoriteRoutes } = require("./routes/favorite.route");
 const { deliverBoyRoutes } = require("./routes/deliveryBoy.route");
 const { notificationRoutes } = require("./routes/notification.route");
+const { ApiResponse } = require("./utils/ApiResponseHandler");
 
 /*Api Logger */
 app.use(morganMiddleware);
 
+app.use(`${BASE_URL}/health-check`, (req, res) => {
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            `API VERSION: V ${API_VERSION}`,
+            "Everything is working as expected",
+        ),
+    );
+});
 app.use(`${BASE_URL}/auth`, authRoutes);
 app.use(verify_access_token);
 app.use(`${BASE_URL}/user`, userRoutes);
@@ -88,8 +104,7 @@ app.use(`${BASE_URL}/partner`, partnerRoutes);
 app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
 app.use(`${BASE_URL}/notification`, notificationRoutes);
-// Serve uploaded files as static content
-app.use("/upload", express.static(path.join(__dirname, "upload")));
+
 
 app.use(errorHandler);
 

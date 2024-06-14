@@ -1,5 +1,6 @@
 module.exports = {
     DB_NAME: "dropeatTest",
+    API_VERSION: "1.0.0",
     BASE_URL: "/api/v1",
     hash: 14,
     generateSeed: false, // set to false if noo need
@@ -153,6 +154,10 @@ module.exports = {
             adminPrivilegesRequired: "Access Denied: Admin Privileges Required",
             customerMapChartDataFetchedSuccessfully:
                 "Customer Map Chart Data Fetched Successfully",
+            bannerAdded:"Banner Added Successfully",
+            bannerUpdated:"Banner Updated Successfully",
+            bannerDeleted:"Banner Deleted Successfully",
+            bannerFetchedSuccessfully:"Banner Fetched Successfully",
         },
         validationResultMessage: "Received data is not valid",
         userDataFetchedSuccessfully: "User data fetched successfully",

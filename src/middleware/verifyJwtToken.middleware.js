@@ -21,7 +21,7 @@ const { ApiResponse } = require("../utils/ApiResponseHandler");
  */
 const verify_access_token = (req,res, next) => {
     try {
-        const accessToken = req.headers['x-access-token'] || req.cookies.accessToken;
+        const accessToken = req.headers['x-access-token'] || req.cookies["accessToken"];
         if (!accessToken) {
         // throw new ApiError(401, "Access Denied: No access token provided!");
             return res.status(403).send({message: "Access Denied: No access token provided!"});
