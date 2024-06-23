@@ -9,4 +9,6 @@ router.get("/get-cart/byId/:cartId", cartController.getCartById);
 
 router.delete("/delete/product", cartController.deleteProductFromCart);
 
+router.delete("/:userId/clear", cartController.clearCart)
+
 module.exports = { cartRoutes: router };

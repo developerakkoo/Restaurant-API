@@ -123,6 +123,7 @@ module.exports = {
                 "Product deleted from cart successfully",
             cartFetchedSuccessfully: "Cart fetched successfully",
             cartNotFound: "Cart not found",
+            cartClearedSuccessfully: "Cart cleared successfully",
             emptyCart: "cart is empty",
             ALREADY_FAVORITED: "Already added to favorites",
             NOT_FAVORITED: "Not found",
