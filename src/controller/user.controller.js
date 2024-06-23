@@ -87,11 +87,6 @@ exports.loginUser = asyncHandler(async (req, res) => {
         "-password -refreshToken",
     );
 
-    // Set options for HTTP cookies
-    const options = {
-        httpOnly: true,
-        secure: true,
-    };
 
     // Send a successful login response with cookies containing access and refresh tokens
     return res
@@ -112,9 +107,10 @@ exports.loginUser = asyncHandler(async (req, res) => {
 });
 
 exports.addAddresses = asyncHandler(async (req, res) => {
-    const { address, selected } = req.body;
+    const { type, address, selected } = req.body;
     const savedAddress = await userAddress.create({
         userId: req.user.userId,
+        type,
         address,
         selected,
     });
@@ -189,6 +185,8 @@ exports.updateAddress = asyncHandler(async (req, res) => {
     if (!savedAddress) {
         throw new ApiError(404, responseMessage.userMessage.addressNotFound);
     }
+    savedAddress.type =
+        req.body.type != undefined ? req.body.type : savedAddress.type;
     savedAddress.address =
         req.body.address != undefined ? req.body.address : savedAddress.address;
     savedAddress.selected =

@@ -9,6 +9,11 @@ const userAddressSchema = new Schema(
             ref: "User",
             required: true,
         },
+        type:{
+            type: String,
+            required: true,
+            default: "Home",
+        },
         address: {
             type: String,
             required: true,
