@@ -1,13 +1,30 @@
-<ion-header [translucent]="true">
+
+<ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar>
-    <ion-title>map-address</ion-title>
+    <ion-title>Set Address</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/address"></ion-back-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
-
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">map-address</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <capacitor-google-map id="map"></capacitor-google-map>
+
+  
 </ion-content>
+<ion-footer class="ion-padding">
+  <ion-toolbar>
+    <div class="container">
+    <ion-item>
+      <ion-icon color="primary" name="location" slot="start"></ion-icon>
+      <ion-label> 
+      <p style="color: var(--ion-color-primary);">DELIVERING YOUR ORDER TO</p>
+      {{formattedAddress}}  
+      </ion-label>
+    </ion-item>
+      <ion-button mode="ios" (click)="openAddAddressPage()" expand="block" fill="solid" color="primary">
+        Add more address details
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

@@ -1,5 +1,6 @@
 <ion-content [fullscreen]="true">
   <div class="container">
+    <form [formGroup]="form" (ngSubmit)="loginHandler()">
     <img
       class="animate__animated animate__fadeIn"
       src="assets/login-image.svg"
@@ -20,6 +21,7 @@
       label="Email"
       placeholder="email@domain.com"
       fill="outline"
+      formControlName="email"
     >
       <ion-icon
         color="primary"
@@ -37,6 +39,7 @@
       label="Password"
       type="password"
       fill="outline"
+      formControlName="password"
     >
       <ion-icon
         color="primary"
@@ -79,6 +82,7 @@
       Sign In
     </ion-button> -->
     <br />
+    </form>
 
     <div class="line-container animate__animated animate__fadeIn">
       <div class="line"></div>
@@ -102,7 +106,7 @@
 
     <div class="footer animate__animated animate__fadeIn">
       <p class="poppins-regular">Do you already have an account?</p>
-      <span class="poppins-bold">Sign up</span>
+      <span class="poppins-bold" routerLink="/">Sign up</span>
     </div>
   </div>
 </ion-content>

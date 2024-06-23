@@ -1,11 +1,15 @@
 <ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar style="--background: #fff;">
-    <ion-icon color="primary" size="large" class="ion-padding-start" slot="start" name="arrow-back-outline"></ion-icon>
+    <ion-icon routerLink="/login" color="primary" size="large" class="ion-padding-start" slot="start" name="arrow-back-outline"></ion-icon>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <div class="container">
+
+   
+   <form [formGroup]="form" (ngSubmit)="registerHandler()">
+   
    
     <ion-text
       color="dark"
@@ -21,6 +25,8 @@
     label="Full name"
     placeholder="Robin"
     fill="outline"
+    type="text"
+    formControlName="name"
   >
     <ion-icon
       color="primary"
@@ -30,6 +36,24 @@
     ></ion-icon>
   </ion-input>
 <br>
+<ion-input
+      class="animate__animated animate__fadeIn"
+      color="medium"
+      labelPlacement="stacked"
+      label="Phone No"
+      placeholder="+91XXXXXXXXXX"
+      fill="outline"
+      type="number"
+      formControlName="phoneNumber"
+    >
+      <ion-icon
+        color="primary"
+        slot="start"
+        name="call-outline"
+        aria-hidden="true"
+      ></ion-icon>
+    </ion-input>
+    <br>
     <ion-input
       class="animate__animated animate__fadeIn"
       color="medium"
@@ -37,6 +61,8 @@
       label="Email"
       placeholder="email@domain.com"
       fill="outline"
+      type="email"
+      formControlName="email"
     >
       <ion-icon
         color="primary"
@@ -54,6 +80,7 @@
       label="Password"
       type="password"
       fill="outline"
+      formControlName="password"
     >
       <ion-icon
         color="primary"
@@ -78,7 +105,7 @@
 
     <br />
 
-    <button (click)="registerHandler()" class="button-primary animate__animated animate__fadeIn">
+    <button fill="clear"  [disabled]="form.invalid" (click)="registerHandler()" class="button-primary animate__animated animate__fadeIn">
       {{registerButtonText}}
     <ion-spinner *ngIf="isRegistering" size="small" name=""></ion-spinner>
     </button>
@@ -93,6 +120,7 @@
       Sign In
     </ion-button> -->
     <br />
+  </form>
 
     <div class="line-container animate__animated animate__fadeIn">
       <div class="line"></div>
@@ -116,7 +144,7 @@
 
     <div class="footer animate__animated animate__fadeIn">
       <p class="poppins-regular">Do you already have an account?</p>
-      <span class="poppins-bold">Sign In</span>
+      <span class="poppins-bold" routerLink="/login" >Sign In</span>
     </div>
   </div>
 </ion-content>

@@ -6,14 +6,19 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./hotel-detail.page.scss'],
 })
 export class HotelDetailPage implements OnInit {
+  totalItems: any = 0;
+  constructor() {}
 
-  constructor() { }
+  ngOnInit() {}
 
-  ngOnInit() {
+  addToCart() {
+    console.log('add');
+    this.totalItems++;
   }
 
-  onSearchChange(ev:any){
-    
+  removeFromCart() {
+    console.log('remove');
+    this.totalItems--;
   }
-
+  onSearchChange(ev: any) {}
 }

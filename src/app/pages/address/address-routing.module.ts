@@ -13,7 +13,7 @@ const routes: Routes = [
     loadChildren: () => import('./add-address/add-address.module').then( m => m.AddAddressPageModule)
   },
   {
-    path: 'map-address',
+    path: 'map-address/:lat/:lng',
     loadChildren: () => import('./map-address/map-address.module').then( m => m.MapAddressPageModule)
   }
 ];
