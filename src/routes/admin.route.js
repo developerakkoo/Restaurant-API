@@ -16,7 +16,16 @@ const {
 
 router.post("/logout", authController.logoutUser);
 
+router.get("/banner/get/:type", bannerController.getBanner);
+
+router.get("/category/get/all", adminController.getAllCategory);
+
+router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
+
+
+
 router.use(adminPrivilegesRequired);
+
 
 router.get("/get/all-users", adminController.getAllUsers);
 
@@ -137,7 +146,6 @@ router.post(
     adminController.uploadCategoryImage,
 );
 
-router.get("/category/get/all", adminController.getAllCategory);
 
 router.get("/category/get/:categoryId", adminController.getCategoryById);
 
@@ -157,7 +165,6 @@ router.put(
 
 router.get("/promoCode/get/:promoCodeId", promoCodeController.getPromoCode);
 
-router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
 router.delete(
     "/promoCode/delete/:promoCodeId",
@@ -197,13 +204,15 @@ router.put(
     bannerController.updateBanner,
 );
 
-router.get("/banner/get/:type", bannerController.getBanner);
 
-adminPrivilegesRequired,
-    router.delete(
-        "/banner/delete/:bannerId",
-        adminPrivilegesRequired,
-        bannerController.deleteBanner,
-    );
+router.delete(
+    "/banner/delete/:bannerId",
+    adminPrivilegesRequired,
+    bannerController.deleteBanner,
+);
+
+/* DATA */
+
+router.post('/add/data',adminController.createData)
 
 module.exports = { adminRoutes: router };

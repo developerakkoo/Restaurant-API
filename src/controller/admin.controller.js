@@ -5,6 +5,7 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const DeliveryBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
+const Data = require("../models/data.model");
 const userAddress = require("../models/userAddress.model");
 const Hotel = require("../models/hotel.model");
 const HotelDish = require("../models/hotelDish.model");
@@ -575,13 +576,18 @@ exports.updatePartnerStatus = asyncHandler(async (req, res) => {
 });
 
 exports.updateHotelStatus = asyncHandler(async (req, res) => {
-    const { hotelId, status } = req.body;
+    const { hotelId, status, isTop } = req.body;
+    let option = {
+        hotelStatus: status,
+    };
+
+    if (isTop) {
+        option.isTop = isTop;
+    }
     const hotel = await Hotel.findByIdAndUpdate(
         hotelId,
         {
-            $set: {
-                hotelStatus: status,
-            },
+            $set: option,
         },
         {
             new: true,
@@ -1180,5 +1186,18 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
             data,
             responseMessage.userMessage.revenueChartData,
         ),
+    );
+});
+
+exports.createData = asyncHandler(async (req, res) => {
+    const { gstPercentage, deliveryCharges, platformFee } = req.body;
+
+    const data = await Data.create({
+        gstPercentage,
+        deliveryCharges,
+        platformFee,
+    });
+    res.status(200).json(
+        new ApiResponse(200, data, "Data created successfully"),
     );
 });

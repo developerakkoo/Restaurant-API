@@ -4,6 +4,8 @@ const { applyPromoCode } = require("../controller/promoCode.controller");
 
 router.post("/initiate/payment", orderController.initiatePayment);
 
+router.post("/calculate/amount-to-pay", orderController.CalculateAmountToPay)
+
 router.post("/place-order", orderController.placeOrder);
 
 router.get("/get/order-by-id/:id", orderController.getOrderById);

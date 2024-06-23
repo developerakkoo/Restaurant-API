@@ -26,6 +26,12 @@ const hotelSchema = new Schema(
             type: String,
             required: true,
         },
+        isTop: {
+            type: Number,
+            required: true,
+            default: 0,
+            enum: [0, 1], // 0 for not top; 1 for top
+        },
         hotelStatus: {
             type: Number,
             required: true,

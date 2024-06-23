@@ -1,42 +1,144 @@
 const Order = require("../models/order.model");
 const Cart = require("../models/cart.model");
+const dishModel = require("../models/hotelDish.model");
 const { v4: uuidv4 } = require("uuid");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { responseMessage } = require("../constant");
+const dataModel = require("../models/data.model");
 const moment = require("moment");
 const razorpay = require("razorpay");
 const { getIO } = require("../utils/socket");
+const promoCodeModel = require("../models/promoCode.model");
 let instance = new razorpay({
     key_id: process.env.KEY_ID,
     key_secret: process.env.KEY_SECRET,
 });
+exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
+    try {
+        const data = await dataModel.find();
+        if (!data || data.length === 0) {
+            return res.status(500).json(new ApiResponse(500, null, "Server error: Missing configuration data"));
+        }
+
+        const { gstPercentage, deliveryCharges, platformFee } = data[0];
+        const { userId, promoCode: code } = req.body;
+
+        // Find the user's cart
+        const cart = await Cart.findOne({ userId });
+        if (!cart || cart.products.length === 0) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        responseMessage.userMessage.emptyCart,
+                    ),
+                );
+        }
+
+        // Calculate the subtotal (total product cost)
+        const subtotal = (await Promise.all(
+            cart.products.map(async (product) => {
+                const dish = await dishModel.findById(product.dishId);
+                return dish.userPrice * product.quantity;
+            })
+        )).reduce((total, price) => total + price, 0);
+
+        // Calculate GST
+        const gstAmount = (subtotal * gstPercentage) / 100;
+
+        // Calculate the initial total amount to pay
+        let totalAmountToPay = subtotal + gstAmount + deliveryCharges + platformFee;
+
+        let discount = 0;
+        let promoCodeId = null;
+        let promoCodeDetails = null;
+
+        // If a promo code is provided, validate and apply it
+        if (code) {
+            const promoCode = await promoCodeModel.findOne({ code });
+            if (!promoCode || !promoCode.isActive) {
+                throw new ApiError(400, "Invalid promo code");
+            }
+            if (moment(promoCode.expiry, "DD-MM-YYYY").isBefore(moment(), "DD-MM-YYYY")) {
+                throw new ApiError(400, "Promo code expired");
+            }
+            if (subtotal < promoCode.minOrderAmount) {
+                throw new ApiError(400, "Order total needs to be greater than the minimum order amount");
+            }
+
+            switch (promoCode.codeType) {
+                case 1: // FREE_DELIVERY
+                    discount = deliveryCharges;
+                    promoCodeDetails = `FREE_DELIVERY ${promoCode.offer}`;
+                    break;
+                case 2: // GET_OFF
+                    discount = promoCode.offer;
+                    promoCodeDetails = `GET_OFF ${promoCode.offer}`;
+                    break;
+                case 3: // NEW_USER
+                    const userOrderExist = await Order.findOne({ userId });
+                    if (userOrderExist) {
+                        throw new ApiError(400, "This code is only valid on the first order");
+                    }
+                    discount = promoCode.offer;
+                    promoCodeDetails = `NEW_USER ${promoCode.offer}`;
+                    break;
+                default:
+                    throw new ApiError(400, "Invalid promo code type");
+            }
+
+            totalAmountToPay -= discount;
+            promoCodeId = promoCode._id;
+        }
+
+        // Construct the detailed breakdown
+        const breakdown = {
+            subtotal,
+            gstAmount,
+            deliveryCharges,
+            platformFee,
+            discount,
+            totalAmountToPay,
+            promoCodeId,
+            promoCodeDetails
+        };
+
+        // Return the calculated amounts and breakdown
+        return res.status(200).json(new ApiResponse(200, breakdown, "Amount calculated successfully"));
+    } catch (error) {
+        return res.status(500).json(new ApiResponse(500, null, "Server error: Unable to calculate amount"));
+    }
+});
+
+
+
 
 exports.placeOrder = asyncHandler(async (req, res) => {
     const {
         userId,
-        hotelId,
         addressId,
         promoCode,
-        totalPrice,
         paymentId,
         phone,
         deliveryCharge,
-        gst,
         description,
     } = req.body;
+
     // Generate UUIDv4
     const uuid = uuidv4();
-
     // Convert UUID to uppercase
     const uppercaseUuid = uuid.toUpperCase();
-
     // Extract first 6 characters
-    const orderId = uppercaseUuid.substring(0, 6);
+    const orderIdPrefix = uppercaseUuid.substring(0, 6);
+
+    // Find the user's cart
     const cart = await Cart.findOne({ userId });
-    if (cart.products.length === 0) {
+    if (!cart || cart.products.length === 0) {
         return res
-            .status(200)
+            .status(400)
             .json(
                 new ApiResponse(
                     400,
@@ -45,12 +147,35 @@ exports.placeOrder = asyncHandler(async (req, res) => {
                 ),
             );
     }
+
+    // Fetch all dishes details and group products by hotelId
+    const productsByHotel = {};
+    for (const product of cart.products) {
+        const dish = await dishModel.findById(product.dishId);
+        if (dish) {
+            const hotelId = dish.hotelId.toString();
+            if (!productsByHotel[hotelId]) {
+                productsByHotel[hotelId] = [];
+            }
+            // Include dishId in the products array
+            const quantity = product.quantity;
+            productsByHotel[hotelId].push({
+                ...product,
+                dishId: dish._id,
+                quantity,
+            });
+        } else {
+            console.log(`Dish not found for dishId: ${product.dishId}`);
+        }
+    }
+
+    const orderId = `${orderIdPrefix}-${dishId.substring(0, 3).toUpperCase()}`;
     const order = await Order.create({
         orderId,
         userId,
         hotelId,
-        products: cart.products,
-        price: cart.totalPrice,
+        products,
+        price: totalPrice,
         address: addressId,
         promoCode,
         totalPrice,
@@ -60,6 +185,8 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         gst,
         description,
     });
+
+    // Clear the cart
     await cart.updateOne({
         $set: {
             products: [],
@@ -364,9 +491,7 @@ exports.initiatePayment = asyncHandler(async (req, res, next) => {
     instance.orders.create(options, function (err, order) {
         console.log("ORDER: " + order);
         if (err) {
-            return res
-                .status(400)
-                .json(new ApiResponse(40, null, err.message));
+            return res.status(400).json(new ApiResponse(40, null, err.message));
         }
         return res
             .status(201)

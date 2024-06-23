@@ -823,7 +823,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     if (categoryId) {
         const categoryIds = Array.isArray(categoryId)
             ? categoryId.map((id) => new ObjectId(id.trim()))
-            : [new ObjectId(categoryId.trim())];
+            : [new Types.ObjectId(categoryId.trim())];
         dbQuery.categoryId = { $in: categoryIds };
     }
 
@@ -1035,6 +1035,45 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                 200,
                 dishAggregate,
                 responseMessage.userMessage.dishFetchedSuccessfully,
+            ),
+        );
+});
+
+// exports.getHotelByCategoryId = asyncHandler(async (req, res) => {
+//     const { categoryId } = req.params;
+//     const category = await Category.findById(categoryId);
+//     if (!category) {
+//         return res
+//             .status(404)
+//             .json(
+//                 new ApiResponse(
+//                     404,
+//                     null,
+//                     responseMessage.userMessage.categoryNotFound,
+//                 ),
+//             );
+//     }
+//     const hotels = await Hotel.find({ categoryId: categoryId });
+//     return res
+//         .status(200)
+//         .json(
+//             new ApiResponse(
+//                 200,
+//                 hotels,
+//                 responseMessage.userMessage.hotelFetchedSuccessfully,
+//             ),
+//         );
+// });
+
+exports.getTopHotels = asyncHandler(async (req, res) => {
+    const hotels = await Hotel.find({ isTop: 1 });
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                hotels,
+                responseMessage.userMessage.topHotelsFetchedSuccessfully,
             ),
         );
 });

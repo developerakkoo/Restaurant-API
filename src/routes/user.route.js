@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const userDataValidator = require("../validators/user.validator");
 const userController = require("../controller/user.controller");
+const { getAllCategory } = require("../controller/admin.controller");
 const authController = require("../controller/auth.controller");
 const {
     getPromoCode,
@@ -31,6 +32,10 @@ router.get("/promoCode/get-all", getAllPromoCodes);
 /* track user */
 
 router.post("/track/add", userController.addUserTrackRecord);
+
+/* Category route*/
+
+router.get("/category/get-all", getAllCategory);
 
 /* Recommendation */
 

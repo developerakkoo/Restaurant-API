@@ -3,6 +3,8 @@ const HotelStarController = require("../controller/hotel.controller");
 
 router.get("/get/byId/:hotelId", HotelStarController.getHotelById);
 
+
+
 router.post("/add-star", HotelStarController.addStartToHotel);
 
 router.get("/get-star/:starId", HotelStarController.getStartById);
@@ -11,6 +13,13 @@ router.get(
     "/get/all-star/hotelId/:hotelId",
     HotelStarController.getAllStartsByHotelId,
 );
+
+router.get(
+    "/get-top",
+    HotelStarController.getTopHotels,
+);
+
+
 
 router.delete(
     "/delete-star/userId",
