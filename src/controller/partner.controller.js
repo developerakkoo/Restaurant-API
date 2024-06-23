@@ -1,6 +1,6 @@
 const Partner = require("../models/partner.model");
 const Hotel = require("../models/hotel.model");
-const { responseMessage } = require("../constant");
+const { responseMessage, cookieOptions } = require("../constant");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
@@ -87,17 +87,11 @@ exports.loginPartner = asyncHandler(async (req, res) => {
         "-password -refreshToken",
     );
 
-    // Set options for HTTP cookies
-    const options = {
-        httpOnly: true,
-        secure: true,
-    };
-
     // Send a successful login response with cookies containing access and refresh tokens
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(
                 200,

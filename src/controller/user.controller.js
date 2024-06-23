@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
 const Cart = require("../models/cart.model");
-const { responseMessage } = require("../constant");
+const { responseMessage, cookieOptions } = require("../constant");
 const UserTrack = require("../models/userTrack.model");
 const userAddress = require("../models/userAddress.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -96,8 +96,8 @@ exports.loginUser = asyncHandler(async (req, res) => {
     // Send a successful login response with cookies containing access and refresh tokens
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(
                 200,

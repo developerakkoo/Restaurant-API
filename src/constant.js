@@ -3,6 +3,13 @@ module.exports = {
     API_VERSION: "1.0.0",
     BASE_URL: "/api/v1",
     hash: 14,
+    cookieOptions: {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+        sameSite: "none",
+        httpOnly: true,
+        secure: true,
+    },
+
     generateSeed: false, // set to false if noo need
     events: {
         ALERT: "ALERT",

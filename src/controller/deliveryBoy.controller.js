@@ -1,6 +1,6 @@
 const DeliverBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
-const { responseMessage } = require("../constant");
+const { responseMessage, cookieOptions } = require("../constant");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
@@ -86,17 +86,11 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
         "-password -refreshToken",
     );
 
-    // Set options for HTTP cookies
-    const options = {
-        httpOnly: true,
-        secure: true,
-    };
-
     // Send a successful login response with cookies containing access and refresh tokens
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(
                 200,

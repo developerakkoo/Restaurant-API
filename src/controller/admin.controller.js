@@ -11,7 +11,7 @@ const HotelDish = require("../models/hotelDish.model");
 const Category = require("../models/category.model");
 const Partner = require("../models/partner.model");
 const User = require("../models/user.model");
-const { responseMessage } = require("../constant");
+const { responseMessage, cookieOptions } = require("../constant");
 const { deleteFile } = require("../utils/deleteFile");
 const { getIO } = require("../utils/socket");
 const Order = require("../models/order.model");
@@ -93,17 +93,11 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
         "-password -refreshToken",
     );
 
-    // Set options for HTTP cookies
-    const options = {
-        httpOnly: true,
-        secure: true,
-    };
-
     // Send a successful login response with cookies containing access and refresh tokens
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(
                 200,
