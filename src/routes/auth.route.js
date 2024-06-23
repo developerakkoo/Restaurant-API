@@ -25,7 +25,7 @@ router.post(
 /** User Auth Routes */
 router.post(
     "/user/register",
-    [userDataValidator.validateUserRegister, dataValidationResult],
+    // [userDataValidator.validateUserRegister, dataValidationResult],
     userController.registerUser,
 );
 
@@ -72,7 +72,6 @@ router.post("/partner/login", partnerController.loginPartner);
 router.get("/user-forgot-password", (req, res, next) => {
     res.render("forgot-password");
 });
-
 
 router.post("/user-forgot-password", authController.forgotPassword);
 

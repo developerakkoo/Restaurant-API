@@ -32,4 +32,8 @@ router.get("/promoCode/get-all", getAllPromoCodes);
 
 router.post("/track/add", userController.addUserTrackRecord);
 
+/* Recommendation */
+
+router.get("/get/recommended/dishes/:userId", userController.getRecommendation);
+
 module.exports = { userRoutes: router };

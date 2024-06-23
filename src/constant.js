@@ -145,6 +145,8 @@ module.exports = {
                 "User tracked record fetched successfully",
             orderChartData: "Order chart data fetched successfully",
             revenueChartData: "Revenue chart data fetched successfully",
+            recommendationsFetchedSuccessfully:
+                "Recommendations fetched successfully",
         },
         adminMessage: {
             adminExist: "Admin is already exist",
@@ -154,10 +156,10 @@ module.exports = {
             adminPrivilegesRequired: "Access Denied: Admin Privileges Required",
             customerMapChartDataFetchedSuccessfully:
                 "Customer Map Chart Data Fetched Successfully",
-            bannerAdded:"Banner Added Successfully",
-            bannerUpdated:"Banner Updated Successfully",
-            bannerDeleted:"Banner Deleted Successfully",
-            bannerFetchedSuccessfully:"Banner Fetched Successfully",
+            bannerAdded: "Banner Added Successfully",
+            bannerUpdated: "Banner Updated Successfully",
+            bannerDeleted: "Banner Deleted Successfully",
+            bannerFetchedSuccessfully: "Banner Fetched Successfully",
         },
         validationResultMessage: "Received data is not valid",
         userDataFetchedSuccessfully: "User data fetched successfully",
@@ -165,7 +167,7 @@ module.exports = {
         NOTIFICATION_FETCHED_SUCCESSFULLY: "Notification fetched successfully",
         NOTIFICATION_NOT_FOUND: "Notification not found",
         NOTIFICATION_DELETED_SUCCESSFULLY: "Notification deleted successfully",
-        NOTIFICATION_MARKED_AS_READ_SUCCESSFULLY:"Notification marked as read",
-        GET_CHAT_LIST_SUCCESS:"Chat list fetched successfully",
+        NOTIFICATION_MARKED_AS_READ_SUCCESSFULLY: "Notification marked as read",
+        GET_CHAT_LIST_SUCCESS: "Chat list fetched successfully",
     },
 };

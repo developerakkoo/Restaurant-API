@@ -16,11 +16,11 @@ exports.validateUserRegister = [
             validationMessage.userRegistration.userEmailValidationMessage,
         ),
     body("phoneNumber").notEmpty().withMessage(validationMessage.require),
-    body("phoneNumber")
-        .isMobilePhone("en-IN")
-        .withMessage(
-            validationMessage.userRegistration.userPhoneNumberValidationMessage,
-        ),
+    // body("phoneNumber")
+    //     .isMobilePhone("en-IN")
+    //     .withMessage(
+    //         validationMessage.userRegistration.userPhoneNumberValidationMessage,
+    //     ),
     body("password").notEmpty().withMessage(validationMessage.require),
     body("password")
         .isStrongPassword({

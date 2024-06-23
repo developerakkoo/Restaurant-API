@@ -5,6 +5,7 @@ const UserTrack = require("../models/userTrack.model");
 const userAddress = require("../models/userAddress.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
+const { recommendDishes } = require("../utils/helper.util");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
@@ -350,4 +351,22 @@ exports.addUserTrackRecord = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.trackRecordAdded,
             ),
         );
+});
+
+exports.getRecommendation = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, responseMessage.userMessage.userNotFound);
+    }
+
+    const recommendations = await recommendDishes(userId);
+
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            recommendations,
+            responseMessage.userMessage.recommendationsFetchedSuccessfully,
+        ),
+    );
 });
