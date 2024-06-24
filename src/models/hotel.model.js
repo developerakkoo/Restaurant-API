@@ -8,6 +8,10 @@ const hotelSchema = new Schema(
             ref: "Partner",
             required: true,
         },
+        category: {
+            type: [String], // Array of strings
+            required: true, // Add this if you want to ensure the category field is always present
+        },
         hotelName: {
             type: String,
             required: true,

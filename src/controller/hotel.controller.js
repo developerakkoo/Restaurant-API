@@ -1039,31 +1039,36 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
         );
 });
 
-// exports.getHotelByCategoryId = asyncHandler(async (req, res) => {
-//     const { categoryId } = req.params;
-//     const category = await Category.findById(categoryId);
-//     if (!category) {
-//         return res
-//             .status(404)
-//             .json(
-//                 new ApiResponse(
-//                     404,
-//                     null,
-//                     responseMessage.userMessage.categoryNotFound,
-//                 ),
-//             );
-//     }
-//     const hotels = await Hotel.find({ categoryId: categoryId });
-//     return res
-//         .status(200)
-//         .json(
-//             new ApiResponse(
-//                 200,
-//                 hotels,
-//                 responseMessage.userMessage.hotelFetchedSuccessfully,
-//             ),
-//         );
-// });
+exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+
+    // Check if the category exists
+    const category = await Category.findById(categoryId);
+    if (!category) {
+        return res
+            .status(404)
+            .json(
+                new ApiResponse(
+                    404,
+                    null,
+                    responseMessage.userMessage.categoryNotFound
+                )
+            );
+    }
+
+    // Find hotels with the specified category ID in their category array
+    const hotels = await Hotel.find({ category: { $in: [categoryId] } });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                hotels,
+                responseMessage.userMessage.hotelFetchedSuccessfully
+            )
+        );
+});
 
 exports.getTopHotels = asyncHandler(async (req, res) => {
     const hotels = await Hotel.find({ isTop: 1 });

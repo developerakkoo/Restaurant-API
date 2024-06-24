@@ -1,9 +1,8 @@
 const router = require("express").Router();
 const HotelStarController = require("../controller/hotel.controller");
+const { getAllHotel } = require("../controller/admin.controller");
 
 router.get("/get/byId/:hotelId", HotelStarController.getHotelById);
-
-
 
 router.post("/add-star", HotelStarController.addStartToHotel);
 
@@ -14,12 +13,9 @@ router.get(
     HotelStarController.getAllStartsByHotelId,
 );
 
-router.get(
-    "/get-top",
-    HotelStarController.getTopHotels,
-);
+router.get("/get-top", HotelStarController.getTopHotels);
 
-
+router.get("/get-by/:categoryId/category", getAllHotel);
 
 router.delete(
     "/delete-star/userId",

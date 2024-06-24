@@ -615,13 +615,16 @@ exports.updateHotelStatus = asyncHandler(async (req, res) => {
         );
 });
 
+
 exports.getAllHotel = asyncHandler(async (req, res) => {
     let dbQuery = {};
-    const { q, startDate, populate, status } = req.query;
+    const { categoryId } = req.params;
+    const { q, startDate, populate, status} = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
     const pageNumber = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const skip = (pageNumber - 1) * pageSize;
+
     // Search based on user query
     if (q) {
         dbQuery = {
@@ -632,12 +635,12 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         };
     }
 
-    // Sort by status
+    // Filter by status
     if (status) {
-        dbQuery.status = status;
+        dbQuery.hotelStatus = status;
     }
 
-    // Sort by date range
+    // Filter by date range
     if (startDate) {
         const sDate = new Date(startDate);
         const eDate = new Date(endDate);
@@ -647,6 +650,11 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
             $gte: sDate,
             $lte: eDate,
         };
+    }
+
+    // Filter by category
+    if (categoryId) {
+        dbQuery.category = { $in: [categoryId] };
     }
 
     const dataCount = await Hotel.countDocuments(dbQuery);
@@ -698,7 +706,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                     from: "hotelstars",
                     foreignField: "hotelId",
                     localField: "_id",
-                    //adding a pipeline for getting user who start the hotel
+                    // adding a pipeline for getting user who starred the hotel
                     pipeline: [
                         {
                             $lookup: {
@@ -824,6 +832,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         ),
     );
 });
+
 
 exports.addCategory = asyncHandler(async (req, res) => {
     const { categoryName } = req.body;
