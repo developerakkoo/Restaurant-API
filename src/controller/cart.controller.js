@@ -5,7 +5,7 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { responseMessage } = require("../constant");
 
 exports.updateCart = asyncHandler(async (req, res) => {
-    const { userId, products } = req.body;
+    const { userId, hotelId, products } = req.body;
 
     // Retrieve the existing cart
     let cart = await Cart.findOne({ userId });

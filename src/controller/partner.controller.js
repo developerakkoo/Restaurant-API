@@ -106,11 +106,12 @@ exports.loginPartner = asyncHandler(async (req, res) => {
 });
 
 exports.addHotel = asyncHandler(async (req, res) => {
-    const { userId, hotelName, address } = req.body;
+    const { userId, hotelName, address, category } = req.body;
     const hotel = await Hotel.create({
         userId,
         hotelName,
         address,
+        category,
     });
     if (!hotel) {
         throw new ApiError(500, responseMessage.userMessage.hotelNotCreated);

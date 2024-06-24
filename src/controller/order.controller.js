@@ -149,11 +149,9 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     const {
         userId,
         addressId,
-        promoCode,
-        paymentId,
         phone,
-        deliveryCharge,
         description,
+        priceDetails
     } = req.body;
 
     // Generate UUIDv4
@@ -178,40 +176,41 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     }
 
     // Fetch all dishes details and group products by hotelId
-    const productsByHotel = {};
-    for (const product of cart.products) {
-        const dish = await dishModel.findById(product.dishId);
-        if (dish) {
-            const hotelId = dish.hotelId.toString();
-            if (!productsByHotel[hotelId]) {
-                productsByHotel[hotelId] = [];
-            }
-            // Include dishId in the products array
-            const quantity = product.quantity;
-            productsByHotel[hotelId].push({
-                ...product,
-                dishId: dish._id,
-                quantity,
-            });
-        } else {
-            console.log(`Dish not found for dishId: ${product.dishId}`);
-        }
-    }
+    // const productsByHotel = {};
+    // for (const product of cart.products) {
+    //     const dish = await dishModel.findById(product.dishId);
+    //     if (dish) {
+    //         const hotelId = dish.hotelId.toString();
+    //         if (!productsByHotel[hotelId]) {
+    //             productsByHotel[hotelId] = [];
+    //         }
+    //         // Include dishId in the products array
+    //         const quantity = product.quantity;
+    //         productsByHotel[hotelId].push({
+    //             ...product,
+    //             dishId: dish._id,
+    //             quantity,
+    //         });
+    //     } else {
+    //         console.log(`Dish not found for dishId: ${product.dishId}`);
+    //     }
+    // }
 
-    const orderId = `${orderIdPrefix}-${dishId.substring(0, 3).toUpperCase()}`;
+    console.log('====================================');
+    console.log(cart);
+    console.log('====================================');
+
+    const orderId = `${orderIdPrefix}-${hotelId.substring(0, 3).toUpperCase()}`;
     const order = await Order.create({
         orderId,
         userId,
         hotelId,
         products,
-        price: totalPrice,
+        priceDetails,
         address: addressId,
-        promoCode,
-        totalPrice,
+        promoCode: priceDetails.promoCodeId,
         paymentId,
         phone,
-        deliveryCharge,
-        gst,
         description,
     });
 

@@ -41,21 +41,31 @@ const orderSchema = new Schema(
                 },
             },
         ],
-        price: {
-            type: Number,
-            required: true,
-        },
-        deliveryCharge: {
-            type: Number,
-            required: true,
-        },
-        gst: {
-            type: Number,
-            required: true,
-        },
-        totalPrice: {
-            type: Number,
-            required: true,
+        priceDetails: {
+            subtotal: {
+                type: Number,
+                required: true,
+            },
+            gstAmount: {
+                type: Number,
+                required: true,
+            },
+            deliveryCharges: {
+                type: Number,
+                required: true,
+            },
+            platformFee: {
+                type: Number,
+                required: true,
+            },
+            discount: {
+                type: Number,
+                required: true,
+            },
+            totalAmountToPay: {
+                type: Number,
+                required: true,
+            },
         },
         paymentId: {
             type: String,
@@ -83,7 +93,7 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1, 2, 3, 4], // received =0 being prepared = 1 , delivery assigned = 2, delivered =3 cancel order=4
+            enum: [0, 1, 2, 3, 4], // received = 0, being prepared = 1, delivery assigned = 2, delivered = 3, cancel order = 4
         },
     },
     { timestamps: true },

@@ -8,6 +8,11 @@ const cartSchema = new Schema(
             ref: "User",
             required: true,
         },
+        hotelId: {
+            type: Schema.Types.ObjectId,
+            ref: "Hotel",
+            required: true,
+        },
         products: [
             {
                 dishId: {

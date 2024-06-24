@@ -615,11 +615,10 @@ exports.updateHotelStatus = asyncHandler(async (req, res) => {
         );
 });
 
-
 exports.getAllHotel = asyncHandler(async (req, res) => {
     let dbQuery = {};
     const { categoryId } = req.params;
-    const { q, startDate, populate, status} = req.query;
+    const { q, startDate, populate, status, sort } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
     const pageNumber = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
@@ -807,6 +806,15 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         );
     }
 
+    // Conditionally add sort stage if sort is 'toprated'
+    if (sort && sort === 'tr') {
+        hotelAggregation.push({
+            $sort: {
+                "starCounts.totalCount": -1, // Sort by total star count in descending order
+            },
+        });
+    }
+
     const hotel = await Hotel.aggregate(hotelAggregation).exec();
 
     const startItem = skip + 1;
@@ -815,7 +823,6 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         startItem + hotel.length - 1,
     );
     const totalPages = Math.ceil(dataCount / pageSize);
-
     return res.status(200).json(
         new ApiResponse(
             200,
@@ -832,6 +839,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         ),
     );
 });
+
 
 
 exports.addCategory = asyncHandler(async (req, res) => {
