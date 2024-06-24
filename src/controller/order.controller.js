@@ -146,13 +146,8 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
 });
 
 exports.placeOrder = asyncHandler(async (req, res) => {
-    const {
-        userId,
-        addressId,
-        phone,
-        description,
-        priceDetails
-    } = req.body;
+    const { userId, addressId, phone, description, priceDetails, paymentId } =
+        req.body;
 
     // Generate UUIDv4
     const uuid = uuidv4();
@@ -175,37 +170,13 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             );
     }
 
-    // Fetch all dishes details and group products by hotelId
-    // const productsByHotel = {};
-    // for (const product of cart.products) {
-    //     const dish = await dishModel.findById(product.dishId);
-    //     if (dish) {
-    //         const hotelId = dish.hotelId.toString();
-    //         if (!productsByHotel[hotelId]) {
-    //             productsByHotel[hotelId] = [];
-    //         }
-    //         // Include dishId in the products array
-    //         const quantity = product.quantity;
-    //         productsByHotel[hotelId].push({
-    //             ...product,
-    //             dishId: dish._id,
-    //             quantity,
-    //         });
-    //     } else {
-    //         console.log(`Dish not found for dishId: ${product.dishId}`);
-    //     }
-    // }
-
-    console.log('====================================');
-    console.log(cart);
-    console.log('====================================');
-
+    let hotelId = cart.hotelId.toString();
     const orderId = `${orderIdPrefix}-${hotelId.substring(0, 3).toUpperCase()}`;
     const order = await Order.create({
         orderId,
         userId,
-        hotelId,
-        products,
+        hotelId: cart.hotelId,
+        products: cart.products,
         priceDetails,
         address: addressId,
         promoCode: priceDetails.promoCodeId,
@@ -219,6 +190,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         $set: {
             products: [],
             totalPrice: 0,
+            hotelId: null,
         },
     });
 

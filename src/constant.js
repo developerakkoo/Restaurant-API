@@ -118,6 +118,8 @@ module.exports = {
             dishNotFound: "Dish not found",
             dishAlreadyExist: "Dish already exists",
             alreadyStaredDish: "Your already star this dish",
+            cartHotelMismatch:
+                "Please add products from the same hotel to your cart. To add products from a different hotel, place a new order.",
             cartUpdatedSuccessfully: "Cart updated successfully",
             deleteProductFromCartDeletedSuccessfully:
                 "Product deleted from cart successfully",

@@ -9,8 +9,21 @@ exports.updateCart = asyncHandler(async (req, res) => {
 
     // Retrieve the existing cart
     let cart = await Cart.findOne({ userId });
+
     if (!cart) {
-        cart = new Cart({ userId, products: [] });
+        // Create a new cart if it doesn't exist
+        cart = new Cart({ userId, products: [], hotelId: hotelId });
+    } else {
+        // Check if the cart already has products from a different hotel
+        if (cart.hotelId && cart.hotelId.toString() !== hotelId.toString()) {
+            return res.status(400).json(
+                new ApiResponse(
+                    400,
+                    null,
+                    responseMessage.userMessage.cartHotelMismatch,
+                ),
+            );
+        }
     }
 
     // Update quantities and add new products
@@ -19,7 +32,7 @@ exports.updateCart = asyncHandler(async (req, res) => {
 
         // Check if the dish already exists in the cart
         const existingProduct = cart.products.find(
-            (p) => p.dishId.toString() === product.dishId,
+            (p) => p.dishId.toString() === product.dishId.toString(),
         );
         if (existingProduct) {
             // Update the quantity of the existing dish
@@ -40,8 +53,9 @@ exports.updateCart = asyncHandler(async (req, res) => {
         totalPrice += dish.userPrice * product.quantity;
     }
 
-    // Update the total price in the cart
+    // Update the total price and hotelId in the cart
     cart.totalPrice = totalPrice;
+    cart.hotelId = hotelId;
 
     // Save the updated cart
     const updatedCart = await cart.save();
@@ -54,6 +68,8 @@ exports.updateCart = asyncHandler(async (req, res) => {
         ),
     );
 });
+
+
 
 exports.deleteProductFromCart = asyncHandler(async (req, res) => {
     const { userId, dishId, quantityToRemove = 1 } = req.body;

@@ -750,11 +750,8 @@ exports.getDishById = asyncHandler(async (req, res) => {
 });
 
 exports.getAllDishes = asyncHandler(async (req, res) => {
-    console.log('====================================');
-    console.log(req.query);
-    console.log('====================================');
     let dbQuery = {
-        status: 2, // for approve dishes by admin
+        status: 2, // for approved dishes by admin
         stock: 1, // for available in stocks only
     };
     const {
@@ -775,22 +772,19 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     const skip = (pageNumber - 1) * pageSize;
 
     // Search based on user query
-    // if (q) {
-    //     const words = q
-    //         .split(" ")
-    //         .map((word) => `\\b${word}\\b`)
-    //         .join("|");
-    //     dbQuery = {
-    //         $or: [
-    //             { name: { $regex: new RegExp(words, "i") } },
-    //             { name: { $regex: new RegExp(words, "i") } },
-    //             // { name: { $regex: `${q}`, $options: "i" } },
-    //             // { name: { $regex: `^${q}`, $options: "i" } },
-    //             // { name: { $regex: `${q}`, $options: "i" } },
-    //             { dishType: { $regex: `^${q}` } },
-    //         ],
-    //     };
-    // }
+    if (q) {
+        const words = q
+            .split(" ")
+            .map((word) => `\\b${word}\\b`)
+            .join("|");
+        dbQuery = {
+            ...dbQuery,
+            $or: [
+                { name: { $regex: new RegExp(words, "i") } },
+                { dishType: { $regex: `^${q}` } },
+            ],
+        };
+    }
 
     // Sort by status
     if (status) {
@@ -822,11 +816,9 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     if (dishType) {
         dbQuery.dishType = dishType;
     }
-    // Sort by category (user can sort by multiple category)
+    // Sort by category (user can sort by multiple categories)
     if (categoryId) {
-        const categoryIds = Array.isArray(categoryId)
-            ? categoryId.map((id) => new ObjectId(id.trim()))
-            : [new Types.ObjectId(categoryId.trim())];
+        const categoryIds = categoryId.split(',').map(id => new Types.ObjectId(id.trim()));
         dbQuery.categoryId = { $in: categoryIds };
     }
 
@@ -855,10 +847,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
             $match: {
                 $text: {
                     $search: q,
-                    // $caseSensitive: false,
-                    // $diacriticSensitive: false,
                     $language: "en",
-                    // $maxExpansions: 50,
                 },
             },
         });
@@ -952,19 +941,15 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                                 ],
                             },
                         },
-                        // Unwind the user array to work with individual user object
                         {
                             $unwind: "$user",
                         },
                     ],
                 },
             },
-            // Unwind the Dishstars array to work with individual star ratings
             {
                 $unwind: "$dishStars",
             },
-            // Gro
-            // Calculate star counts
             {
                 $group: {
                     _id: {
@@ -1006,16 +991,13 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                             $cond: [{ $eq: ["$dishStars.star", 5] }, 1, 0],
                         },
                     },
-                    // Push each star data into an array
                     starData: { $push: "$dishStars" },
                 },
             },
-            // Project the final result with star counts
             {
                 $project: {
                     _id: "$_id",
                     dishDetails: 1,
-                    // Include the array of star data
                     ratingData: "$starData",
                     starCounts: {
                         totalCount: "$totalCount",
@@ -1029,17 +1011,15 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
             },
         );
     }
-    // console.log(pipeline);
+
     const dishAggregate = await Dish.aggregate(pipeline);
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                dishAggregate,
-                responseMessage.userMessage.dishFetchedSuccessfully,
-            ),
-        );
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            dishAggregate,
+            responseMessage.userMessage.dishFetchedSuccessfully,
+        ),
+    );
 });
 
 exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {

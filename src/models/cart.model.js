@@ -11,7 +11,6 @@ const cartSchema = new Schema(
         hotelId: {
             type: Schema.Types.ObjectId,
             ref: "Hotel",
-            required: true,
         },
         products: [
             {
