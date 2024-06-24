@@ -10,111 +10,140 @@ const moment = require("moment");
 const razorpay = require("razorpay");
 const { getIO } = require("../utils/socket");
 const promoCodeModel = require("../models/promoCode.model");
+const { ApiError } = require("../utils/ApiErrorHandler");
 let instance = new razorpay({
     key_id: process.env.KEY_ID,
     key_secret: process.env.KEY_SECRET,
 });
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
-    try {
-        const data = await dataModel.find();
-        if (!data || data.length === 0) {
-            return res.status(500).json(new ApiResponse(500, null, "Server error: Missing configuration data"));
-        }
+    const data = await dataModel.find();
+    if (!data || data.length === 0) {
+        return res
+            .status(500)
+            .json(
+                new ApiResponse(
+                    500,
+                    null,
+                    "Server error: Missing configuration data",
+                ),
+            );
+    }
 
-        const { gstPercentage, deliveryCharges, platformFee } = data[0];
-        const { userId, promoCode: code } = req.body;
+    const { gstPercentage, deliveryCharges, platformFee } = data[0];
+    const { userId, code } = req.body;
 
-        // Find the user's cart
-        const cart = await Cart.findOne({ userId });
-        if (!cart || cart.products.length === 0) {
-            return res
-                .status(400)
-                .json(
-                    new ApiResponse(
-                        400,
-                        null,
-                        responseMessage.userMessage.emptyCart,
-                    ),
-                );
-        }
+    // Find the user's cart
+    const cart = await Cart.findOne({ userId });
+    if (!cart || cart.products.length === 0) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    responseMessage.userMessage.emptyCart,
+                ),
+            );
+    }
 
-        // Calculate the subtotal (total product cost)
-        const subtotal = (await Promise.all(
+    // Calculate the subtotal (total product cost)
+    const subtotal = (
+        await Promise.all(
             cart.products.map(async (product) => {
                 const dish = await dishModel.findById(product.dishId);
                 return dish.userPrice * product.quantity;
-            })
-        )).reduce((total, price) => total + price, 0);
+            }),
+        )
+    ).reduce((total, price) => total + price, 0);
 
-        // Calculate GST
-        const gstAmount = (subtotal * gstPercentage) / 100;
+    // Calculate GST
+    const gstAmount = (subtotal * gstPercentage) / 100;
 
-        // Calculate the initial total amount to pay
-        let totalAmountToPay = subtotal + gstAmount + deliveryCharges + platformFee;
+    // Calculate the initial total amount to pay
+    let totalAmountToPay = subtotal + gstAmount + deliveryCharges + platformFee;
 
-        let discount = 0;
-        let promoCodeId = null;
-        let promoCodeDetails = null;
+    let discount = 0;
+    let promoCodeId = null;
+    let promoCodeDetails = null;
 
-        // If a promo code is provided, validate and apply it
-        if (code) {
-            const promoCode = await promoCodeModel.findOne({ code });
-            if (!promoCode || !promoCode.isActive) {
-                throw new ApiError(400, "Invalid promo code");
-            }
-            if (moment(promoCode.expiry, "DD-MM-YYYY").isBefore(moment(), "DD-MM-YYYY")) {
-                throw new ApiError(400, "Promo code expired");
-            }
-            if (subtotal < promoCode.minOrderAmount) {
-                throw new ApiError(400, "Order total needs to be greater than the minimum order amount");
-            }
-
-            switch (promoCode.codeType) {
-                case 1: // FREE_DELIVERY
-                    discount = deliveryCharges;
-                    promoCodeDetails = `FREE_DELIVERY ${promoCode.offer}`;
-                    break;
-                case 2: // GET_OFF
-                    discount = promoCode.offer;
-                    promoCodeDetails = `GET_OFF ${promoCode.offer}`;
-                    break;
-                case 3: // NEW_USER
-                    const userOrderExist = await Order.findOne({ userId });
-                    if (userOrderExist) {
-                        throw new ApiError(400, "This code is only valid on the first order");
-                    }
-                    discount = promoCode.offer;
-                    promoCodeDetails = `NEW_USER ${promoCode.offer}`;
-                    break;
-                default:
-                    throw new ApiError(400, "Invalid promo code type");
-            }
-
-            totalAmountToPay -= discount;
-            promoCodeId = promoCode._id;
+    // If a promo code is provided, validate and apply it
+    if (code) {
+        const promoCode = await promoCodeModel.findOne({ code });
+        if (!promoCode || !promoCode.isActive) {
+            throw new ApiError(400, "Invalid promo code");
+        }
+        if (
+            moment(promoCode.expiry, "DD-MM-YYYY").isBefore(
+                moment(),
+                "DD-MM-YYYY",
+            )
+        ) {
+            throw new ApiError(400, "Promo code expired");
+        }
+        if (subtotal < promoCode.minOrderAmount) {
+            throw new ApiError(
+                400,
+                "Order total needs to be greater than the minimum order amount",
+            );
         }
 
-        // Construct the detailed breakdown
-        const breakdown = {
-            subtotal,
-            gstAmount,
-            deliveryCharges,
-            platformFee,
-            discount,
-            totalAmountToPay,
-            promoCodeId,
-            promoCodeDetails
-        };
+        switch (promoCode.codeType) {
+            case 1: // FREE_DELIVERY
+                discount = deliveryCharges;
+                promoCodeDetails = `FREE_DELIVERY`;
+                totalAmountToPay -= deliveryCharges;
+                break;
+            case 2: // GET_OFF
+                discount = promoCode.discountAmount;
+                promoCodeDetails = `GET_OFF`;
+                totalAmountToPay -= promoCode.discountAmount;
+                break;
+            case 3: // NEW_USER
+                const userOrderExist = await Order.findOne({ userId });
+                if (userOrderExist) {
+                    throw new ApiError(
+                        400,
+                        "This code is only valid on the first order",
+                    );
+                }
+                discount = promoCode.discountAmount;
+                promoCodeDetails = `NEW_USER `;
+                totalAmountToPay -= promoCode.discountAmount;
+                break;
+            default:
+                throw new ApiError(400, "Invalid promo code type");
+        }
 
-        // Return the calculated amounts and breakdown
-        return res.status(200).json(new ApiResponse(200, breakdown, "Amount calculated successfully"));
-    } catch (error) {
-        return res.status(500).json(new ApiResponse(500, null, "Server error: Unable to calculate amount"));
+        promoCodeId = promoCode._id;
     }
+
+    // Adjust totalAmountToPay in case it goes negative
+    if (totalAmountToPay < 0) {
+        totalAmountToPay = 0;
+    }
+
+    // Construct the detailed breakdown
+    const breakdown = {
+        subtotal,
+        gstAmount,
+        deliveryCharges:
+            promoCodeDetails && promoCodeDetails.startsWith("FREE_DELIVERY")
+                ? 0
+                : deliveryCharges,
+        platformFee,
+        discount,
+        totalAmountToPay,
+        promoCodeId,
+        promoCodeDetails,
+    };
+
+    // Return the calculated amounts and breakdown
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, breakdown, "Amount calculated successfully"),
+        );
 });
-
-
-
 
 exports.placeOrder = asyncHandler(async (req, res) => {
     const {

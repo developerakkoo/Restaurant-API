@@ -48,9 +48,9 @@ app.use(
             includeSubDomains: true,
             preload: true,
         },
-        referrerPolicy: {
-            policy: "same-origin",
-        },
+        // referrerPolicy: {
+        //     policy: "same-origin",
+        // },
     }),
 );
 
