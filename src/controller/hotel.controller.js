@@ -750,6 +750,9 @@ exports.getDishById = asyncHandler(async (req, res) => {
 });
 
 exports.getAllDishes = asyncHandler(async (req, res) => {
+    console.log('====================================');
+    console.log(req.query);
+    console.log('====================================');
     let dbQuery = {
         status: 2, // for approve dishes by admin
         stock: 1, // for available in stocks only
@@ -829,7 +832,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
 
     // Sort by hotel
     if (hotelId) {
-        dbQuery.hotelId = hotelId;
+        dbQuery.hotelId = new Types.ObjectId(hotelId);
     }
 
     let pipeline = [
