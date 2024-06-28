@@ -873,7 +873,10 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                 },
             },
             {
-                $unwind: "$categoryDetails",
+                $unwind: {
+                    path: "$categoryDetails",
+                    preserveNullAndEmptyArrays: true,
+                },
             },
             {
                 $lookup: {
@@ -910,13 +913,19 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                             },
                         },
                         {
-                            $unwind: "$hotelOwner",
+                            $unwind: {
+                                path: "$hotelOwner",
+                                preserveNullAndEmptyArrays: true,
+                            },
                         },
                     ],
                 },
             },
             {
-                $unwind: "$hotelDetails",
+                $unwind: {
+                    path: "$hotelDetails",
+                    preserveNullAndEmptyArrays: true,
+                },
             },
             {
                 $lookup: {
@@ -935,20 +944,28 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                                     {
                                         $project: {
                                             name: 1,
-                                            profile_image: 1,
+                                            profile_image: {
+                                                $ifNull: ["$profile_image", ""],
+                                            },
                                         },
                                     },
                                 ],
                             },
                         },
                         {
-                            $unwind: "$user",
+                            $unwind: {
+                                path: "$user",
+                                preserveNullAndEmptyArrays: true,
+                            },
                         },
                     ],
                 },
             },
             {
-                $unwind: "$dishStars",
+                $unwind: {
+                    path: "$dishStars",
+                    preserveNullAndEmptyArrays: true,
+                },
             },
             {
                 $group: {
@@ -998,7 +1015,28 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                 $project: {
                     _id: "$_id",
                     dishDetails: 1,
-                    ratingData: "$starData",
+                    ratingData: {
+                        $map: {
+                            input: "$starData",
+                            as: "star",
+                            in: {
+                                _id: "$$star._id",
+                                dishId: "$$star.dishId",
+                                userId: "$$star.userId",
+                                description: "$$star.description",
+                                star: "$$star.star",
+                                createdAt: "$$star.createdAt",
+                                updatedAt: "$$star.updatedAt",
+                                user: {
+                                    _id: "$$star.user._id",
+                                    name: "$$star.user.name",
+                                    profile_image: {
+                                        $ifNull: ["$$star.user.profile_image", ""],
+                                    },
+                                },
+                            },
+                        },
+                    },
                     starCounts: {
                         totalCount: "$totalCount",
                         "1starCount": "$1starCount",
@@ -1021,6 +1059,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
         ),
     );
 });
+
 
 exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;

@@ -81,6 +81,8 @@ router.post("/rest-password/:id/:token", authController.ResetPassword);
 
 /** Common Routes  */
 
+router.get('/get-current-user', authController.getCurrentUserStatus)
+
 router.post("/get-access-token", authController.reGenerateAccessToken);
 
 module.exports = { authRoutes: router };

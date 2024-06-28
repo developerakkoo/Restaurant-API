@@ -725,14 +725,20 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                         },
                         // Unwind the user array to work with individual user object
                         {
-                            $unwind: "$user",
+                            $unwind: {
+                                path: "$user",
+                                preserveNullAndEmptyArrays: true,
+                            },
                         },
                     ],
                 },
             },
             // Unwind the hotelstars array to work with individual star ratings
             {
-                $unwind: "$hotelstars",
+                $unwind: {
+                    path: "$hotelstars",
+                    preserveNullAndEmptyArrays: true,
+                },
             },
             // Group by hotel details and calculate star counts
             {
@@ -778,7 +784,10 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
             },
             // Unwind the hotelOwner array to flatten it
             {
-                $unwind: "$_id.hotelOwner",
+                $unwind: {
+                    path: "$_id.hotelOwner",
+                    preserveNullAndEmptyArrays: true,
+                },
             },
             // Project the final result with necessary fields
             {
@@ -790,17 +799,23 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                     address: "$_id.address",
                     // Structure star counts
                     starCounts: {
-                        "1starCount": "$1starCount",
-                        "2starCount": "$2starCount",
-                        "3starCount": "$3starCount",
-                        "4starCount": "$4starCount",
-                        "5starCount": "$5starCount",
-                        totalCount: "$totalCount",
+                        "1starCount": { $ifNull: ["$1starCount", 0] },
+                        "2starCount": { $ifNull: ["$2starCount", 0] },
+                        "3starCount": { $ifNull: ["$3starCount", 0] },
+                        "4starCount": { $ifNull: ["$4starCount", 0] },
+                        "5starCount": { $ifNull: ["$5starCount", 0] },
+                        totalCount: { $ifNull: ["$totalCount", 0] },
                     },
                     // Include the array of star data
-                    ratingData: "$starData",
+                    ratingData: {
+                        $cond: {
+                            if: { $gt: [{ $size: "$starData" }, 0] },
+                            then: "$starData",
+                            else: [],
+                        },
+                    },
                     // Flatten the partner/hotelOwner array
-                    partner: "$_id.hotelOwner",
+                    partner: { $ifNull: ["$_id.hotelOwner", {}] },
                 },
             },
         );
@@ -839,6 +854,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         ),
     );
 });
+
 
 
 

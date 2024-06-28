@@ -65,6 +65,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     let discount = 0;
     let promoCodeId = null;
     let promoCodeDetails = null;
+    let promoCodeData;
 
     // If a promo code is provided, validate and apply it
     if (code) {
@@ -115,6 +116,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         }
 
         promoCodeId = promoCode._id;
+        promoCodeData = promoCode;
     }
 
     // Adjust totalAmountToPay in case it goes negative
@@ -134,7 +136,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         discount,
         totalAmountToPay,
         promoCodeId,
-        promoCodeDetails,
+        promoCodeDetails:promoCodeData,
     };
 
     // Return the calculated amounts and breakdown

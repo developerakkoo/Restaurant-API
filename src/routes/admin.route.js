@@ -18,6 +18,9 @@ router.post("/logout", authController.logoutUser);
 
 router.get("/banner/get/:type", bannerController.getBanner);
 
+
+router.get("/get/all-hotels", adminController.getAllHotel);
+
 router.get("/category/get/all", adminController.getAllCategory);
 
 router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
@@ -48,7 +51,6 @@ router.get("/get/partner/byId/:partnerId", PartnerController.getPartnerById);
 
 router.post("/hotel/register", PartnerController.addHotel);
 
-router.get("/get/all-hotels", adminController.getAllHotel);
 
 router.post(
     "/hotel/upload/image",

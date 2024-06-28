@@ -163,9 +163,9 @@ exports.reGenerateAccessToken = asyncHandler(async (req, res) => {
 //sending mail about rest password with rest password page link
 exports.forgotPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
-    console.log('====================================');
+    console.log("====================================");
     console.log(email);
-    console.log('====================================');
+    console.log("====================================");
     const result = await findUserByEmail(email);
 
     if (!result) {
@@ -234,4 +234,39 @@ exports.ResetPassword = asyncHandler(async (req, res) => {
         console.log(error.message);
         res.send(error.message);
     }
+});
+
+exports.getCurrentUserStatus = asyncHandler(async (req, res) => {
+    const accessToken =
+        req.headers["x-access-token"] || req.cookies["accessToken"];
+    if (!accessToken) {
+        // throw new ApiError(401, "Access Denied: No access token provided!");
+        return res
+            .status(403)
+            .send({ message: "Access Denied: No access token provided!" });
+    }
+    jwt.verify(
+        accessToken,
+        process.env.JWT_ACCESS_SECRET_KEY,
+        (error, decoded) => {
+            if (error) {
+                // throw new ApiError(401, "Access Denied: Unauthorized!");
+                return res
+                    .status(200)
+                    .json(
+                        new ApiResponse(
+                            200,
+                            { loggedIn: false },
+                            "User not logged in",
+                        ),
+                    );
+            }
+            req.user = decoded;
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, { loggedIn: true }, "User logged in"),
+                );
+        },
+    );
 });

@@ -24,7 +24,7 @@ exports.addFavorite = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                {},
+                favorite,
                 responseMessage.userMessage.FAVORITED_SUCCESSFULLY,
             ),
         );
