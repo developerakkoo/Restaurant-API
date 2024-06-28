@@ -33,7 +33,9 @@
     "@ionic/angular": "^7.0.0",
     "@ionic/storage-angular": "^4.0.0",
     "ionicons": "^7.0.0",
+    "ngx-scrollreveal": "^3.0.0",
     "rxjs": "~7.8.0",
+    "scrollreveal": "^4.0.9",
     "swiper": "^11.1.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"

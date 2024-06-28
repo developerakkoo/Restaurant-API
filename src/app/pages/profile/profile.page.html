@@ -1,0 +1,47 @@
+<ion-header [translucent]="true" class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="ion-text-center">Settings</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tabs/tab1"></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-list>
+    <ion-item  detail [routerLink]="['/edit-profile']" >
+      <ion-label>Edit Profile
+        <p>View or Modify Your Profile</p>
+      </ion-label>
+      <ion-icon color="primary" slot="start" name="person-circle"></ion-icon>
+    </ion-item>
+
+    <ion-item  detail  [routerLink]="['/view-order']">
+      <ion-label>Manage Orders
+        <p>View Current Orders</p>
+      </ion-label>
+      <ion-icon color="primary" slot="start" name="bag"></ion-icon>
+
+    </ion-item>
+
+    <ion-item  detail [routerLink]="['/bill']">
+      <ion-label>Help
+        <p>View Help Section</p>
+      </ion-label>
+      <ion-icon color="primary" slot="start" name="receipt"></ion-icon>
+
+    </ion-item>
+
+    
+    <ion-item  detail (click)="logout()">
+      <ion-label>Logout
+        <p color="light">Logout current user.</p>
+
+      </ion-label>
+      <ion-icon color="primary" slot="start" name="log-out"></ion-icon>
+
+    </ion-item>
+
+
+  </ion-list>
+</ion-content>

@@ -11,7 +11,7 @@ import { IonicStorageModule } from '@ionic/storage-angular';
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [BrowserModule, IonicModule.forRoot(),IonicStorageModule.forRoot({name:"dropeat-customer"}), AppRoutingModule, HttpClientModule],
+  imports: [BrowserModule, IonicModule.forRoot(),IonicStorageModule.forRoot({name:"dropeat-customer"}), AppRoutingModule, HttpClientModule, ],
   providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }, Geolocation],
   bootstrap: [AppComponent],
 })

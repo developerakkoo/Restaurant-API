@@ -1,11 +1,11 @@
 <ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar>
-    <ion-title>Biryani </ion-title>
+    <ion-title>{{categoryName | titlecase}} </ion-title>
     <ion-buttons slot="start">
       <ion-back-button defaultHref="home"></ion-back-button>
     </ion-buttons>
     <ion-button id="open-modal" fill="clear" slot="end">
-      <ion-icon slot="icon-only" name="filterw"></ion-icon>
+      <ion-icon slot="icon-only" name="filter"></ion-icon>
     </ion-button>
   </ion-toolbar>
 </ion-header>
@@ -16,21 +16,21 @@
     
 
      
-        <ion-searchbar mode="ios" placeholder="Filter Pizza" inputmode="text" type="text" (ionChange)="onSearchChange($event)" [debounce]="250" showCancelButton="always"></ion-searchbar>
+        <ion-searchbar mode="ios" [placeholder]="searchBarPlaceholder" inputmode="text" type="text" (ionInput)="onSearchChange($event)" debounce="150" showCancelButton="always"></ion-searchbar>
 
 
     <!-- Hotel Items list -->
     <ion-list class="ion-margin-top">
-      <ion-item lines="none" class="ion-margin-top" routerLink="/all-categories/category-detail/hotel-detail">
-        <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+      <ion-item lines="none" class="ion-margin-top scroll" (click)="openHotelDetailPage(h)" *ngFor="let h of hotels">
+        <img crossOrigin ="anonymous" class="hotel-thumbnail" [src]="h?.image_url" />
 
         <div class="hotel-item-container">
           <ion-label class="ion-margin-start">
-            <p class="title">Hana Chiken</p>
-            <p class="sub-title">Fried Chiken</p>
+            <p class="title">{{h?.hotelName}}</p>
+            <p class="sub-title">{{categoryName | titlecase}}</p>
           </ion-label>
           <div class="ion-margin-start rating-container">
-            <p class="rating">15 mins. 4.8</p>
+            <p class="rating">{{h.ratingData[0]?.star}}</p>
             <ion-icon color="warning" slot="end" name="star"></ion-icon>
           </div>
           <div class="sort-badge ion-margin-start">
@@ -38,40 +38,7 @@
           </div>
         </div>
       </ion-item>
-      <ion-item lines="none" class="ion-margin-top">
-        <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
-
-        <div class="hotel-item-container">
-          <ion-label class="ion-margin-start">
-            <p class="title">Bamsu Restaturant</p>
-            <p class="sub-title">Fried Chiken</p>
-          </ion-label>
-          <div class="ion-margin-start rating-container">
-            <p class="rating">15 mins. 4.8</p>
-            <ion-icon color="warning" slot="end" name="star"></ion-icon>
-          </div>
-          <div class="sort-badge ion-margin-start">
-            <p>Freeship</p>
-          </div>
-        </div>
-      </ion-item>
-      <ion-item lines="none" class="ion-margin-top">
-        <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
-
-        <div class="hotel-item-container">
-          <ion-label class="ion-margin-start">
-            <p class="title">Neighbour Milk</p>
-            <p class="sub-title">Fried Chiken</p>
-          </ion-label>
-          <div class="ion-margin-start rating-container">
-            <p class="rating">15 mins. 4.8</p>
-            <ion-icon color="warning" slot="end" name="star"></ion-icon>
-          </div>
-          <div class="sort-badge ion-margin-start">
-            <p>Freeship</p>
-          </div>
-        </div>
-      </ion-item>
+      
     </ion-list>
   </div>
 

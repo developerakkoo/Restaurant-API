@@ -1,6 +1,9 @@
 <ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar>
     <ion-title>All Categories</ion-title>
+    <ion-button (click)="dismissModal()" fill="clear" slot="end">
+      <ion-icon slot="icon-only" name="close"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
@@ -16,11 +19,11 @@
   </div>
 
   <div class="category-container">
-    <div class="category-circle" (click)="dismiss()">
-      <img src="./../../../assets/Biryani.png" alt="">
-      <p>Biryani</p>
+    <div class="category-circle" (click)="dismiss(cat)" *ngFor="let cat of categories">
+      <img [src]="cat.image_url" alt="" crossOrigin ="anonymous">
+      <p>{{cat.name}}</p>
     </div>
-    <div class="category-circle" (click)="dismiss()">
+    <!-- <div class="category-circle" (click)="dismiss()">
       <img src="./../../../assets/Pizza.png" alt="">
       <p>Pizza</p>
     </div>
@@ -47,7 +50,7 @@
     <div class="category-circle" (click)="dismiss()">
       <img src="./../../../assets/Biryani.png" alt="">
       <p>Coffee</p>
-    </div>
+    </div> -->
   </div>
 
  </div>

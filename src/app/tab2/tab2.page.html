@@ -1,17 +1,100 @@
-<ion-header [translucent]="true">
+<ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar>
-    <ion-title>
-      Tab 2
+    <ion-title class="ion-text-center">
+      My Cart
     </ion-title>
+    <ion-button (click)="clearCart()" fill="clear" slot="end">
+      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding" *ngIf="cart.length <= 0">
+  <ion-text  color="primary" class="ion-text-center">
+    <h5>Your Cart is Empty!</h5>
+  </ion-text>
+</ion-content>
+<ion-content [fullscreen]="true" class="ion-padding" *ngIf="cart.length >= 1">
+  
+  <ion-text color="primary" class="ion-text-start">
+    <h5>Your Cart items!</h5>
+  </ion-text>
+  <ion-list>
+    <ion-item
+    *ngFor="let item of cart"
+      class="ion-margin-top"
+      routerLink="/all-categories/category-detail/hotel-detail"
+    >
+      <img class="hotel-thumbnail" crossOrigin ="anonymous" [src]="item.dishId.image_url" />
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 2</ion-title>
-    </ion-toolbar>
-  </ion-header>
+      <div class="hotel-item-container">
+        <ion-label class="ion-margin-start">
+          <p class="title">{{item.dishId.name}}</p>
+          <p class="sub-title">{{item.dishId.userPrice | currency:"INR"}}</p> <span>X {{item.quantity}}</span>
+        </ion-label>
+       
+        
+      </div>
+     
+    </ion-item>
+    
+  </ion-list>
 
-  <app-explore-container name="Tab 2 page"></app-explore-container>
+  <ion-item>
+    <ion-label>Subtotal</ion-label>
+    <p class="pricing" slot="end">{{subtotal | currency:"INR"}}</p>
+  </ion-item>
+  <ion-item>
+    <ion-label>Delivery</ion-label>
+    <p class="pricing" slot="end">{{deliveryCharges | currency:"INR"}}</p>
+  </ion-item>
+  <ion-item>
+    <ion-label>Handling Fees</ion-label>
+    <p class="pricing" slot="end">{{handlingFeed | currency:"INR"}}</p>
+  </ion-item>
+  <ion-item>
+    <ion-label>(GST)</ion-label>
+    <p class="pricing" slot="end">{{gstCharges | currency:"INR"}}</p>
+  </ion-item>
+  <ion-item>
+    <ion-label>Total</ion-label>
+    <p class="pricing" slot="end">{{total | currency:"INR"}}</p>
+  </ion-item>
+
+  <br>
+  <ion-input
+  class="animate__animated animate__fadeIn"
+  color="medium"
+  labelPlacement="stacked"
+  placeholder="Promo Code"
+  [fill]="promoCodeInputFillType"
+  [(ngModel)]="promoCode"
+  [readonly]="isPromoCodeApplied"
+>
+  <ion-icon
+  *ngIf="!isPromoCodeApplied"
+    color="primary"
+    slot="start"
+    name="mail-outline"
+    aria-hidden="true"
+  ></ion-icon>
+  <ion-icon
+  *ngIf="isPromoCodeApplied"
+    color="success"
+    slot="start"
+    name="checkmark"
+    aria-hidden="true"
+  ></ion-icon>
+  <ion-button *ngIf="!isPromoCodeApplied" slot="end" (click)="addPromoCode()" shape="round">
+    Apply
+  </ion-button>
+  <ion-button *ngIf="isPromoCodeApplied" slot="end" (click)="clearPromoCode()" shape="round">
+    Clear
+  </ion-button>
+</ion-input>
+
+<br>
+
+<ion-button (click)="checkout()" expand="block" fill="solid" mode="ios">
+  Checkout
+</ion-button>
 </ion-content>

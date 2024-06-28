@@ -1,19 +1,19 @@
 <ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar>
-    <ion-title>Hana's Kitchen</ion-title>
+    <ion-title>{{hotelName}}</ion-title>
     <ion-buttons slot="start">
       <ion-back-button
         defaultHref="/all-categories/category-details"
       ></ion-back-button>
     </ion-buttons>
-    <ion-button fill="clear" slot="end">
+    <ion-button (click)="addHotelAsUserFav()" fill="clear" slot="end">
       <ion-icon slot="icon-only" name="heart-outline"></ion-icon>
     </ion-button>
   </ion-toolbar>
   <ion-searchbar
     mode="ios"
-    placeholder="Search Hana's Kitchen"
-    inputmode="decimal"
+    placeholder="Search for menu"
+    inputmode="text"
     type="decimal"
     (ionChange)="onSearchChange($event)"
     [debounce]="250"
@@ -21,34 +21,45 @@
   ></ion-searchbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content>
   <ion-list>
     <ion-item
       lines="none"
       class="ion-margin-top"
-      routerLink="/all-categories/category-detail/hotel-detail"
+      *ngFor="let menu of dishesWithCartStatus"
     >
-      <img class="hotel-thumbnail" src="./../../../../assets/hotel.png" />
+      <img crossOrigin="anonymous" class="hotel-thumbnail" [src]="menu._id.image_url" />
 
       <div class="hotel-item-container">
         <ion-label class="ion-margin-start">
-          <p class="title">Hot pasta</p>
-          <p class="sub-title">{{234 | currency:"INR"}}</p>
+          <p class="title">{{menu._id.dishName}}</p>
+          <p class="sub-title">{{menu._id.userPrice | currency:"INR"}}</p>
         </ion-label>
         <div class="ion-margin-start rating-container">
-          <p class="rating">4.8</p>
+          <p class="rating">{{menu.starCounts.totalCount}}</p>
           <ion-icon color="warning" slot="end" name="star"></ion-icon>
         </div>
-        <div class="sort-badge ion-margin-start">
-          <p>Freeship</p>
-        </div>
+       <img *ngIf="menu._id.dishType === 'veg'" class="ion-margin-start" style="height: 14px; width:14px;" src="assets/icons8-veg-48.png" alt="" srcset="">
+       <img *ngIf="menu._id.dishType === 'non-veg'" class="ion-margin-start" style="height: 14px; width:14px;" src="assets/icons8-non-veg-48.png" alt="" srcset="">
       </div>
-      <ion-chip color="primary" slot="end" mode="ios" outline="true">
-        <ion-icon (click)="removeFromCart()" name="remove-circle"></ion-icon>
+      <ion-chip color="primary" slot="end" mode="ios" outline="true" *ngIf="!menu.isAddedToCart">
 
-        <ion-label>{{totalItems}}</ion-label>
-        <ion-icon (click)="addToCart()" name="add-circle"></ion-icon>
+        <ion-label>ADD</ion-label>
+        <ion-icon (click)="addToCartNew(menu)" name="add-circle"></ion-icon>
+      </ion-chip>
+      <ion-chip color="primary" slot="end" mode="ios" outline="true" *ngIf="menu.isAddedToCart">
+
+        <ion-label>Clear</ion-label>
+        <ion-icon (click)="removeFromCart(menu._id._id)" name="remove-circle"></ion-icon>
       </ion-chip>
     </ion-item>
   </ion-list>
+
+  <!-- <ion-fab slot="fixed" vertical="bottom" horizontal="start">
+    <ion-fab-button>
+      <ion-label>{{dishesWithCartStatus.length}}</ion-label>
+      <ion-icon name="cart-outline"></ion-icon>
+    </ion-fab-button>
+    
+  </ion-fab> -->
 </ion-content>

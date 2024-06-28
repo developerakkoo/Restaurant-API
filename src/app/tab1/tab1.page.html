@@ -1,17 +1,17 @@
 <ion-header [translucent]="true" class="ion-no-border">
   <ion-toolbar  class="animate__animated animate__fadeIn">
     <div class="header">
-      <div class="container-image">
+      <div class="container-image" routerLink="/profile">
         <ion-avatar>
           <img src="assets/icon/user.png" />
         </ion-avatar>
       </div>
       <div class="container-address">
-        <ion-label>
+        <ion-label class="ion-text-overflow">
           <!-- <p class="poppins-regular">Delivery address</p> -->
           <div (click)="openModalAddress()" class="icon-container">
             <img class="icon" src="assets/icon/pin-outline.svg" alt="" />
-            <h6 class="poppins-extrabold">Hinjewadi Phase 2 Pune</h6>
+            <h6 class="poppins-extrabold"> {{defaultAddress}} </h6>
             <img
               class="icon"
               src="assets/icon/arrow-ios-downward-outline.svg"
@@ -45,7 +45,7 @@
     </ion-list>
 
     <div class="category-container animate__animated animate__fadeIn">
-      <div class="category-box">
+      <div class="category-box" >
         <img src="assets/Pizza.png" alt="" srcset="" />
         <p>Pizza</p>
       </div>
@@ -160,5 +160,30 @@
       </ion-card></swiper-slide>
      
     </swiper-container>
+
+    <ion-list class="ion-margin-top" class="list-style animate__animated animate__fadeIn">
+      <ion-list-header>
+        <ion-label class="poppins-semibold sub-title" color="dark"
+          >Hotels near you</ion-label
+        >
+        <ion-button>View All</ion-button>
+      </ion-list-header>
+    </ion-list>
+
+    <swiper-container class="animate__animated animate__fadeIn" [autoplay]="true" [slidesPerView]="1" [loop]="true">
+
+      <swiper-slide *ngFor="let top of topHotelsBanner">
+        <div class="img-wrapper">
+          <div class="text-content">
+            <ion-label>{{top.hotelName}}</ion-label>
+          </div>
+          <img [src]="top.image_url" alt="" srcset="" crossOrigin ="anonymous" >
+          <ion-button color="warning" mode="ios" expand="block" fill="solid" shape="round">
+            TAP FOR DETAILS
+          </ion-button>
+        </div>
+      </swiper-slide>
+    </swiper-container>
+    
   </div>
 </ion-content>

@@ -35,6 +35,10 @@ const routes: Routes = [
     path: 'all-menu',
     loadChildren: () => import('./all-categories/category-detail/all-menu/all-menu.module').then( m => m.AllMenuPageModule)
   },
+  {
+    path: 'profile',
+    loadChildren: () => import('./pages/profile/profile.module').then( m => m.ProfilePageModule)
+  },
 ];
 @NgModule({
   imports: [

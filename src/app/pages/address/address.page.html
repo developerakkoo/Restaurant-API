@@ -25,57 +25,20 @@
       </ion-item>
     </ion-list>
 
-    <ion-list>
-      <ion-list-header>
-        <ion-label>Recent Addresses</ion-label>
-      </ion-list-header>
-      <ion-item detail lines="full">
-        <ion-icon
-          color="primary"
-          name="location-outline"
-          slot="start"
-        ></ion-icon>
-        <ion-label>
-          Dange Chowk
-          <p>Pune,Maharashtra</p>
-        </ion-label>
-      </ion-item>
-      <ion-item detail lines="full">
-        <ion-icon
-          color="primary"
-          name="location-outline"
-          slot="start"
-        ></ion-icon>
-        <ion-label>
-          Baner Avenue
-          <p>Pune,Maharashtra</p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+  
     <ion-list>
       <ion-list-header>
         <ion-label>Saved Addresses</ion-label>
       </ion-list-header>
-      <ion-item lines="full">
+      <ion-item lines="full" *ngFor="let item of address" (click)="setAddressDefault(item)">
         <ion-icon color="primary" name="home-outline" slot="start"></ion-icon>
         <ion-label>
-          Home
-          <p>Chhatrapati Shivaji Maharaj Chowk,Pune,Maharashtra</p>
+          {{item.type |titlecase }}
+          <p>{{item.address}}</p>
         </ion-label>
         <ion-icon color="medium" name="pencil-outline" slot="end"></ion-icon>
       </ion-item>
-      <ion-item lines="full">
-        <ion-icon
-          color="primary"
-          name="business-outline"
-          slot="start"
-        ></ion-icon>
-        <ion-label>
-          Work
-          <p>Gera's Imperium Rise, Wipro circle,Pune,Maharashtra</p>
-        </ion-label>
-        <ion-icon color="medium" name="pencil-outline" slot="end"></ion-icon>
-      </ion-item>
+     
     </ion-list>
   </div>
 </ion-content>
