@@ -185,6 +185,11 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         description,
     });
 
+    getIO.emit(hotelId,{
+        message:"Order",
+        data: order
+    })
+
     // Clear the cart
     await cart.updateOne({
         $set: {
