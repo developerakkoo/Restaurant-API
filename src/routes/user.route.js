@@ -43,4 +43,8 @@ router.get("/category/get-all", getAllCategory);
 
 router.get("/get/recommended/dishes/:userId", userController.getRecommendation);
 
+/* Hotel And  Category Search*/
+
+router.get("/search", userController.hotelAndCategorySearch);
+
 module.exports = { userRoutes: router };

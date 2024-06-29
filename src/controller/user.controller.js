@@ -1,5 +1,7 @@
 const User = require("../models/user.model");
 const Cart = require("../models/cart.model");
+const Hotel = require("../models/hotel.model");
+const Category = require("../models/category.model");
 const { responseMessage, cookieOptions } = require("../constant");
 const UserTrack = require("../models/userTrack.model");
 const userAddress = require("../models/userAddress.model");
@@ -383,6 +385,56 @@ exports.getRecommendation = asyncHandler(async (req, res) => {
             200,
             recommendations,
             responseMessage.userMessage.recommendationsFetchedSuccessfully,
+        ),
+    );
+});
+
+exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
+    const { q } = req.query;
+
+    const searchRegex = new RegExp(q.trim(), "i");
+
+    let hotelDbQuery = {
+        $or: [
+            { hotelName: { $regex: searchRegex } },
+            { hotelName: { $regex: searchRegex } },
+        ],
+    };
+
+    let categoryDbQuery = {
+        $or: [
+            { name: { $regex: searchRegex } },
+            { name: { $regex: searchRegex } },
+        ],
+    };
+    const hotels = await Hotel.find(hotelDbQuery).exec();
+    // Perform text search on the Category model
+    const categories = await Category.find(categoryDbQuery).exec();
+
+    // Format the results
+    const formattedResults = [];
+
+    hotels.forEach((hotel) => {
+        formattedResults.push({
+            type: "hotel",
+            hotelId: hotel._id,
+            name: hotel.hotelName,
+        });
+    });
+
+    categories.forEach((category) => {
+        formattedResults.push({
+            type: "category",
+            categoryId: category._id,
+            name: category.name,
+        });
+    });
+
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            formattedResults,
+            "search Results Fetched Successfully",
         ),
     );
 });
