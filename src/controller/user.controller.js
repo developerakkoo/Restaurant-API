@@ -417,7 +417,7 @@ exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
     hotels.forEach((hotel) => {
         formattedResults.push({
             type: "hotel",
-            hotelId: hotel._id,
+            id: hotel._id,
             name: hotel.hotelName,
         });
     });
@@ -425,7 +425,7 @@ exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
     categories.forEach((category) => {
         formattedResults.push({
             type: "category",
-            categoryId: category._id,
+            id: category._id,
             name: category.name,
         });
     });
