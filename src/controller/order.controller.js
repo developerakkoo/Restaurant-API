@@ -411,6 +411,10 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 exports.getOrderByOrderId = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
     const order = await Order.findOne({ orderId })
+    .populate({
+        path: "hotelId",
+        select: "-createdAt -updatedAt -__v",
+    })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
@@ -435,6 +439,10 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
     const orders = await Order.find({
         assignedDeliveryBoy: deliveryBoyId,
     })
+    .populate({
+        path: "hotelId",
+        select: "-createdAt -updatedAt -__v",
+    })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
@@ -457,6 +465,10 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
 exports.getOrderById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const order = await Order.findById(id)
+    .populate({
+        path: "hotelId",
+        select: "-createdAt -updatedAt -__v",
+    })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
@@ -493,6 +505,10 @@ exports.deleteOrderById = asyncHandler(async (req, res) => {
 exports.getOrdersByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const orders = await Order.find({ userId })
+    .populate({
+        path: "hotelId",
+        select: "-createdAt -updatedAt -__v",
+    })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
