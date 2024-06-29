@@ -18,6 +18,7 @@ const { getIO } = require("../utils/socket");
 const Order = require("../models/order.model");
 const moment = require("moment");
 const userTrackModel = require("../models/userTrack.model");
+const { Types } = require("mongoose");
 
 /**
  *  @function registerAdmin
@@ -653,7 +654,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
 
     // Filter by category
     if (categoryId) {
-        dbQuery.category = { $in: [categoryId] };
+        dbQuery.category = { $in: [new Types.ObjectId(categoryId)] };
     }
 
     const dataCount = await Hotel.countDocuments(dbQuery);
@@ -822,7 +823,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
     }
 
     // Conditionally add sort stage if sort is 'toprated'
-    if (sort && sort === 'tr') {
+    if (sort && sort === "tr") {
         hotelAggregation.push({
             $sort: {
                 "starCounts.totalCount": -1, // Sort by total star count in descending order
@@ -854,9 +855,6 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
         ),
     );
 });
-
-
-
 
 exports.addCategory = asyncHandler(async (req, res) => {
     const { categoryName } = req.body;

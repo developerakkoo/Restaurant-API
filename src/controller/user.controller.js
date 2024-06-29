@@ -410,10 +410,6 @@ exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
     const hotels = await Hotel.find(hotelDbQuery)
         .populate("category", "name")
         .exec();
-
-    console.log("====================================");
-    console.log(hotels[0].category);
-    console.log("====================================");
     // Perform text search on the Category model
     const categories = await Category.find(categoryDbQuery).exec();
 
