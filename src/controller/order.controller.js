@@ -187,7 +187,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         description,
     });
 
-    getIO.emit(hotelId,{
+    getIO().emit(hotelId,{
         message:"Order",
         data: order
     })
