@@ -407,7 +407,13 @@ exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
             { name: { $regex: searchRegex } },
         ],
     };
-    const hotels = await Hotel.find(hotelDbQuery).exec();
+    const hotels = await Hotel.find(hotelDbQuery)
+        .populate("category", "name")
+        .exec();
+
+    console.log("====================================");
+    console.log(hotels[0].category);
+    console.log("====================================");
     // Perform text search on the Category model
     const categories = await Category.find(categoryDbQuery).exec();
 
@@ -419,6 +425,7 @@ exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
             type: "hotel",
             id: hotel._id,
             name: hotel.hotelName,
+            category: hotel.category,
         });
     });
 
