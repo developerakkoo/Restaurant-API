@@ -39,7 +39,16 @@ app.use(function (req, res, next) {
  * @param {Function} next - The next middleware function in the stack
  */
 app.use(
-    helmet(),
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'", "*"],
+                imgSrc: ["'self'", "data:", "https:", "https://api.dropeat.in"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
+                styleSrc: ["'self'", "'unsafe-inline'", "*"],
+            },
+        },
+    }),
 );
 
 // Set the views directory
@@ -92,7 +101,6 @@ app.use(`${BASE_URL}/partner`, partnerRoutes);
 app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
 app.use(`${BASE_URL}/notification`, notificationRoutes);
-
 
 app.use(errorHandler);
 
