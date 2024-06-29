@@ -12,6 +12,8 @@ router.post("/logout", authController.logoutUser);
 
 router.get("/get/user/:userId", userController.getUserById);
 
+router.put("/update/:userId", userController.updateUserProfile);
+
 router.post("/add-address", userController.addAddresses);
 
 router.get("/get/all-address/:userId", userController.getAllAddressesByUserId);

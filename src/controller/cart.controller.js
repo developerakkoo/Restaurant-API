@@ -16,13 +16,9 @@ exports.updateCart = asyncHandler(async (req, res) => {
     } else {
         // Check if the cart already has products from a different hotel
         if (cart.hotelId && cart.hotelId.toString() !== hotelId.toString()) {
-            return res.status(400).json(
-                new ApiResponse(
-                    400,
-                    null,
-                    responseMessage.userMessage.cartHotelMismatch,
-                ),
-            );
+            // Clear the cart and add the new dish from the different hotel
+            cart.products = [];
+            cart.hotelId = hotelId;
         }
     }
 
@@ -55,7 +51,6 @@ exports.updateCart = asyncHandler(async (req, res) => {
 
     // Update the total price and hotelId in the cart
     cart.totalPrice = totalPrice;
-    cart.hotelId = hotelId;
 
     // Save the updated cart
     const updatedCart = await cart.save();

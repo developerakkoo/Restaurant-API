@@ -87,7 +87,6 @@ exports.loginUser = asyncHandler(async (req, res) => {
         "-password -refreshToken",
     );
 
-
     // Send a successful login response with cookies containing access and refresh tokens
     return res
         .status(200)
@@ -104,6 +103,25 @@ exports.loginUser = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.loginSuccessful,
             ),
         );
+});
+
+exports.updateUserProfile = asyncHandler(async (req, res) => {
+    const { name, email, phoneNumber } = req.body;
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user.userId,
+        {
+            $set: {
+                name: name,
+                email: email,
+                phoneNumber: phoneNumber,
+            },
+        },
+        { new: true },
+    ).select("-password");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedUser, "User profile updated"));
 });
 
 exports.addAddresses = asyncHandler(async (req, res) => {
