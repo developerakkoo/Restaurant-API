@@ -39,19 +39,7 @@ app.use(function (req, res, next) {
  * @param {Function} next - The next middleware function in the stack
  */
 app.use(
-    helmet({
-        frameguard: {
-            action: "deny",
-        },
-        hsts: {
-            maxAge: 31536000,
-            includeSubDomains: true,
-            preload: true,
-        },
-        // referrerPolicy: {
-        //     policy: "same-origin",
-        // },
-    }),
+    helmet(),
 );
 
 // Set the views directory

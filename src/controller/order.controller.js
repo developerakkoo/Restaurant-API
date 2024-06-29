@@ -136,7 +136,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         discount,
         totalAmountToPay,
         promoCodeId,
-        promoCodeDetails:promoCodeData,
+        promoCodeDetails: promoCodeData,
     };
 
     // Return the calculated amounts and breakdown
@@ -187,10 +187,10 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         description,
     });
 
-    getIO().emit(hotelId,{
-        message:"Order",
-        data: order
-    })
+    getIO().emit(hotelId, {
+        message: "Order",
+        data: order,
+    });
 
     // Clear the cart
     await cart.updateOne({
@@ -410,7 +410,15 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 
 exports.getOrderByOrderId = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId })
+        .populate({
+            path: "products.dishId",
+            select: "-createdAt -updatedAt -__v",
+        })
+        .populate({
+            path: "promoCode",
+            select: "-createdAt -updatedAt -__v",
+        });
     return res
         .status(200)
         .json(
@@ -424,7 +432,17 @@ exports.getOrderByOrderId = asyncHandler(async (req, res) => {
 
 exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
     const { deliveryBoyId } = req.params;
-    const orders = await Order.find({ assignedDeliveryBoy: deliveryBoyId });
+    const orders = await Order.find({
+        assignedDeliveryBoy: deliveryBoyId,
+    })
+        .populate({
+            path: "products.dishId",
+            select: "-createdAt -updatedAt -__v",
+        })
+        .populate({
+            path: "promoCode",
+            select: "-createdAt -updatedAt -__v",
+        });
     return res
         .status(200)
         .json(
@@ -438,7 +456,15 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
 
 exports.getOrderById = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const order = await Order.findById(id);
+    const order = await Order.findById(id)
+        .populate({
+            path: "products.dishId",
+            select: "-createdAt -updatedAt -__v",
+        })
+        .populate({
+            path: "promoCode",
+            select: "-createdAt -updatedAt -__v",
+        });
     return res
         .status(200)
         .json(
@@ -466,7 +492,15 @@ exports.deleteOrderById = asyncHandler(async (req, res) => {
 
 exports.getOrdersByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const orders = await Order.find({ userId });
+    const orders = await Order.find({ userId })
+        .populate({
+            path: "products.dishId",
+            select: "-createdAt -updatedAt -__v",
+        })
+        .populate({
+            path: "promoCode",
+            select: "-createdAt -updatedAt -__v",
+        });
     return res
         .status(200)
         .json(
