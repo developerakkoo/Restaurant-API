@@ -9,6 +9,8 @@ const { responseMessage } = require("../constant");
 const { generateTokens } = require("../utils/generateToken");
 const jwt = require("jsonwebtoken");
 const { findUserByEmail } = require("../utils/helper.util");
+const sendEmail = require("../utils/email.utils");
+const { hash } = require("bcrypt");
 
 /**
  * @function logoutUser
@@ -163,14 +165,10 @@ exports.reGenerateAccessToken = asyncHandler(async (req, res) => {
 //sending mail about rest password with rest password page link
 exports.forgotPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
-    console.log("====================================");
-    console.log(email);
-    console.log("====================================");
     const result = await findUserByEmail(email);
 
     if (!result) {
-        res.send("User Not Registered");
-        return;
+        return res.render("error", { message: "User Not Registered" });
     }
 
     const { user, model } = result;
@@ -185,43 +183,52 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
         process.env.JWT_ACCESS_SECRET_KEY + user.password,
         { expiresIn: 86400 },
     ); // 24 hours
+    const url =
+        "http://localhost:8000/api/v1/auth/rest-password/" +
+        user._id +
+        "/" +
+        token;
 
-    // sendResetEmail(user.email, user._id, token, req);
+    sendEmail(user.email, "Rest password", url);
 
     res.render("linkSend");
 });
 
 //user rest password page for getting the new password from user
 
-exports.getResetPassword = asyncHandler(async (req, res) => {
-    const { id, token } = req.params;
-    const user = await User.findOne({ _id: id });
-    if (!user) {
-        res.send("Invalid Id...!");
+exports.getResetPassword = async (req, res) => {
+    try {
+        const { id, token } = req.params;
+        const user = await User.findById(id);
+        if (!user) {
+            return res.render("error", { message: "Invalid signature" });
+        }
+        const payload = jwt.verify(
+            token,
+            process.env.JWT_ACCESS_SECRET_KEY + user.password,
+        );
+        res.render("reset-password", { email: user.email });
+    } catch (error) {
+        return res.render("error", { message: error.message });
     }
-    const payload = jwt.verify(
-        token,
-        process.env.JWT_SECRET_KEY + user.password,
-    );
-    res.render("reset-password", { email: user.email });
-});
+};
 
 //updating user password
 
-exports.ResetPassword = asyncHandler(async (req, res) => {
+exports.ResetPassword = async (req, res) => {
     const { id, token } = req.params;
     const user = await User.findOne({ _id: req.params.id });
     if (!user) {
-        res.send("Invalid Id...!");
+        return res.render("error", { message: "Invalid signature" });
     }
     try {
         const payload = jwt.verify(
             token,
-            process.env.JWT_SECRET_KEY + user.password,
+            process.env.JWT_ACCESS_SECRET_KEY + user.password,
         );
 
-        user.password = bcrypt.hashSync(req.body.password, 16)
-            ? bcrypt.hashSync(req.body.password, 16)
+        user.password = (await hash(req.body.password, 12))
+            ? await hash(req.body.password, 12)
             : user.password;
         const updatedUser = await user.save(user);
         const postRes = {
@@ -229,12 +236,12 @@ exports.ResetPassword = asyncHandler(async (req, res) => {
             email: updatedUser.email,
             photo: updatedUser.photo,
         };
-        res.render("success");
+        res.render("success", { message: "Password Reset Success" });
     } catch (error) {
         console.log(error.message);
-        res.send(error.message);
+        return res.render("error", { message: "Invalid signature" });
     }
-});
+};
 
 exports.getCurrentUserStatus = asyncHandler(async (req, res) => {
     const accessToken =

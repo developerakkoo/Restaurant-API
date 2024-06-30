@@ -70,9 +70,9 @@ exports.sendMultimediaNotification = asyncHandler(async (req, res) => {
     const { chatId, senderId, receiverId } = req.body;
     const { filename } = req.file;
     const local_filePath = `upload/${filename}`;
-    let image_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    let image_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        image_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+        image_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
     const notification = await Notification.create({
         chatId,

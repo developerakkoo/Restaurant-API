@@ -337,9 +337,9 @@ exports.uploadDishImage = asyncHandler(async (req, res) => {
     // console.log(req.file);
     const { filename } = req.file;
     const local_filePath = `upload/${filename}`;
-    let document_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        document_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+        document_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
     const savedDish = await Dish.findById(dishId);
     if (savedDish) {
@@ -818,7 +818,9 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     }
     // Sort by category (user can sort by multiple categories)
     if (categoryId) {
-        const categoryIds = categoryId.split(',').map(id => new Types.ObjectId(id.trim()));
+        const categoryIds = categoryId
+            .split(",")
+            .map((id) => new Types.ObjectId(id.trim()));
         dbQuery.categoryId = { $in: categoryIds };
     }
 
@@ -1031,7 +1033,10 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                                     _id: "$$star.user._id",
                                     name: "$$star.user.name",
                                     profile_image: {
-                                        $ifNull: ["$$star.user.profile_image", ""],
+                                        $ifNull: [
+                                            "$$star.user.profile_image",
+                                            "",
+                                        ],
                                     },
                                 },
                             },
@@ -1051,15 +1056,16 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     }
 
     const dishAggregate = await Dish.aggregate(pipeline);
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            dishAggregate,
-            responseMessage.userMessage.dishFetchedSuccessfully,
-        ),
-    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                dishAggregate,
+                responseMessage.userMessage.dishFetchedSuccessfully,
+            ),
+        );
 });
-
 
 exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
@@ -1073,8 +1079,8 @@ exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {
                 new ApiResponse(
                     404,
                     null,
-                    responseMessage.userMessage.categoryNotFound
-                )
+                    responseMessage.userMessage.categoryNotFound,
+                ),
             );
     }
 
@@ -1087,8 +1093,8 @@ exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 hotels,
-                responseMessage.userMessage.hotelFetchedSuccessfully
-            )
+                responseMessage.userMessage.hotelFetchedSuccessfully,
+            ),
         );
 });
 

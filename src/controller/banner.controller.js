@@ -10,9 +10,9 @@ exports.addBanner = asyncHandler(async (req, res) => {
     // console.log(req.file);
     const { filename } = req.file;
     const local_filePath = `upload/${filename}`;
-    let image_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    let image_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        image_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+        image_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
     const savedBanner = await bannerModel.findById(hotelId);
     if (savedBanner) {
@@ -69,9 +69,9 @@ exports.updateBannerImage = asyncHandler(async (req, res) => {
     // console.log(req.file);
     const { filename } = req.file;
     const local_filePath = `upload/${filename}`;
-    let document_url = `${req.protocol}://${req.hostname}/upload/${filename}`;
+    let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        document_url = `${req.protocol}://${req.hostname}:8000/upload/${filename}`;
+        document_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
     const savedDish = await Dish.findById(dishId);
     if (savedDish) {
@@ -126,20 +126,18 @@ exports.getBanner = asyncHandler(async (req, res) => {
         startItem + banner.length - 1,
     );
     const totalPages = Math.ceil(dataCount / pageSize);
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    content: banner,
-                    startItem,
-                    endItem,
-                    totalPages,
-                    pagesize: banner.length,
-                    totalDoc: dataCount,
-                },
-                responseMessage.adminMessage.bannerFetchedSuccessfully,
-            ),
-        );
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                content: banner,
+                startItem,
+                endItem,
+                totalPages,
+                pagesize: banner.length,
+                totalDoc: dataCount,
+            },
+            responseMessage.adminMessage.bannerFetchedSuccessfully,
+        ),
+    );
 });
