@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Error</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f2f2f2;
+                text-align: center;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+            .error-container {
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                padding: 30px;
+                max-width: 400px;
+                width: 100%;
+                text-align: center;
+            }
+            .error-icon {
+                width: 100px;
+                height: 100px;
+                fill: #ff4c5a; /* Red color for error */
+                margin-bottom: 20px;
+            }
+            .error-message {
+                font-size: 18px;
+                margin-bottom: 20px;
+                color: #333333;
+            }
+            .home-link {
+                text-decoration: none;
+                color: #007bff; /* Bootstrap primary blue */
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <svg class="error-icon" viewBox="0 0 24 24">
+                <!-- Replace with your SVG path or use an icon library -->
+                <path
+                    d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.566 17.048a.997.997 0 0 1-.707.293c-.268 0-.52-.104-.707-.293L12 13.414l-4.152 4.151a1 1 0 0 1-1.414-1.414L10.586 12 6.435 7.849a1 1 0 0 1 1.415-1.414L12 10.586l4.151-4.151a1 1 0 0 1 1.414 1.414L13.414 12l4.152 4.152c.39.39.39 1.024 0 1.414z"
+                />
+            </svg>
+            <h2 class="error-message"><%= message %></h2>
+            <a class="home-link" href="/">Go to Home Page</a>
+        </div>
+    </body>
+</html>
