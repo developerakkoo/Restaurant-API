@@ -15,8 +15,8 @@ const userDocumentSchema = new Schema(
         },
         documentNumber: {
             type: String,
-            required: true,
-            default: "_",
+            // required: true,
+            // default: "_",
         },
         document_url: {
             type: String,

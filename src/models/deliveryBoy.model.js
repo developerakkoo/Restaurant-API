@@ -6,32 +6,52 @@ const bcrypt = require("bcrypt");
 
 const deliveryBoySchema = new Schema(
     {
-        name: {
+        firstName: {
             type: String,
             required: true,
-            default: "_",
+        },
+        lastName: {
+            type: String,
+            required: true,
+        },
+        fatherName: {
+            type: String,
+            required: true,
+        },        
+        dateOfBirth: {
+            type: String,
+            required: true,
         },
         profile_image: {
             type: String,
-            required: true,
-            default: "_",
         },
         local_profileImagePath: {
             type: String,
-            required: true,
-            default: "_",
         },
         email: {
             type: String,
-            required: true,
             unique: true,
-            default: "_",
         },
         phoneNumber: {
             type: String,
             required: true,
             unique: true,
-            default: "_",
+        },
+        bloodGroup: {
+            type: String,
+            required: true,
+        },
+        city: {
+            type: String,
+            required: true,
+        },
+        address: {
+            type: String,
+            required: true,
+        },
+        languageKnown: {
+            type: [String],
+            required: true,
         },
         password: {
             type: String,

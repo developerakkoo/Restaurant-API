@@ -42,7 +42,7 @@ router.delete("/user/delete/image", userController.deletedImage);
 /** Delivery Boy Auth Routes */
 router.post(
     "/delivery-boy/register",
-    [userDataValidator.validateUserRegister, dataValidationResult],
+    // [userDataValidator.validateUserRegister, dataValidationResult],
     deliveryBoyController.registerDeliveryBoy,
 );
 

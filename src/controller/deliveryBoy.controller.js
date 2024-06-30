@@ -6,6 +6,7 @@ const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
+const { Types } = require("mongoose");
 
 /**
  *  @function registerDeliveryBoy
@@ -18,16 +19,31 @@ const { deleteFile } = require("../utils/deleteFile");
  * creates a new user, and returns the registered user details in the response.
  */
 exports.registerDeliveryBoy = asyncHandler(async (req, res) => {
-    const { name, email, phoneNumber, password } = req.body;
-    const existedUser = await DeliverBoy.findOne({
-        $or: [{ email }, { phoneNumber }],
-    });
+    const {
+        firstName,
+        lastName,
+        fatherName,
+        dateOfBirth,
+        bloodGroup,
+        city,
+        address,
+        languageKnown,
+        phoneNumber,
+        password,
+    } = req.body;
+    const existedUser = await DeliverBoy.findOne({ phoneNumber });
     if (existedUser) {
         throw new ApiError(409, responseMessage.userMessage.userExist);
     }
     const user = await DeliverBoy.create({
-        name,
-        email,
+        firstName,
+        lastName,
+        fatherName,
+        dateOfBirth,
+        bloodGroup,
+        city,
+        address,
+        languageKnown,
         phoneNumber,
         password,
     });
@@ -60,10 +76,10 @@ exports.registerDeliveryBoy = asyncHandler(async (req, res) => {
  */
 exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
     // Extract user login details from the request body
-    const { email, password } = req.body;
+    const { phoneNumber} = req.body;
 
     // Find a user with the provided email in the database
-    const user = await DeliverBoy.findOne({ email: email });
+    const user = await DeliverBoy.findOne({ phoneNumber });
 
     // If the user is not found, return a 404 response
     if (!user) {
@@ -71,12 +87,12 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
     }
 
     // Check if the provided password is correct
-    const isPasswordValid = await user.isPasswordCorrect(password);
+    // const isPasswordValid = await user.isPasswordCorrect(password);
 
     // If the password is incorrect, return a 401 response
-    if (!isPasswordValid) {
-        throw new ApiError(401, responseMessage.userMessage.incorrectPassword);
-    }
+    // if (!isPasswordValid) {
+    //     throw new ApiError(401, responseMessage.userMessage.incorrectPassword);
+    // }
 
     // Generate access and refresh tokens for the logged-in user
     const { accessToken, refreshToken } = await generateTokens(user._id, 3);
@@ -186,6 +202,11 @@ exports.uploadDocument = asyncHandler(async (req, res) => {
     let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
         document_url = `https://${req.hostname}:8000/upload/${filename}`;
+    }
+
+    const existDoc = await DeliverBoyDocument.findOne({ userId, documentType });
+    if (existDoc) {
+        deleteFile(existDoc.local_filePath);
     }
     const userDocument = await DeliverBoyDocument.create({
         userId,
@@ -303,4 +324,43 @@ exports.getAllDocuments = asyncHandler(async (req, res) => {
             responseMessage.userMessage.documentsFetchedSuccessfully,
         ),
     );
+});
+
+exports.getMyProfile = asyncHandler(async (req, res) => {
+    const { userId } = req.query;
+    const user = await DeliverBoy.aggregate([
+        {
+            $match: {
+                _id: new Types.ObjectId(userId),
+            },
+        },
+        {
+            $lookup: {
+                as: "userdocuments",
+                from: "userdocuments",
+                foreignField: "userId",
+                localField: "_id",
+            },
+        },
+    ]);
+    if (!user) {
+        return res
+            .status(404)
+            .json(
+                new ApiResponse(
+                    404,
+                    null,
+                    responseMessage.userMessage.userNotFound,
+                ),
+            );
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user,
+                responseMessage.userMessage.profileFetchedSuccessfully,
+            ),
+        );
 });
