@@ -90,6 +90,7 @@ exports.loginPartner = asyncHandler(async (req, res) => {
     const loggedInUser = await Partner.findById(user._id).select(
         "-password -refreshToken",
     );
+    const hotels = await hotelModel.countDocuments({userId:loggedInUser._id})
 
     // Send a successful login response with cookies containing access and refresh tokens
     return res
@@ -101,6 +102,7 @@ exports.loginPartner = asyncHandler(async (req, res) => {
                 200,
                 {
                     userId: loggedInUser._id,
+                    hotelCount:hotels,
                     accessToken,
                     refreshToken,
                 },
