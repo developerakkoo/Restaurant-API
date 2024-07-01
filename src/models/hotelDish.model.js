@@ -47,6 +47,10 @@ const dishSchema = new Schema(
             default: 0,
             enum: [0, 1, 3], // no-spicey, medium-spicey, so-spicey
         },
+        timeToPrepare: {
+            type: Number,
+            required: true,
+        },
         stock: {
             type: Number,
             required: true,
@@ -65,4 +69,3 @@ const dishSchema = new Schema(
 
 dishSchema.index({ name: "text" });
 module.exports = mongoose.model("HotelDish", dishSchema);
-

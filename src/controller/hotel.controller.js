@@ -303,6 +303,7 @@ exports.addDish = asyncHandler(async (req, res) => {
         dishType,
         partnerPrice,
         spicLevel,
+        timeToPrepare,
         stock,
     } = req.body;
 
@@ -321,6 +322,7 @@ exports.addDish = asyncHandler(async (req, res) => {
         dishType,
         partnerPrice,
         spicLevel,
+        timeToPrepare,
         stock,
     });
     res.status(201).json(
@@ -379,6 +381,7 @@ exports.updateDish = asyncHandler(async (req, res) => {
         spicLevel,
         stock,
         status,
+        timeToPrepare,
         partnerPrice,
     } = req.body;
     const hotelDish = await Dish.findByIdAndUpdate(
@@ -393,6 +396,7 @@ exports.updateDish = asyncHandler(async (req, res) => {
                 spicLevel: spicLevel,
                 stock: stock,
                 status: status,
+                timeToPrepare: timeToPrepare,
                 partnerPrice: partnerPrice,
             },
         },

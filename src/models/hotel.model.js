@@ -45,6 +45,11 @@ const hotelSchema = new Schema(
             default: 0,
             enum: [0, 1, 2], // pending, approved, rejected
         },
+        isOnline: {
+            type: Boolean,
+            required: true,
+            default: 1,
+        },
     },
     { timestamps: true },
 );
