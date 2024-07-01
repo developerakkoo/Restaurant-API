@@ -65,10 +65,10 @@ exports.registerPartner = asyncHandler(async (req, res) => {
  */
 exports.loginPartner = asyncHandler(async (req, res) => {
     // Extract user login details from the request body
-    const { phonNumber } = req.body;
+    const { phoneNumber } = req.body;
 
     // Find a user with the provided email in the database
-    const user = await Partner.findOne({ phonNumber });
+    const user = await Partner.findOne({ phoneNumber });
 
     // If the user is not found, return a 404 response
     if (!user) {
