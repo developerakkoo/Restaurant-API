@@ -9,6 +9,7 @@ const dataModel = require("../models/data.model");
 const moment = require("moment");
 const razorpay = require("razorpay");
 const { getIO } = require("../utils/socket");
+const { Types } = require("mongoose");
 const promoCodeModel = require("../models/promoCode.model");
 const { ApiError } = require("../utils/ApiErrorHandler");
 let instance = new razorpay({
@@ -263,6 +264,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
         startDate,
         populate,
         status,
+        hotelId,
     } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
     const skip = (pageNumber - 1) * pageSize;
@@ -272,6 +274,13 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
             $or: [{ orderId: { $regex: `^${q}`, $options: "i" } }],
         };
     }
+    console.log(hotelId);
+    if (hotelId) {
+        dbQuery = {
+            hotelId: new Types.ObjectId(hotelId),
+        };
+    }
+
     // Sort by date range
     if (startDate) {
         const sDate = new Date(startDate);
@@ -286,7 +295,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 
     //sort by status
     if (status) {
-        dbQuery.status = status;
+        dbQuery.orderStatus = Number(status);
     }
 
     let orderAggregation = [
@@ -411,10 +420,10 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 exports.getOrderByOrderId = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
     const order = await Order.findOne({ orderId })
-    .populate({
-        path: "hotelId",
-        select: "-createdAt -updatedAt -__v",
-    })
+        .populate({
+            path: "hotelId",
+            select: "-createdAt -updatedAt -__v",
+        })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
@@ -439,10 +448,10 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
     const orders = await Order.find({
         assignedDeliveryBoy: deliveryBoyId,
     })
-    .populate({
-        path: "hotelId",
-        select: "-createdAt -updatedAt -__v",
-    })
+        .populate({
+            path: "hotelId",
+            select: "-createdAt -updatedAt -__v",
+        })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
@@ -465,10 +474,10 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
 exports.getOrderById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const order = await Order.findById(id)
-    .populate({
-        path: "hotelId",
-        select: "-createdAt -updatedAt -__v",
-    })
+        .populate({
+            path: "hotelId",
+            select: "-createdAt -updatedAt -__v",
+        })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
@@ -505,10 +514,10 @@ exports.deleteOrderById = asyncHandler(async (req, res) => {
 exports.getOrdersByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const orders = await Order.find({ userId })
-    .populate({
-        path: "hotelId",
-        select: "-createdAt -updatedAt -__v",
-    })
+        .populate({
+            path: "hotelId",
+            select: "-createdAt -updatedAt -__v",
+        })
         .populate({
             path: "products.dishId",
             select: "-createdAt -updatedAt -__v",
