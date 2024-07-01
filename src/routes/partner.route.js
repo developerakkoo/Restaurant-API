@@ -19,13 +19,15 @@ router.post(
 
 router.put("/hotel/update", partnerController.updateHotel);
 
+router.get("/get/hotels/:partnerId", partnerController.getHotelsByIdPartnerId);
+
 router.delete("/hotel/delete", partnerController.deleteHotel);
 
 router.get("/get/dashboard/:partnerId", partnerController.getPartnerDashboard);
 
 router.get("/get/earnings/:partnerId", partnerController.getEarnings);
 
-router.get("/get/orders",getAllOrders)
+router.get("/get/orders", getAllOrders);
 
 /*Hotel Dish Route*/
 

@@ -90,7 +90,9 @@ exports.loginPartner = asyncHandler(async (req, res) => {
     const loggedInUser = await Partner.findById(user._id).select(
         "-password -refreshToken",
     );
-    const hotels = await hotelModel.countDocuments({userId:loggedInUser._id})
+    const hotels = await hotelModel.countDocuments({
+        userId: loggedInUser._id,
+    });
 
     // Send a successful login response with cookies containing access and refresh tokens
     return res
@@ -102,7 +104,7 @@ exports.loginPartner = asyncHandler(async (req, res) => {
                 200,
                 {
                     userId: loggedInUser._id,
-                    hotelCount:hotels,
+                    hotelCount: hotels,
                     accessToken,
                     refreshToken,
                 },
@@ -134,7 +136,8 @@ exports.addHotel = asyncHandler(async (req, res) => {
 });
 
 exports.updateHotel = asyncHandler(async (req, res) => {
-    const { hotelId, hotelName, address, hotelStatus, isOnline } = req.body;
+    const { hotelId, hotelName, address, hotelStatus, category, isOnline } =
+        req.body;
     const hotelImage = await Hotel.findByIdAndUpdate(
         hotelId,
         {
@@ -142,6 +145,7 @@ exports.updateHotel = asyncHandler(async (req, res) => {
                 hotelName: hotelName,
                 address: address,
                 hotelStatus: hotelStatus,
+                category: category,
                 isOnline: isOnline,
             },
         },
@@ -217,17 +221,25 @@ exports.uploadHotelImage = asyncHandler(async (req, res) => {
 exports.getPartnerById = asyncHandler(async (req, res) => {
     const { partnerId } = req.params;
     const { populate } = req.query;
+
+    // Check if partnerId is a valid ObjectId
+    // if (!Types.ObjectId.isValid(partnerId)) {
+    //     throw new ApiError(400, "Invalid partner ID");
+    // }
+
     let partnerAggregation = [
         {
             $match: {
-                _id: new Types.ObjectId(partnerId), // Convert dishId to ObjectId if needed
+                _id: new Types.ObjectId(partnerId),
             },
         },
         {
-            $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
+            $project: { password: 0, refreshToken: 0 }, // Exclude sensitive fields from the result
         },
     ];
-    if (populate && Number(populate) === 1) {
+
+    if (populate && populate === "1") {
+        // Ensure populate is compared as string '1'
         partnerAggregation.splice(1, 0, {
             // Insert $lookup stage after $match
             $lookup: {
@@ -240,9 +252,11 @@ exports.getPartnerById = asyncHandler(async (req, res) => {
     }
 
     const partner = await Partner.aggregate(partnerAggregation).exec();
-    if (!partner) {
-        throw new ApiError(404, responseMessage.userMessage.userNotFound);
+
+    if (!partner || partner.length === 0) {
+        throw new ApiError(404, "Partner not found");
     }
+
     return res
         .status(200)
         .json(
@@ -435,5 +449,13 @@ exports.getEarnings = asyncHandler(async (req, res) => {
     };
     res.status(200).json(
         new ApiResponse(200, response, "Earnings Data Fetched Successfully"),
+    );
+});
+
+exports.getHotelsByIdPartnerId = asyncHandler(async (req, res) => {
+    const { partnerId } = req.params;
+    const hotels = await hotelModel.find({ userId: partnerId });
+    res.status(200).json(
+        new ApiResponse(200, hotels, "Hotels Fetched Successfully"),
     );
 });
