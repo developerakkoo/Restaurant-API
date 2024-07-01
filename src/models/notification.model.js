@@ -1,31 +1,19 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const { Schema, model } = require("mongoose");
 
 const notificationSchema = new Schema(
     {
-        chatId:{
-            type: Schema.Types.ObjectId,
-            ref: "Chat",
-            required: true,
-        },
-        senderId: {
+        userId: {
             type: Schema.Types.ObjectId,
             required: true,
         },
-        receiverId: {
-            type: Schema.Types.ObjectId,
-            required: true,
-        },
-        message: {
+        title: {
             type: String,
-            default: "",
+            required: true,
         },
-        isImage: {
-            type: Boolean,
-            default: false,
+        content: {
+            type: String,
+            required: true,
         },
-        image_url: String,
-        local_filePath: String,
         read: {
             type: Boolean,
             default: false,
@@ -34,4 +22,4 @@ const notificationSchema = new Schema(
     { timestamps: true },
 );
 
-module.exports = mongoose.model("Notification", notificationSchema);
+module.exports = model("Notification", notificationSchema);

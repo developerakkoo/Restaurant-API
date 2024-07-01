@@ -215,6 +215,8 @@ router.delete(
 
 /* DATA */
 
+router.get("/most-selling-products",adminController.getMostSellingDishes)
+
 router.post('/add/data',adminController.createData)
 
 module.exports = { adminRoutes: router };

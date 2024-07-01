@@ -89,11 +89,20 @@ const orderSchema = new Schema(
             required: true,
             default: false,
         },
+        orderTimeline: {
+            type: [
+                {
+                    title: String,
+                    dateTime: String,
+                    status: String,
+                },
+            ],
+        },
         orderStatus: {
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1, 2, 3, 4], // received = 0, being prepared = 1, delivery assigned = 2, delivered = 3, cancel order = 4
+            enum: [0, 1, 2, 3, 4, 5], // received = 0, being prepared = 1, delivery assigned = 2, delivered = 3, accepted = 4, cancel order = 5
         },
     },
     { timestamps: true },

@@ -7,21 +7,29 @@ const { responseMessage } = require("../constant");
 exports.updateCart = asyncHandler(async (req, res) => {
     const { userId, hotelId, products } = req.body;
 
+    // Check if hotelId is provided
+    if (!hotelId) {
+        return res.status(400).json(
+            new ApiResponse(
+                400,
+                null,
+                "Hotel ID is required"
+            )
+        );
+    }
+
     // Retrieve the existing cart
     let cart = await Cart.findOne({ userId });
-    
+
+    if (cart && cart.hotelId.toString() !== hotelId.toString()) {
+        // If cart exists and hotelId does not match, delete the cart
+        await Cart.findByIdAndDelete(cart._id);
+        cart = null;
+    }
+
     if (!cart) {
-        // Create a new cart if it doesn't exist
-        cart = new Cart({ userId, products: [], hotelId: hotelId });
-        // console.log('Creating new cart with hotelId:', hotelId);
-    } else {
-        // Check if the cart already has products from a different hotel
-        if (cart.hotelId && cart.hotelId.toString() !== hotelId.toString()) {
-            // Clear the cart and add the new dish from the different hotel
-            cart.products = [];
-            cart.hotelId = hotelId;
-            // console.log('Cart cleared and updated with new hotelId:', hotelId);
-        }
+        // Create a new cart if it doesn't exist or was deleted
+        cart = new Cart({ userId, products: [], hotelId });
     }
 
     // Update quantities and add new products
@@ -56,7 +64,6 @@ exports.updateCart = asyncHandler(async (req, res) => {
 
     // Save the updated cart
     const updatedCart = await cart.save();
-    // console.log('Updated cart saved:', updatedCart);
 
     res.status(200).json(
         new ApiResponse(
@@ -66,6 +73,8 @@ exports.updateCart = asyncHandler(async (req, res) => {
         ),
     );
 });
+
+
 
 
 

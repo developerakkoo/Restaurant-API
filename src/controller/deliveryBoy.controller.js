@@ -76,7 +76,7 @@ exports.registerDeliveryBoy = asyncHandler(async (req, res) => {
  */
 exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
     // Extract user login details from the request body
-    const { phoneNumber} = req.body;
+    const { phoneNumber } = req.body;
 
     // Find a user with the provided email in the database
     const user = await DeliverBoy.findOne({ phoneNumber });
@@ -204,17 +204,26 @@ exports.uploadDocument = asyncHandler(async (req, res) => {
         document_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
 
+    let userDocument;
     const existDoc = await DeliverBoyDocument.findOne({ userId, documentType });
     if (existDoc) {
         deleteFile(existDoc.local_filePath);
+        userDocument = await DeliverBoyDocument.findByIdAndUpdate(userId, {
+            documentType,
+            documentNumber,
+            document_url,
+            local_filePath,
+        });
+    } else {
+        userDocument = await DeliverBoyDocument.create({
+            userId,
+            documentType,
+            documentNumber,
+            document_url,
+            local_filePath,
+        });
     }
-    const userDocument = await DeliverBoyDocument.create({
-        userId,
-        documentType,
-        documentNumber,
-        document_url,
-        local_filePath,
-    });
+
     return res
         .status(200)
         .json(

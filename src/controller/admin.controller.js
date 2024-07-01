@@ -1068,7 +1068,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
         }),
         Order.countDocuments({
             ...DateFilterPipeline[0].$match,
-            orderStatus: 4,
+            orderStatus: 5, // Corrected to match 'cancel order' status
         }),
         User.countDocuments(DateFilterPipeline[0].$match),
         Partner.countDocuments(DateFilterPipeline[0].$match),
@@ -1081,7 +1081,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
                 $group: {
                     _id: null,
                     sum_totalPrice: {
-                        $sum: "$totalPrice",
+                        $sum: "$priceDetails.totalAmountToPay", // Corrected to match the correct field
                     },
                 },
             },
@@ -1162,7 +1162,7 @@ exports.orderChartData = asyncHandler(async (req, res) => {
         {
             $group: {
                 _id: "$sortField",
-                userCount: {
+                orderCount: {
                     $sum: 1,
                 },
             },
@@ -1183,12 +1183,11 @@ exports.orderChartData = asyncHandler(async (req, res) => {
 
 exports.totalRevenueData = asyncHandler(async (req, res) => {
     const { sort = "dayOfMonth" } = req.query;
-    // const startDate = moment().startOf(sort); // Today's date at 00:00:00
-    // const endDate = moment().endOf(sort);
+
     const pipeline = [
         {
             $project: {
-                totalPrice: 1,
+                totalPrice: "$priceDetails.totalAmountToPay",
                 sortField: {
                     [`$${sort}`]: "$createdAt",
                 },
@@ -1210,7 +1209,9 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
             },
         },
     ];
+
     const data = await Order.aggregate(pipeline);
+
     res.status(200).json(
         new ApiResponse(
             200,
@@ -1231,4 +1232,72 @@ exports.createData = asyncHandler(async (req, res) => {
     res.status(200).json(
         new ApiResponse(200, data, "Data created successfully"),
     );
+});
+
+exports.getMostSellingDishes = asyncHandler(async (req, res) => {
+    const { period } = req.query; // period can be 'daily', 'weekly', or 'monthly'
+
+    // Define the date range based on the period
+    let startDate, endDate;
+    if (period === "daily") {
+        startDate = moment().startOf("day").toDate();
+        endDate = moment().endOf("day").toDate();
+    } else if (period === "weekly") {
+        startDate = moment().startOf("week").toDate();
+        endDate = moment().endOf("week").toDate();
+    } else if (period === "monthly") {
+        startDate = moment().startOf("month").toDate();
+        endDate = moment().endOf("month").toDate();
+    } else {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Invalid period"));
+    }
+    const matchStage = {
+        createdAt: {
+            $gte: startDate,
+            $lte: endDate,
+        },
+    };
+
+    const aggregatePipeline = [
+        { $match: matchStage },
+        { $unwind: "$products" },
+        {
+            $group: {
+                _id: "$products.dishId",
+                totalOrders: { $sum: "$products.quantity" },
+            },
+        },
+        {
+            $lookup: {
+                from: "hoteldishes", // Assuming the collection name is "hoteldishes"
+                localField: "_id",
+                foreignField: "_id",
+                as: "dish",
+            },
+        },
+        { $unwind: "$dish" },
+        {
+            $project: {
+                _id: 0,
+                dish: "$dish",
+                totalOrders: 1,
+            },
+        },
+        { $sort: { totalOrders: -1 } },
+        { $limit: 10 }, // Limit to top 10 products
+    ];
+
+    const result = await Order.aggregate(aggregatePipeline).exec();
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                result,
+                "Most selling products fetched successfully",
+            ),
+        );
 });

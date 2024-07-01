@@ -12,6 +12,8 @@ const { getIO } = require("../utils/socket");
 const { Types } = require("mongoose");
 const promoCodeModel = require("../models/promoCode.model");
 const { ApiError } = require("../utils/ApiErrorHandler");
+const { sendNotification } = require("./notification.controller");
+const hotelModel = require("../models/hotel.model");
 let instance = new razorpay({
     key_id: process.env.KEY_ID,
     key_secret: process.env.KEY_SECRET,
@@ -186,12 +188,16 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         paymentId,
         phone,
         description,
+        orderTimeline: [
+            {
+                title: "Order Placed",
+                status: "PENDING",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+            },
+        ],
     });
-
-    getIO().emit(hotelId, {
-        message: "Order",
-        data: order,
-    });
+    const hotel = await hotelModel.findById(hotelId);
+    sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
 
     // Clear the cart
     await cart.updateOne({
@@ -213,12 +219,57 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         );
 });
 
+exports.acceptOrder = asyncHandler(async (req, res) => {
+    const { orderId, status } = req.body;
+    let message;
+
+    const update = {
+        $set: {
+            orderStatus: status,
+        },
+    };
+
+    if (status === 4) {
+        message = "ORDER_ACCEPTED_SUCCESSFULLY";
+        update.$push = {
+            orderTimeline: {
+                title: "Order Accepted",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "ACCEPTED",
+            },
+        };
+    } else if (status === 5) {
+        message = "ORDER_REJECTED_SUCCESSFULLY";
+        update.$push = {
+            orderTimeline: {
+                title: "Order Rejected",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "REJECTED",
+            },
+        };
+    }
+
+    const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
+
+    if (!order) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    sendNotification(order.userId, message, order);
+
+    return res.status(200).json(new ApiResponse(200, order, message));
+});
+
 exports.updateOrder = asyncHandler(async (req, res) => {
     const { orderId, status, deliveryBoyId } = req.body;
     const savedOrder = await Order.findById(orderId);
-    if (savedOrder.orderStatus === 2 && savedOrder.assignedDeliveryBoy) {
+
+    // Check if the order is already assigned and trying to assign again
+    if (savedOrder.orderStatus === 2 && savedOrder.assignedDeliveryBoy && req.body.deliveryBoyId) {
         return res
-            .status(200)
+            .status(400)
             .json(
                 new ApiResponse(
                     400,
@@ -227,23 +278,60 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 ),
             );
     }
-    const order = await Order.findByIdAndUpdate(
-        orderId,
-        {
-            $set: {
-                orderStatus: status,
-                assignedDeliveryBoy: deliveryBoyId,
-            },
+
+    const update = {
+        $set: {
+            orderStatus: status,
+            assignedDeliveryBoy: deliveryBoyId,
         },
-        { new: true },
-    );
-    if (deliveryBoyId) {
-        console.log("even");
-        getIO().emit(deliveryBoyId, {
-            message: "Order assign to you ",
-            data: order,
-        });
+    };
+
+    // Prepare timeline entry based on status
+    let timelineEntry = {};
+    switch (Number(status)) {
+        case 1:
+            timelineEntry = {
+                title: "Order being prepared",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "preparing",
+            };
+            break;
+        case 2:
+            timelineEntry = {
+                title: "Delivery assigned",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "assigned",
+            };
+            break;
+        case 3:
+            timelineEntry = {
+                title: "Order delivered",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "delivered",
+            };
+            break;
+        default:
+            break;
     }
+
+    if (timelineEntry.title) {
+        update.$push = { orderTimeline: timelineEntry };
+    }
+
+    const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
+
+    // Send notifications based on actions
+    if (deliveryBoyId) {
+        const hotel = await hotelModel.findById(order.hotelId);
+        sendNotification(hotel.userId, "Order pick up confirm", order);
+        sendNotification(deliveryBoyId, "Order assign to you", order);
+        sendNotification(
+            order.userId,
+            "Delivery boy assigned to your order",
+            order,
+        );
+    }
+
     return res
         .status(200)
         .json(
