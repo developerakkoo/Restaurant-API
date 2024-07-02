@@ -62,10 +62,12 @@ exports.removeFavorite = asyncHandler(async (req, res) => {
 
 exports.getFavorite = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const favorites = await Favorite.findById(id).populate({
-        path: "dishId",
-        select: "-partnerPrice",
-    });
+    const favorites = await Favorite.findById(id)
+        .populate({
+            path: "dishId",
+            select: "-partnerPrice",
+        })
+        .populate("hotelId");
     return res
         .status(200)
         .json(
@@ -79,10 +81,12 @@ exports.getFavorite = asyncHandler(async (req, res) => {
 
 exports.getMyFavoritesList = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const favorites = await Favorite.find({ userId }).populate({
-        path: "dishId",
-        select: "-partnerPrice",
-    });
+    const favorites = await Favorite.find({ userId })
+        .populate({
+            path: "dishId",
+            select: "-partnerPrice",
+        })
+        .populate("hotelId");
     return res
         .status(200)
         .json(
