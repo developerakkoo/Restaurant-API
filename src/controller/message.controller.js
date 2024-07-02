@@ -41,6 +41,52 @@ exports.getMyChatList = asyncHandler(async (req, res) => {
         );
 });
 
+
+
+exports.sendMessage = asyncHandler(async (req, res) => {
+    console.log("hree>>>>>>>>>>>>>> text");
+    const { chatId, senderId, receiverId, message, orderId } = req.body;
+    const newMessage = await Message.create({
+        senderId,
+        orderId,
+        receiverId,
+        message,
+        chatId,
+    });
+    sendNotification(receiverId, "New Message", newMessage);
+    return res
+        .status(201)
+        .json(new ApiResponse(201, newMessage, responseMessage.Message_SENT));
+});
+
+exports.sendMultimediaMessage = asyncHandler(async (req, res) => {
+    // console.log("hree>>>>>>>>>>>>>> media");
+    const { chatId, senderId, receiverId, orderId } = req.body;
+    const { filename } = req.file;
+    const local_filePath = `upload/${filename}`;
+    let image_url = `https://${req.hostname}/upload/${filename}`;
+    if (process.env.NODE_ENV !== "production") {
+        image_url = `https://${req.hostname}:8000/upload/${filename}`;
+    }
+
+    const data = {
+        chatId,
+        orderId,
+        senderId,
+        receiverId,
+        isImage: true,
+        image_url,
+        local_filePath,
+    };
+    // console.log(data);
+    const newMessage = await Message.create(data);
+    sendNotification(receiverId, "New Message", newMessage);
+
+    return res
+        .status(201)
+        .json(new ApiResponse(201, newMessage, responseMessage.Message_SENT));
+});
+
 exports.checkChatExist = asyncHandler(async (req, res, next) => {
     const { senderId, receiverId } = req.body;
 
@@ -54,50 +100,13 @@ exports.checkChatExist = asyncHandler(async (req, res, next) => {
 
     if (chat) {
         req.body.chatId = chat._id;
-        return this.sendMessage(req, res);
+        // return this.sendMessage(req, res);
     }
 
     // If no chat exists, create a new one
     chat = await chatModel.create({ members: [senderId, receiverId] });
     req.body.chatId = chat._id;
     next();
-});
-9;
-exports.sendMessage = asyncHandler(async (req, res) => {
-    const { chatId, senderId, receiverId, message } = req.body;
-    const newMessage = await Message.create({
-        senderId,
-        receiverId,
-        message,
-        chatId,
-    });
-    sendNotification(receiverId, "New Message", newMessage);
-    return res
-        .status(201)
-        .json(new ApiResponse(201, newMessage, responseMessage.Message_SENT));
-});
-
-exports.sendMultimediaMessage = asyncHandler(async (req, res) => {
-    const { chatId, senderId, receiverId } = req.body;
-    const { filename } = req.file;
-    const local_filePath = `upload/${filename}`;
-    let image_url = `https://${req.hostname}/upload/${filename}`;
-    if (process.env.NODE_ENV !== "production") {
-        image_url = `https://${req.hostname}:8000/upload/${filename}`;
-    }
-    const newMessage = await Message.create({
-        chatId,
-        senderId,
-        receiverId,
-        isImage: true,
-        image_url,
-        local_filePath,
-    });
-    sendNotification(receiverId, "New Message", newMessage);
-
-    return res
-        .status(201)
-        .json(new ApiResponse(201, newMessage, responseMessage.Message_SENT));
 });
 
 exports.getMessageById = asyncHandler(async (req, res) => {
@@ -119,9 +128,15 @@ exports.getMessageById = asyncHandler(async (req, res) => {
 
 exports.getAllMessageByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const Messages = await Message.find({
-        $or: [{ senderId: userId }, { receiverId: userId }],
-    }).sort({ createdAt: -1 });
+    const {orderId} = req.query;
+        // Build the query to find messages based on orderId and userId
+        const query = {
+            $or: [{ senderId: userId }, { receiverId: userId }],
+        };
+        if (orderId) {
+            query.orderId = orderId; // Add orderId filter if provided
+        }
+    const Messages = await Message.find(query).sort({ createdAt: 1 });
     if (!Messages) {
         throw new ApiError(404, responseMessage.Message_NOT_FOUND);
     }

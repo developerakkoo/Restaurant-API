@@ -30,7 +30,7 @@ exports.addFavorite = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 newFavorite,
-                responseMessage.userMessage.FAVORITED_SUCCESSFULLY,
+                responseMessage.userMessage.ADD_FAVORITED_SUCCESSFULLY,
             ),
         );
 });
@@ -79,6 +79,8 @@ exports.getFavorite = asyncHandler(async (req, res) => {
         );
 });
 
+
+//TODO:  need all data like rating and all sam link get all dish and hotel
 exports.getMyFavoritesList = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const favorites = await Favorite.find({ userId })
@@ -86,14 +88,18 @@ exports.getMyFavoritesList = asyncHandler(async (req, res) => {
             path: "dishId",
             select: "-partnerPrice",
         })
-        .populate("hotelId");
+        .populate({path:"hotelId",
+            populate: {
+                path: "category", // Populate the category field within hotelId
+            }
+        });
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
                 favorites,
-                responseMessage.userMessage.FAVORITED_SUCCESSFULLY,
+                responseMessage.userMessage.ADD_FAVORITED_SUCCESSFULLY,
             ),
         );
 });
