@@ -45,7 +45,7 @@ const dishSchema = new Schema(
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1, 3], // no-spicey, medium-spicey, so-spicey
+            enum: [0, 1,2, 3], // no-spicey, medium-spicey, so-spicey
         },
         timeToPrepare: {
             type: Number,
