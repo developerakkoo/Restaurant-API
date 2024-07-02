@@ -355,14 +355,13 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
         hotelId,
     } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
-    const skip = (pageNumber - 1) * pageSize;
+    const skip = (Number(pageNumber) - 1) * Number(pageSize);
     // Search based on user query
     if (q) {
         dbQuery = {
             $or: [{ orderId: { $regex: `^${q}`, $options: "i" } }],
         };
     }
-    console.log(hotelId);
     if (hotelId) {
         dbQuery = {
             hotelId: new Types.ObjectId(hotelId),
@@ -397,7 +396,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
             $skip: skip,
         },
         {
-            $limit: pageSize,
+            $limit: Number(pageSize),
         },
     ];
     // Conditionally add $lookup stage if populate is true
