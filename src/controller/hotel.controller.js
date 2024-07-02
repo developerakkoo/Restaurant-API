@@ -1165,7 +1165,10 @@ exports.getDishByHotelId = asyncHandler(async (req, res) => {
     const totalDishes = await Dish.countDocuments(dbQuery);
 
     // Fetch paginated documents
-    const dishes = await Dish.find(dbQuery).skip(skip).limit(pageSize);
+    const dishes = await Dish.find(dbQuery)
+        .populate({ path: "hotelId", populate: { path: "category" } })
+        .skip(skip)
+        .limit(pageSize);
 
     const totalPages = Math.ceil(totalDishes / pageSize);
     const startItem = skip + 1;
@@ -1174,20 +1177,18 @@ exports.getDishByHotelId = asyncHandler(async (req, res) => {
         startItem + dishes.length - 1,
     );
 
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    content: dishes,
-                    startItem,
-                    endItem,
-                    totalPages,
-                    pagesize: dishes.length,
-                    totalDoc: totalDishes,
-                },
-                responseMessage.userMessage.dishFetchedSuccessfully,
-            ),
-        );
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                content: dishes,
+                startItem,
+                endItem,
+                totalPages,
+                pagesize: dishes.length,
+                totalDoc: totalDishes,
+            },
+            responseMessage.userMessage.dishFetchedSuccessfully,
+        ),
+    );
 });
