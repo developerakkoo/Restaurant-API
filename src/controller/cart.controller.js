@@ -9,37 +9,56 @@ exports.updateCart = asyncHandler(async (req, res) => {
 
     // Check if hotelId is provided
     if (!hotelId) {
-        return res.status(400).json(
-            new ApiResponse(
-                400,
-                null,
-                "Hotel ID is required"
-            )
-        );
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Hotel ID is required"));
     }
 
     // Retrieve the existing cart
     let cart = await Cart.findOne({ userId });
 
-    if (cart && cart.hotelId.toString() !== hotelId.toString()) {
-        // If cart exists and hotelId does not match, delete the cart
-        await Cart.findByIdAndDelete(cart._id);
-        cart = null;
+    // Check if cart exists and hotelId does not match
+    if (
+        cart &&
+        cart.hotelId &&
+        cart.hotelId.toString() !== hotelId.toString()
+    ) {
+        // Clear the products in the cart if hotelId does not match
+        cart.products = [];
+        cart.hotelId = hotelId;
     }
 
+    // Create a new cart if it doesn't exist
     if (!cart) {
-        // Create a new cart if it doesn't exist or was deleted
         cart = new Cart({ userId, products: [], hotelId });
+    } else {
+        // Update the hotelId if it was null
+        if (!cart.hotelId) {
+            cart.hotelId = hotelId;
+        }
     }
 
     // Update quantities and add new products
     for (const product of products) {
         const dish = await dishModel.findById(product.dishId);
 
+        if (!dish) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        `Dish with ID ${product.dishId} not found`,
+                    ),
+                );
+        }
+
         // Check if the dish already exists in the cart
         const existingProduct = cart.products.find(
             (p) => p.dishId.toString() === product.dishId.toString(),
         );
+
         if (existingProduct) {
             // Update the quantity of the existing dish
             existingProduct.quantity += product.quantity;
@@ -56,7 +75,9 @@ exports.updateCart = asyncHandler(async (req, res) => {
     let totalPrice = 0;
     for (const product of cart.products) {
         const dish = await dishModel.findById(product.dishId);
-        totalPrice += dish.userPrice * product.quantity;
+        if (dish) {
+            totalPrice += dish.userPrice * product.quantity;
+        }
     }
 
     // Update the total price in the cart
@@ -73,11 +94,6 @@ exports.updateCart = asyncHandler(async (req, res) => {
         ),
     );
 });
-
-
-
-
-
 
 exports.deleteProductFromCart = asyncHandler(async (req, res) => {
     const { userId, dishId, quantityToRemove = 1 } = req.body;
