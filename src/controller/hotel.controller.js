@@ -1167,6 +1167,7 @@ exports.getDishByHotelId = asyncHandler(async (req, res) => {
     // Fetch paginated documents
     const dishes = await Dish.find(dbQuery).skip(skip).limit(pageSize);
 
+    const totalPages = Math.ceil(totalDishes / pageSize);
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
