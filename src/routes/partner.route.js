@@ -31,7 +31,6 @@ router.get("/get/orders", getAllOrders);
 
 router.get("/get/byId/:partnerId", partnerController.getPartnerById);
 
-
 /*Hotel Dish Route*/
 
 router.post("/hotel/add-dish", HotelController.addDish);
@@ -50,6 +49,8 @@ router.put(
     "/category/:categoryId/toggleStoke/:hotelId",
     partnerController.toggleCategoryOutOfStock,
 );
+
+router.put("/update/:partnerId", partnerController.updatePartner);
 
 router.delete("/hotel/dish/delete", HotelController.deleteDish);
 

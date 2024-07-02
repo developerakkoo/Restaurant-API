@@ -460,5 +460,23 @@ exports.getHotelsByIdPartnerId = asyncHandler(async (req, res) => {
     );
 });
 
+exports.updatePartner = asyncHandler(async (req, res) => {
+    const { partnerId } = req.params;
+    const { name, email, phoneNumber } = req.body;
 
-exports.updatePartner = asyncHandler
+    const partner = await Partner.findByIdAndUpdate(
+        partnerId,
+        {
+            $set: {
+                name,
+                email,
+                phoneNumber,
+            },
+        },
+        { new: true },
+    );
+
+    res.status(200).json(
+        new ApiResponse(200, partner, "Partner Updated Successfully"),
+    );
+});
