@@ -54,10 +54,10 @@ const orderSchema = new Schema(
                 type: Number,
                 required: true,
             },
-            deliveryBoyCompensation: {
-                type: Number,
-                required: true,
-            },
+            // deliveryBoyCompensation: {
+            //     type: Number,
+            //     required: true,
+            // },
             platformFee: {
                 type: Number,
                 required: true,
