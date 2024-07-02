@@ -1166,7 +1166,8 @@ exports.getDishByHotelId = asyncHandler(async (req, res) => {
 
     // Fetch paginated documents
     const dishes = await Dish.find(dbQuery)
-        .populate({ path: "hotelId", populate: { path: "category" } })
+        .populate("hotelId")
+        .populate("categoryId")
         .skip(skip)
         .limit(pageSize);
 

@@ -459,3 +459,6 @@ exports.getHotelsByIdPartnerId = asyncHandler(async (req, res) => {
         new ApiResponse(200, hotels, "Hotels Fetched Successfully"),
     );
 });
+
+
+exports.updatePartner = asyncHandler
