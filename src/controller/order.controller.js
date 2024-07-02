@@ -293,21 +293,21 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             timelineEntry = {
                 title: "Order being prepared",
                 dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
-                status: "preparing",
+                status: "PREPARING",
             };
             break;
         case 2:
             timelineEntry = {
                 title: "Delivery assigned",
                 dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
-                status: "assigned",
+                status: "ASSIGNED",
             };
             break;
         case 3:
             timelineEntry = {
                 title: "Order delivered",
                 dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
-                status: "delivered",
+                status: "DELIVERED",
             };
             break;
         default:
