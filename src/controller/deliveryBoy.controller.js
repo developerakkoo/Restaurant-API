@@ -208,12 +208,16 @@ exports.uploadDocument = asyncHandler(async (req, res) => {
     const existDoc = await DeliverBoyDocument.findOne({ userId, documentType });
     if (existDoc) {
         deleteFile(existDoc.local_filePath);
-        userDocument = await DeliverBoyDocument.findByIdAndUpdate(userId, {
-            documentType,
-            documentNumber,
-            document_url,
-            local_filePath,
-        });
+        userDocument = await DeliverBoyDocument.findByIdAndUpdate(
+            existDoc._id,
+            {
+                documentType,
+                documentNumber,
+                document_url,
+                local_filePath,
+            },
+            { new: true },
+        );
     } else {
         userDocument = await DeliverBoyDocument.create({
             userId,

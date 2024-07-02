@@ -69,6 +69,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     let promoCodeId = null;
     let promoCodeDetails = null;
     let promoCodeData;
+    let deliveryBoyCompensation = 0;
 
     // If a promo code is provided, validate and apply it
     if (code) {
@@ -94,6 +95,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         switch (promoCode.codeType) {
             case 1: // FREE_DELIVERY
                 discount = deliveryCharges;
+                deliveryBoyCompensation = deliveryCharges;
                 promoCodeDetails = `FREE_DELIVERY`;
                 totalAmountToPay -= deliveryCharges;
                 break;
@@ -101,6 +103,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
                 discount = promoCode.discountAmount;
                 promoCodeDetails = `GET_OFF`;
                 totalAmountToPay -= promoCode.discountAmount;
+                deliveryBoyCompensation = deliveryCharges;
                 break;
             case 3: // NEW_USER
                 const userOrderExist = await Order.findOne({ userId });
@@ -111,6 +114,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
                     );
                 }
                 discount = promoCode.discountAmount;
+                deliveryBoyCompensation = deliveryCharges;
                 promoCodeDetails = `NEW_USER `;
                 totalAmountToPay -= promoCode.discountAmount;
                 break;
@@ -267,7 +271,11 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     const savedOrder = await Order.findById(orderId);
 
     // Check if the order is already assigned and trying to assign again
-    if (savedOrder.orderStatus === 2 && savedOrder.assignedDeliveryBoy && req.body.deliveryBoyId) {
+    if (
+        savedOrder.orderStatus === 2 &&
+        savedOrder.assignedDeliveryBoy &&
+        req.body.deliveryBoyId
+    ) {
         return res
             .status(400)
             .json(
