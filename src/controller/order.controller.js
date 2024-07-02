@@ -311,6 +311,13 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 status: "ASSIGNED",
             };
             break;
+        case 6:
+            timelineEntry = {
+                title: "Confirm Pickup",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "PICKUP_CONFIRMED",
+            };
+            break;
         case 3:
             timelineEntry = {
                 title: "Order delivered",
@@ -540,9 +547,14 @@ exports.getOrderByOrderId = asyncHandler(async (req, res) => {
 
 exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
     const { deliveryBoyId } = req.params;
-    const orders = await Order.find({
+    let dbQuery = {
         assignedDeliveryBoy: deliveryBoyId,
-    })
+    };
+    if (req.query.status) {
+        dbQuery.orderStatus = req.query.status;
+    }
+    const orders = await Order.find(dbQuery)
+        .populate({path:"userId",select:"name phoneNumber"})
         .populate({
             path: "hotelId",
             select: "-createdAt -updatedAt -__v",

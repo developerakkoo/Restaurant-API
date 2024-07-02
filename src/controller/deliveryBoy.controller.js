@@ -1,5 +1,6 @@
 const DeliverBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
+const leaveModel = require("../models/deliveryBoyLeave.model");
 const { responseMessage, cookieOptions } = require("../constant");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
@@ -374,6 +375,53 @@ exports.getMyProfile = asyncHandler(async (req, res) => {
                 200,
                 user,
                 responseMessage.userMessage.profileFetchedSuccessfully,
+            ),
+        );
+});
+
+exports.askForLeave = asyncHandler(async (req, res) => {
+    const { deliveryBoyId, reason, startDate, endDate } = req.body;
+    const leaveRequest = await leaveModel.findOne({
+        deliveryBoyId,
+        reason,
+        startDate,
+        endDate,
+    });
+    if (leaveRequest) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Leave Request Already Exists"));
+    }
+    const newLeaveRequest = await leaveModel.create({
+        deliveryBoyId,
+        reason,
+        startDate,
+        endDate,
+    });
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                newLeaveRequest,
+                "Leave Request Sent Successfully",
+            ),
+        );
+});
+
+exports.getAllLeaveRequests = asyncHandler(async (req, res) => {
+    const { deliveryBoyId, status } = req.query;
+    const dbQuery = { deliveryBoyId };
+    if (status) dbQuery.status = status;
+
+    const leaveRequests = await leaveModel.find(dbQuery);
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                leaveRequests,
+                "Leave Requests Fetched Successfully",
             ),
         );
 });

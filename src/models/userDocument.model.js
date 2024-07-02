@@ -11,7 +11,7 @@ const userDocumentSchema = new Schema(
         documentType: {
             type: Number,
             required: true,
-            enum:[11,22,33] //"ADHAR","PAN","LC"
+            enum:[11,22,33,44] //"ADHAR","PAN","LC","Passbook"
         },
         documentNumber: {
             type: String,
