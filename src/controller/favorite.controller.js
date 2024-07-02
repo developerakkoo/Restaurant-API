@@ -5,7 +5,7 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { responseMessage } = require("../constant");
 
 exports.addFavorite = asyncHandler(async (req, res) => {
-    const { userId, dishId } = req.body;
+    const { userId, dishId, hotelId } = req.body;
     const favorite = await Favorite.findOne({ userId, dishId });
     if (favorite) {
         return res
@@ -18,13 +18,18 @@ exports.addFavorite = asyncHandler(async (req, res) => {
                 ),
             );
     }
-    const newFavorite = await Favorite.create({ userId, dishId });
+    let newFavorite;
+    if (dishId) {
+        newFavorite = await Favorite.create({ userId, dishId });
+    } else {
+        newFavorite = await Favorite.create({ userId, hotelId });
+    }
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                favorite,
+                newFavorite,
                 responseMessage.userMessage.FAVORITED_SUCCESSFULLY,
             ),
         );
