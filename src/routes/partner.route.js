@@ -29,6 +29,9 @@ router.get("/get/earnings/:partnerId", partnerController.getEarnings);
 
 router.get("/get/orders", getAllOrders);
 
+router.get("/get/byId/:partnerId", partnerController.getPartnerById);
+
+
 /*Hotel Dish Route*/
 
 router.post("/hotel/add-dish", HotelController.addDish);

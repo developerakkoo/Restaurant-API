@@ -1114,3 +1114,79 @@ exports.getTopHotels = asyncHandler(async (req, res) => {
             ),
         );
 });
+
+exports.getDishByHotelId = asyncHandler(async (req, res) => {
+    const { q, status, categoryId, dishType, stock } = req.query;
+    const pageNumber = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const skip = (pageNumber - 1) * pageSize;
+    const { hotelId } = req.params;
+    let dbQuery = { hotelId };
+
+    // Search based on user query
+    if (q) {
+        const words = q
+            .split(" ")
+            .map((word) => `\\b${word}\\b`)
+            .join("|");
+        dbQuery = {
+            ...dbQuery,
+            $or: [
+                { name: { $regex: new RegExp(words, "i") } },
+                { dishType: { $regex: `^${q}` } },
+            ],
+        };
+    }
+
+    // Sort by status
+    if (status) {
+        dbQuery.status = status;
+    }
+
+    // Sort by stock
+    if (stock) {
+        dbQuery.stock = stock;
+    }
+
+    // Sort by dishType
+    if (dishType) {
+        dbQuery.dishType = dishType;
+    }
+
+    // Sort by category (user can sort by multiple categories)
+    if (categoryId) {
+        const categoryIds = categoryId
+            .split(",")
+            .map((id) => new Types.ObjectId(id.trim()));
+        dbQuery.categoryId = { $in: categoryIds };
+    }
+
+    // Count total documents
+    const totalDishes = await Dish.countDocuments(dbQuery);
+
+    // Fetch paginated documents
+    const dishes = await Dish.find(dbQuery).skip(skip).limit(pageSize);
+
+    const startItem = skip + 1;
+    const endItem = Math.min(
+        startItem + pageSize - 1,
+        startItem + dishes.length - 1,
+    );
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    content: dishes,
+                    startItem,
+                    endItem,
+                    totalPages,
+                    pagesize: dishes.length,
+                    totalDoc: totalDishes,
+                },
+                responseMessage.userMessage.dishFetchedSuccessfully,
+            ),
+        );
+});

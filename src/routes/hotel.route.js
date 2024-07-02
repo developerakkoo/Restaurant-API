@@ -4,6 +4,7 @@ const { getAllHotel } = require("../controller/admin.controller");
 
 router.get("/get/byId/:hotelId", HotelStarController.getHotelById);
 
+
 router.post("/add-star", HotelStarController.addStartToHotel);
 
 router.get("/get-star/:starId", HotelStarController.getStartById);
@@ -31,6 +32,9 @@ router.delete(
 
 router.post("/dish/add-star", HotelStarController.addStartToDish);
 
+router.get("/dish/get/:hotelId", HotelStarController.getDishByHotelId);
+
+
 router.get("/dish/get-star/:starId", HotelStarController.getDishStartById);
 
 router.get(
@@ -47,6 +51,8 @@ router.delete(
     "/dish/delete-star/id/:starId",
     HotelStarController.deleteStartFromDishById,
 );
+
+
 
 router.get("/search-dish", HotelStarController.getAllDishes);
 

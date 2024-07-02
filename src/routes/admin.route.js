@@ -27,6 +27,8 @@ router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
 
 
+
+
 router.use(adminPrivilegesRequired);
 
 
