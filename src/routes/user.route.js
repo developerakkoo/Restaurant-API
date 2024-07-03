@@ -1,7 +1,11 @@
 const router = require("express").Router();
 const userDataValidator = require("../validators/user.validator");
 const userController = require("../controller/user.controller");
-const { getAllCategory } = require("../controller/admin.controller");
+const {
+    getAllCategory,
+    getAllVideos,
+    getVideoById,
+} = require("../controller/admin.controller");
 const authController = require("../controller/auth.controller");
 const {
     getPromoCode,
@@ -46,5 +50,11 @@ router.get("/get/recommended/dishes/:userId", userController.getRecommendation);
 /* Hotel And  Category Search*/
 
 router.get("/search", userController.hotelAndCategorySearch);
+
+/* video routes */
+
+router.get("/video/all", getAllVideos);
+
+router.get("/video/get/:videoId", getVideoById);
 
 module.exports = { userRoutes: router };

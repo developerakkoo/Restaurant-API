@@ -1,3 +1,4 @@
+const videoAddModel = require("../models/videoAdd.model");
 const Admin = require("../models/admin.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
@@ -19,6 +20,7 @@ const Order = require("../models/order.model");
 const moment = require("moment");
 const userTrackModel = require("../models/userTrack.model");
 const { Types } = require("mongoose");
+const { v4: uuidV4 } = require("uuid");
 
 /**
  *  @function registerAdmin
@@ -1300,4 +1302,64 @@ exports.getMostSellingDishes = asyncHandler(async (req, res) => {
                 "Most selling products fetched successfully",
             ),
         );
+});
+
+exports.addVideos = asyncHandler(async (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "No files were uploaded"));
+    }
+    const videoData = req.files.map((video) =>
+        videoAddModel.create({
+            videoId: uuidV4().toUpperCase(),
+            videoUrl: `https://${req.hostname}/upload/${video.filename}`,
+            video_local_url: `upload/${video.filename}`,
+        }),
+    );
+    const data = await Promise.all(videoData);
+    res.status(200).json(
+        new ApiResponse(200, data, "Video uploaded successfully "),
+    );
+});
+
+exports.deleteVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const video = await videoAddModel.findByIdAndDelete(videoId);
+    if (!video) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Video not found"));
+    }
+
+    deleteFile(video.video_local_url);
+
+    res.status(200).json(
+        new ApiResponse(200, video, "Video deleted successfully"),
+    );
+});
+
+exports.getAllVideos = asyncHandler(async (req, res) => {
+    try {
+        const videos = await videoAddModel.find();
+        if (videos.length === 0) {
+            return res.status(404).json(new ApiResponse(404, null, "No videos found"));
+        }
+        res.status(200).json(new ApiResponse(200, videos, "All videos fetched successfully"));
+    } catch (error) {
+        res.status(500).json(new ApiResponse(500, null, "An error occurred while fetching videos"));
+    }
+});
+
+exports.getVideoById = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const video = await videoAddModel.findById(videoId);
+    if (!video) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Video not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, video, "Video fetched successfully"),
+    );
 });

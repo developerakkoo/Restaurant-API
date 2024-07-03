@@ -23,6 +23,7 @@ exports.registerDeliveryBoy = asyncHandler(async (req, res) => {
     const {
         firstName,
         lastName,
+        email,
         fatherName,
         dateOfBirth,
         bloodGroup,
@@ -42,6 +43,7 @@ exports.registerDeliveryBoy = asyncHandler(async (req, res) => {
         fatherName,
         dateOfBirth,
         bloodGroup,
+        email,
         city,
         address,
         languageKnown,
@@ -84,7 +86,15 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
 
     // If the user is not found, return a 404 response
     if (!user) {
-        throw new ApiError(404, responseMessage.userMessage.userNotFound);
+        return res
+            .status(404)
+            .json(
+                new ApiResponse(
+                    404,
+                    { isRegistered: false },
+                    responseMessage.userMessage.userNotFound,
+                ),
+            );
     }
 
     // Check if the provided password is correct
@@ -113,6 +123,7 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
                 200,
                 {
                     userId: loggedInUser._id,
+                    isRegistered: true,
                     accessToken,
                     refreshToken,
                 },

@@ -4,7 +4,7 @@ const path = require("path");
 // Multer configuration
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '..', 'upload')); // Specify the directory where uploaded files will be saved
+        cb(null, path.join(__dirname, "..", "upload")); // Specify the directory where uploaded files will be saved
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -20,6 +20,28 @@ exports.upload = multer({
     fileFilter: function (req, file, cb) {
         // Validate file types
         const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only JPEG, PNG, and JPG images are allowed."));
+        }
+    },
+});
+
+exports.videoUpload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // Limit file size to 10MB
+    },
+    fileFilter: function (req, file, cb) {
+        // Validate file types
+        const allowedTypes = [
+            "video/mp4",
+            "video/webm",
+            "video/ogg",
+            "video/x-matroska", // for .mkv files
+        ];
+
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {

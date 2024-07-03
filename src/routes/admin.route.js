@@ -9,7 +9,7 @@ const authController = require("../controller/auth.controller");
 const validateData = require("../validators/admin.validator");
 const { dataValidationResult } = require("../validators/validationResult");
 const promoCodeController = require("../controller/promoCode.controller");
-const { upload } = require("../middleware/fileHandler.middleware");
+const { upload, videoUpload } = require("../middleware/fileHandler.middleware");
 const {
     adminPrivilegesRequired,
 } = require("../middleware/userAccess.middleware");
@@ -18,19 +18,13 @@ router.post("/logout", authController.logoutUser);
 
 router.get("/banner/get/:type", bannerController.getBanner);
 
-
 router.get("/get/all-hotels", adminController.getAllHotel);
 
 router.get("/category/get/all", adminController.getAllCategory);
 
 router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
-
-
-
-
 router.use(adminPrivilegesRequired);
-
 
 router.get("/get/all-users", adminController.getAllUsers);
 
@@ -52,7 +46,6 @@ router.get("/get/partner/byId/:partnerId", PartnerController.getPartnerById);
 /* Hotel */
 
 router.post("/hotel/register", PartnerController.addHotel);
-
 
 router.post(
     "/hotel/upload/image",
@@ -150,7 +143,6 @@ router.post(
     adminController.uploadCategoryImage,
 );
 
-
 router.get("/category/get/:categoryId", adminController.getCategoryById);
 
 router.delete(
@@ -168,7 +160,6 @@ router.put(
 );
 
 router.get("/promoCode/get/:promoCodeId", promoCodeController.getPromoCode);
-
 
 router.delete(
     "/promoCode/delete/:promoCodeId",
@@ -208,7 +199,6 @@ router.put(
     bannerController.updateBanner,
 );
 
-
 router.delete(
     "/banner/delete/:bannerId",
     adminPrivilegesRequired,
@@ -217,8 +207,22 @@ router.delete(
 
 /* DATA */
 
-router.get("/most-selling-products",adminController.getMostSellingDishes)
+router.get("/most-selling-products", adminController.getMostSellingDishes);
 
-router.post('/add/data',adminController.createData)
+router.post("/add/data", adminController.createData);
+
+/* Video add routes */
+
+router.post(
+    "/video/upload",
+    videoUpload.array("video", 5),
+    adminController.addVideos,
+);
+
+router.get("/video/get/:videoId", adminController.getVideoById);
+
+router.get("/video/all", adminController.getAllVideos);
+
+router.delete("/video/delete/:videoId", adminController.deleteVideo);
 
 module.exports = { adminRoutes: router };
