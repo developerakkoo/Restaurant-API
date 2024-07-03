@@ -388,7 +388,7 @@ exports.getEarnings = asyncHandler(async (req, res) => {
     const hotelIds = hotels.map((hotel) => hotel._id);
 
     // Define date filters based on user input or default to current month
-    let filter = { hotelId: { $in: hotelIds } };
+    let filter = { hotelId: { $in: hotelIds }, orderStatus: 3 };
     if (startDate && endDate) {
         const sDate = new Date(startDate);
         const eDate = new Date(endDate);
