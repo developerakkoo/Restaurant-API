@@ -23,9 +23,13 @@ exports.sendNotification = async (
 exports.getNotificationById = asyncHandler(async (req, res) => {
     const notification = await Notification.findById(req.params.id);
     if (!notification) {
-        return ApiResponse.errorResponse(res, 404, "Notification not found");
+        return res
+            .status(404)
+            .json(ApiResponse.errorResponse(404, {}, "Notification not found"));
     }
-    return new ApiResponse(res, 200, notification, "Notification found");
+    return res.status.json(
+        new ApiResponse(200, notification, "Notification found"),
+    );
 });
 
 exports.getAllNotificationsByUserId = asyncHandler(async (req, res) => {
@@ -34,7 +38,7 @@ exports.getAllNotificationsByUserId = asyncHandler(async (req, res) => {
     }).sort({
         createdAt: -1,
     });
-    if (!notifications) {
+    if (notifications.length === 0) {
         return res
             .status(404)
             .json(new ApiResponse(404, {}, "No notifications found"));
@@ -57,20 +61,25 @@ exports.markNotificationAsRead = asyncHandler(async (req, res) => {
         { new: true },
     );
     if (!notification) {
-        return new ApiResponse(res, 404, "Notification not found");
+        return res
+            .status(200)
+            .json(new ApiResponse(404, {}, "Notification not found"));
     }
-    return new ApiResponse(
-        res,
-        200,
-        notification,
-        "Notification marked as read",
-    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, notification, "Notification marked as read"),
+        );
 });
 
 exports.deleteNotificationById = asyncHandler(async (req, res) => {
     const notification = await Notification.findByIdAndDelete(req.params.id);
     if (!notification) {
-        return new ApiResponse(res, 404, "Notification not found");
+        return res
+            .status(404)
+            .json(new ApiResponse(404,{}, "Notification not found"));
     }
-    return new ApiResponse(res, 200, "Notification deleted");
+    return res
+        .status(200)
+        .json(new ApiResponse(200,{}, "Notification deleted"));
 });
