@@ -8,16 +8,16 @@ exports.sendNotification = async (
     title = "New Notification",
     content,
 ) => {
-try {
+    try {
         const notification = await Notification.create({
             userId,
             title,
             content,
         });
         getIO().emit(userId, notification);
-} catch (error) {
-    console.log(error.message);
-}
+    } catch (error) {
+        console.log(error.message);
+    }
 };
 
 exports.getNotificationById = asyncHandler(async (req, res) => {
@@ -25,29 +25,29 @@ exports.getNotificationById = asyncHandler(async (req, res) => {
     if (!notification) {
         return ApiResponse.errorResponse(res, 404, "Notification not found");
     }
-    return new ApiResponse(
-        res,
-        200,
-        notification,
-        "Notification found",
-    );
+    return new ApiResponse(res, 200, notification, "Notification found");
 });
 
 exports.getAllNotificationsByUserId = asyncHandler(async (req, res) => {
     const notifications = await Notification.find({
-        userId: req.params.id,
+        userId: req.params.userId,
     }).sort({
         createdAt: -1,
     });
     if (!notifications) {
-        return new ApiResponse(res, 404, "No notifications found");
+        return res
+            .status(404)
+            .json(new ApiResponse(404, {}, "No notifications found"));
     }
-    return new ApiResponse(
-        res,
-        200,
-        notifications,
-        "Notifications found",
-    );
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                notifications,
+                "notification fetched successfully",
+            ),
+        );
 });
 
 exports.markNotificationAsRead = asyncHandler(async (req, res) => {
