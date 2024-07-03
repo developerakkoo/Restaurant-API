@@ -25,11 +25,11 @@ exports.getNotificationById = asyncHandler(async (req, res) => {
     if (!notification) {
         return ApiResponse.errorResponse(res, 404, "Notification not found");
     }
-    return ApiResponse.successResponse(
+    return new ApiResponse(
         res,
         200,
-        "Notification found",
         notification,
+        "Notification found",
     );
 });
 
@@ -40,13 +40,13 @@ exports.getAllNotificationsByUserId = asyncHandler(async (req, res) => {
         createdAt: -1,
     });
     if (!notifications) {
-        return ApiResponse.errorResponse(res, 404, "No notifications found");
+        return new ApiResponse(res, 404, "No notifications found");
     }
-    return ApiResponse.successResponse(
+    return new ApiResponse(
         res,
         200,
-        "Notifications found",
         notifications,
+        "Notifications found",
     );
 });
 
@@ -57,20 +57,20 @@ exports.markNotificationAsRead = asyncHandler(async (req, res) => {
         { new: true },
     );
     if (!notification) {
-        return ApiResponse.errorResponse(res, 404, "Notification not found");
+        return new ApiResponse(res, 404, "Notification not found");
     }
-    return ApiResponse.successResponse(
+    return new ApiResponse(
         res,
         200,
-        "Notification marked as read",
         notification,
+        "Notification marked as read",
     );
 });
 
 exports.deleteNotificationById = asyncHandler(async (req, res) => {
     const notification = await Notification.findByIdAndDelete(req.params.id);
     if (!notification) {
-        return ApiResponse.errorResponse(res, 404, "Notification not found");
+        return new ApiResponse(res, 404, "Notification not found");
     }
-    return ApiResponse.successResponse(res, 200, "Notification deleted");
+    return new ApiResponse(res, 200, "Notification deleted");
 });
