@@ -76,6 +76,7 @@ const { partnerRoutes } = require("./routes/partner.route");
 const { favoriteRoutes } = require("./routes/favorite.route");
 const { deliverBoyRoutes } = require("./routes/deliveryBoy.route");
 const { messageRoutes } = require("./routes/message.route");
+const {notificationRoutes} = require('./routes/notification.route')
 const { ApiResponse } = require("./utils/ApiResponseHandler");
 
 /*Api Logger */
@@ -101,6 +102,7 @@ app.use(`${BASE_URL}/partner`, partnerRoutes);
 app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
 app.use(`${BASE_URL}/message`, messageRoutes);
+app.use(`${BASE_URL}/notification`, notificationRoutes);
 
 app.use(errorHandler);
 

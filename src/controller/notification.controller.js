@@ -8,12 +8,16 @@ exports.sendNotification = async (
     title = "New Notification",
     content,
 ) => {
-    const notification = await Notification.create({
-        userId,
-        title,
-        content,
-    });
-    getIO().emit(userId, notification);
+try {
+        const notification = await Notification.create({
+            userId,
+            title,
+            content,
+        });
+        getIO().emit(userId, notification);
+} catch (error) {
+    console.log(error.message);
+}
 };
 
 exports.getNotificationById = asyncHandler(async (req, res) => {

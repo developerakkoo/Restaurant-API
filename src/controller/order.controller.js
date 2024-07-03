@@ -85,6 +85,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         ) {
             throw new ApiError(400, "Promo code expired");
         }
+        console.log(subtotal , promoCode.minOrderAmount);
         if (subtotal < promoCode.minOrderAmount) {
             throw new ApiError(
                 400,
