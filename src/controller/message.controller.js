@@ -105,13 +105,13 @@ exports.checkChatExist = asyncHandler(async (req, res, next) => {
         ],
     });
 
-    if (chat) {
-        req.body.chatId = chat._id;
+    
+    if (!chat) {
+        chat = await chatModel.create({ members: [senderId, receiverId] });
         // return this.sendMessage(req, res);
     }
 
     // If no chat exists, create a new one
-    chat = await chatModel.create({ members: [senderId, receiverId] });
     req.body.chatId = chat._id;
     next();
 });
@@ -203,8 +203,8 @@ exports.deleteMessageById = asyncHandler(async (req, res) => {
 
 exports.getMessageByChatId = asyncHandler(async (req, res) => {
     const { chatId } = req.params;
-    
-    const messages = await Message.find({chatId}).sort({ createdAt: 1 });
+
+    const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
     if (!messages) {
         throw new ApiError(404, "MESSAGE_NOT_FOUND");
     }
