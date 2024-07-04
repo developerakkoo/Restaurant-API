@@ -29,19 +29,27 @@ exports.getMyChatList = asyncHandler(async (req, res) => {
     }
 
     const chatList = await chatListQuery.exec();
+    const dataPromises = chatList.map(async (chat) => {
+        const lastMessage = await Message
+            .findOne({ chatId: chat._id })
+            .sort({ createdAt: -1 })
+            .exec();
+
+        return {
+            _id: chat._id,
+            members: chat.members,
+            lastMessage: lastMessage || {}, // Ensure lastMessage is not null
+        };
+    });
+
+    const data = await Promise.all(dataPromises);
 
     return res
         .status(200)
         .json(
-            new ApiResponse(
-                200,
-                chatList,
-                responseMessage.GET_CHAT_LIST_SUCCESS,
-            ),
+            new ApiResponse(200, data, responseMessage.GET_CHAT_LIST_SUCCESS),
         );
 });
-
-
 
 exports.sendMessage = asyncHandler(async (req, res) => {
     console.log("hree>>>>>>>>>>>>>> text");
@@ -128,14 +136,14 @@ exports.getMessageById = asyncHandler(async (req, res) => {
 
 exports.getAllMessageByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const {orderId} = req.query;
-        // Build the query to find messages based on orderId and userId
-        const query = {
-            $or: [{ senderId: userId }, { receiverId: userId }],
-        };
-        if (orderId) {
-            query.orderId = orderId; // Add orderId filter if provided
-        }
+    const { orderId } = req.query;
+    // Build the query to find messages based on orderId and userId
+    const query = {
+        $or: [{ senderId: userId }, { receiverId: userId }],
+    };
+    if (orderId) {
+        query.orderId = orderId; // Add orderId filter if provided
+    }
     const Messages = await Message.find(query).sort({ createdAt: 1 });
     if (!Messages) {
         throw new ApiError(404, responseMessage.Message_NOT_FOUND);
