@@ -13,6 +13,7 @@ const { upload, videoUpload } = require("../middleware/fileHandler.middleware");
 const {
     adminPrivilegesRequired,
 } = require("../middleware/userAccess.middleware");
+const { getMyChatList } = require("../controller/message.controller");
 
 router.post("/logout", authController.logoutUser);
 
@@ -244,7 +245,7 @@ router.put(
 );
 
 /*chat routes*/
-router.get("/get/chat-list/:userId",messageController.getMyChatList)
+router.get("/get/chat-list/:userId",getMyChatList)
 
 
 module.exports = { adminRoutes: router };
