@@ -30,8 +30,7 @@ exports.getMyChatList = asyncHandler(async (req, res) => {
 
     const chatList = await chatListQuery.exec();
     const dataPromises = chatList.map(async (chat) => {
-        const lastMessage = await Message
-            .findOne({ chatId: chat._id })
+        const lastMessage = await Message.findOne({ chatId: chat._id })
             .sort({ createdAt: -1 })
             .exec();
 
@@ -200,4 +199,16 @@ exports.deleteMessageById = asyncHandler(async (req, res) => {
                 responseMessage.Message_DELETED_SUCCESSFULLY,
             ),
         );
+});
+
+exports.getMessageByChatId = asyncHandler(async (req, res) => {
+    const { chatId } = req.params;
+    
+    const messages = await Message.find({chatId}).sort({ createdAt: 1 });
+    if (!messages) {
+        throw new ApiError(404, "MESSAGE_NOT_FOUND");
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, messages, "MESSAGE_FETCHED_SUCCESSFULLY"));
 });

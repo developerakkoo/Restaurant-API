@@ -7,6 +7,7 @@ const PartnerController = require("../controller/partner.controller");
 const orderController = require("../controller/order.controller");
 const authController = require("../controller/auth.controller");
 const validateData = require("../validators/admin.validator");
+const messageController = require("../controller/message.controller");
 const { dataValidationResult } = require("../validators/validationResult");
 const promoCodeController = require("../controller/promoCode.controller");
 const { upload, videoUpload } = require("../middleware/fileHandler.middleware");
@@ -214,7 +215,7 @@ router.post("/add/data", adminController.createData);
 
 router.get("/get/data", adminController.getData);
 
-router.put("/update/data/:id", adminController.updateData)
+router.put("/update/data/:id", adminController.updateData);
 
 /* Video add routes */
 
@@ -245,7 +246,30 @@ router.put(
 );
 
 /*chat routes*/
-router.get("/get/chat-list/:userId",getMyChatList)
+router.get("/get/chat-list/:userId", getMyChatList);
 
+router.post(
+    "/send",
+    messageController.checkChatExist,
+    messageController.sendMessage,
+);
+
+router.post(
+    "/multimedia-send",
+    upload.single("image"),
+    messageController.checkChatExist,
+    messageController.sendMultimediaMessage,
+);
+
+router.get("/get/:messageId", messageController.getMessageById);
+
+router.get("/get/chat/:chatId", messageController.getMessageByChatId);
+
+
+router.get("/get/all/:userId", messageController.getAllMessageByUserId);
+
+router.put("/markAsRead/:messageId", messageController.markAsRead);
+
+router.delete("/delete/:messageId", messageController.deleteMessageById);
 
 module.exports = { adminRoutes: router };
