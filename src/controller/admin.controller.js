@@ -148,9 +148,9 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 
     //sort by status
     if (status === "false" || status == 0) {
-        dbQuery.isOnline = false ;
-    }else{
-        dbQuery.isOnline = true ;
+        dbQuery.isOnline = false;
+    } else {
+        dbQuery.isOnline = true;
     }
 
     const dataCount = await User.countDocuments(dbQuery);
@@ -1238,6 +1238,18 @@ exports.createData = asyncHandler(async (req, res) => {
     );
 });
 
+exports.getData = asyncHandler(async (req, res) => {
+    const data = await Data.find();
+    if (!data) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Data not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "Data fetched successfully"),
+    );
+});
+
 exports.getMostSellingDishes = asyncHandler(async (req, res) => {
     const { period } = req.query; // period can be 'daily', 'weekly', or 'monthly'
 
@@ -1345,11 +1357,21 @@ exports.getAllVideos = asyncHandler(async (req, res) => {
     try {
         const videos = await videoAddModel.find();
         if (videos.length === 0) {
-            return res.status(404).json(new ApiResponse(404, null, "No videos found"));
+            return res
+                .status(404)
+                .json(new ApiResponse(404, null, "No videos found"));
         }
-        res.status(200).json(new ApiResponse(200, videos, "All videos fetched successfully"));
+        res.status(200).json(
+            new ApiResponse(200, videos, "All videos fetched successfully"),
+        );
     } catch (error) {
-        res.status(500).json(new ApiResponse(500, null, "An error occurred while fetching videos"));
+        res.status(500).json(
+            new ApiResponse(
+                500,
+                null,
+                "An error occurred while fetching videos",
+            ),
+        );
     }
 });
 

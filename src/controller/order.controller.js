@@ -85,7 +85,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         ) {
             throw new ApiError(400, "Promo code expired");
         }
-        console.log(subtotal , promoCode.minOrderAmount);
+        console.log(subtotal, promoCode.minOrderAmount);
         if (subtotal < promoCode.minOrderAmount) {
             throw new ApiError(
                 400,
@@ -347,6 +347,9 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             order,
         );
     }
+    if (status === 3) {
+        sendNotification(savedOrder.userId, "Order delivered", order);
+    }
 
     return res
         .status(200)
@@ -555,7 +558,7 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
         dbQuery.orderStatus = req.query.status;
     }
     const orders = await Order.find(dbQuery)
-        .populate({path:"userId",select:"name phoneNumber"})
+        .populate({ path: "userId", select: "name phoneNumber" })
         .populate({
             path: "hotelId",
             select: "-createdAt -updatedAt -__v",

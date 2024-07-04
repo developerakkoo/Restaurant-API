@@ -211,6 +211,8 @@ router.get("/most-selling-products", adminController.getMostSellingDishes);
 
 router.post("/add/data", adminController.createData);
 
+router.get("/get/data", adminController.getData);
+
 /* Video add routes */
 
 router.post(
@@ -229,7 +231,10 @@ router.delete("/video/delete/:videoId", adminController.deleteVideo);
 
 router.get("/leave/get-all", deliveryBoyController.getAllLeaveRequests);
 
-router.get("/leave/get-by/:leaveRequestId", deliveryBoyController.getLeaveRequestById);
+router.get(
+    "/leave/get-by/:leaveRequestId",
+    deliveryBoyController.getLeaveRequestById,
+);
 
 router.put(
     "/leave/update/:leaveRequestId",
