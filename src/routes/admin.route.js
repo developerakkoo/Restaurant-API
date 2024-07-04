@@ -243,4 +243,8 @@ router.put(
     deliveryBoyController.updateLeaveRequestStatus,
 );
 
+/*chat routes*/
+router.get("/get/chat-list/:userId",messageController.getMyChatList)
+
+
 module.exports = { adminRoutes: router };
