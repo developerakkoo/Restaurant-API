@@ -1250,6 +1250,28 @@ exports.getData = asyncHandler(async (req, res) => {
     );
 });
 
+exports.updateData = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { gstPercentage, deliveryCharges, platformFee } = req.body;
+    const data = await Data.findByIdAndUpdate(
+        id,
+        {
+            gstPercentage,
+            deliveryCharges,
+            platformFee,
+        },
+        { new: true },
+    );
+    if (!data) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Data not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "Data updated successfully"),
+    );
+});
+
 exports.getMostSellingDishes = asyncHandler(async (req, res) => {
     const { period } = req.query; // period can be 'daily', 'weekly', or 'monthly'
 

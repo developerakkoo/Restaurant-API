@@ -213,6 +213,8 @@ router.post("/add/data", adminController.createData);
 
 router.get("/get/data", adminController.getData);
 
+router.get("/update/data:id", adminController.updateData)
+
 /* Video add routes */
 
 router.post(
