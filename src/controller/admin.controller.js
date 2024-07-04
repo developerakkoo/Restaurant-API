@@ -147,8 +147,10 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
     }
 
     //sort by status
-    if (status) {
-        dbQuery.status = status;
+    if (status === "false" || status == 0) {
+        dbQuery.isOnline = false ;
+    }else{
+        dbQuery.isOnline = true ;
     }
 
     const dataCount = await User.countDocuments(dbQuery);
