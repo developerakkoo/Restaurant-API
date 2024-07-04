@@ -92,9 +92,9 @@ app.use(`${BASE_URL}/health-check`, (req, res) => {
     );
 });
 app.use(`${BASE_URL}/auth`, authRoutes);
+app.use(`${BASE_URL}/admin`, adminRoutes);
 app.use(verify_access_token);
 app.use(`${BASE_URL}/user`, userRoutes);
-app.use(`${BASE_URL}/admin`, adminRoutes);
 app.use(`${BASE_URL}/order`, orderRoutes);
 app.use(`${BASE_URL}/user/cart`, cartRoutes);
 app.use(`${BASE_URL}/hotel`, hotelStarRoutes);

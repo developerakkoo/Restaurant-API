@@ -24,7 +24,7 @@ router.get("/category/get/all", adminController.getAllCategory);
 
 router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
-router.use(adminPrivilegesRequired);
+// router.use(adminPrivilegesRequired);
 
 router.get("/get/all-users", adminController.getAllUsers);
 
