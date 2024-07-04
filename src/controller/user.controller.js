@@ -127,12 +127,16 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
 });
 
 exports.addAddresses = asyncHandler(async (req, res) => {
-    const { type, address, selected } = req.body;
+    const { type, address, selected, lng, lat } = req.body;
     const savedAddress = await userAddress.create({
         userId: req.user.userId,
         type,
         address,
         selected,
+        location: {
+            type: "Point",
+            coordinates: [lng, lat],
+        },
     });
 
     return res
@@ -268,7 +272,7 @@ exports.uploadProfileImage = asyncHandler(async (req, res) => {
     const { userId } = req.body;
     // console.log(req.file);
     const { filename } = req.file;
-    
+
     const local_filePath = `upload/${filename}`;
     let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {

@@ -225,4 +225,15 @@ router.get("/video/all", adminController.getAllVideos);
 
 router.delete("/video/delete/:videoId", adminController.deleteVideo);
 
+/* Leave Routes*/
+
+router.get("/leave/get-all", deliveryBoyController.getAllLeaveRequests);
+
+router.get("/leave/get-by/:leaveRequestId", deliveryBoyController.getLeaveRequestById);
+
+router.put(
+    "/leave/update/:leaveRequestId",
+    deliveryBoyController.updateLeaveRequestStatus,
+);
+
 module.exports = { adminRoutes: router };

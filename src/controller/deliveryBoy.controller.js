@@ -436,3 +436,45 @@ exports.getAllLeaveRequests = asyncHandler(async (req, res) => {
             ),
         );
 });
+
+exports.updateLeaveRequestStatus = asyncHandler(async (req, res) => {
+    const { leaveRequestId, status } = req.body;
+    const leaveRequest = await leaveModel.findByIdAndUpdate(
+        leaveRequestId,
+        { status },
+        { new: true },
+    );
+    if (!leaveRequest) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Leave Request Not Found"));
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                leaveRequest,
+                "Leave Request Status Updated Successfully",
+            ),
+        );
+});
+
+exports.getLeaveRequestById = asyncHandler(async (req, res) => {
+    const { leaveRequestId } = req.query;
+    const leaveRequest = await leaveModel.findById(leaveRequestId);
+    if (!leaveRequest) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Leave Request Not Found"));
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                leaveRequest,
+                "Leave Request Fetched Successfully",
+            ),
+        );
+});
