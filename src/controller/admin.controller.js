@@ -1180,8 +1180,11 @@ exports.orderChartData = asyncHandler(async (req, res) => {
         },
     ];
     const result = await Order.aggregate(pipeline);
+    console.log('====================================');
+    console.log(result);
+    console.log('====================================');
     const label = result.map((item) =>
-        moment().month(item.month).format("MMMM"),
+        moment().date(item.dayOfMonth).format("dddd"),
     );
     const data = result.map((item) => item.orderCount);
     res.status(200).json(
