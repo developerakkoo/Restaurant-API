@@ -8,7 +8,6 @@ exports.addPromoCode = asyncHandler(async (req, res) => {
     const {
         name,
         code,
-        offer,
         codeType,
         discountAmount,
         minOrderAmount,
@@ -29,7 +28,6 @@ exports.addPromoCode = asyncHandler(async (req, res) => {
     const createdPromoCode = await promoCode.create({
         name,
         code,
-        offer,
         codeType,
         discountAmount,
         minOrderAmount,

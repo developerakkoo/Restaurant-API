@@ -9,7 +9,7 @@ const promoCodeSchema = new Schema(
         },
         offer: {
             type: String,
-            required: true,
+            // required: true,
         },
         code: {
             type: String,
