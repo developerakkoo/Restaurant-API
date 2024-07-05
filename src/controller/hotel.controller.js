@@ -831,7 +831,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
 
     // Sort by hotel
     if (hotelId) {
-        dbQuery.hotelId = new mongoose.Types.ObjectId(hotelId);
+        dbQuery.hotelId = new Types.ObjectId(hotelId);
     }
 
     let pipeline = [
