@@ -30,7 +30,7 @@ const deliveryBoySchema = new Schema(
         },
         email: {
             type: String,
-            unique: true,
+            // unique: true,
         },
         phoneNumber: {
             type: String,

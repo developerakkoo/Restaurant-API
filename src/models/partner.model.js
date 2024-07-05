@@ -18,7 +18,7 @@ const partnerSchema = new Schema(
         email: {
             type: String,
             required: true,
-            unique: true,
+            // unique: true,
             default: "_",
         },
         phoneNumber: {
