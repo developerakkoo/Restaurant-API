@@ -1082,7 +1082,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                 total: totalDishes,
                 page: pageNumber,
                 pageSize: pageSize,
-                dishes: dishes,
+                content: dishes,
             },
         ),
     );
