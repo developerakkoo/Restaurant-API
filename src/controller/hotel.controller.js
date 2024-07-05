@@ -774,7 +774,6 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     const pageNumber = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const skip = (pageNumber - 1) * pageSize;
-    const userId = req.user ? req.user._id : null; // assuming user ID is available in req.user
 
     // Search based on user query
     if (q) {
@@ -825,7 +824,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
     if (categoryId) {
         const categoryIds = categoryId
             .split(",")
-            .map((id) => new mongoose.Types.ObjectId(id.trim()));
+            .map((id) => new Types.ObjectId(id.trim()));
         dbQuery.categoryId = { $in: categoryIds };
     }
 
@@ -990,7 +989,6 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                         categoryDetails: "$categoryDetails",
                     },
                     totalCount: { $sum: 1 },
-                    averageRating: { $avg: "$dishStars.star" }, // Calculate average rating
                     "1starCount": {
                         $sum: {
                             $cond: [{ $eq: ["$dishStars.star", 1] }, 1, 0],
@@ -1023,7 +1021,6 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                 $project: {
                     _id: "$_id",
                     dishDetails: 1,
-                    averageRating: 1, // Include average rating in the result
                     ratingData: {
                         $map: {
                             input: "$starData",
@@ -1062,32 +1059,17 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
         );
     }
 
-    let dishes = await Dish.aggregate(pipeline);
-
-    if (userId) {
-        const favoriteDishes = await Favorite.find({ userId }).lean();
-        const favoriteDishIds = favoriteDishes.map(fav => fav.dishId.toString());
-
-        dishes = dishes.map(dish => ({
-            ...dish,
-            isFavorite: favoriteDishIds.includes(dish._id._id.toString()) // Ensure the correct ID path
-        }));
-    }
-
-    const totalDishes = await Dish.find(dbQuery).count();
-    res.status(200).json(
-        new ApiResponse(
-            responseMessage.userMessage.dishFetchedSuccessfully,
-            {
-                total: totalDishes,
-                page: pageNumber,
-                pageSize: pageSize,
-                content: dishes,
-            },
-        ),
-    );
+    const dishAggregate = await Dish.aggregate(pipeline);
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                dishAggregate,
+                responseMessage.userMessage.dishFetchedSuccessfully,
+            ),
+        );
 });
-
 
 exports.getHotelsByCategoryId = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
