@@ -1281,7 +1281,7 @@ exports.updateData = asyncHandler(async (req, res) => {
 });
 
 exports.getMostSellingDishes = asyncHandler(async (req, res) => {
-    const { period ="monthly" } = req.query; // period can be 'daily', 'weekly', or 'monthly'
+    const { period = "monthly" } = req.query; // period can be 'daily', 'weekly', or 'monthly'
 
     // Define the date range based on the period
     let startDate, endDate;
@@ -1295,10 +1295,9 @@ exports.getMostSellingDishes = asyncHandler(async (req, res) => {
         startDate = moment().startOf("month").toDate();
         endDate = moment().endOf("month").toDate();
     } else {
-        return res
-            .status(400)
-            .json(new ApiResponse(400, null, "Invalid period"));
+        return res.status(400).json(new ApiResponse(400, null, "Invalid period"));
     }
+
     const matchStage = {
         createdAt: {
             $gte: startDate,
@@ -1325,10 +1324,24 @@ exports.getMostSellingDishes = asyncHandler(async (req, res) => {
         },
         { $unwind: "$dish" },
         {
+            $lookup: {
+                from: "dishstars", // Assuming the collection name is "dishstars"
+                localField: "_id",
+                foreignField: "dishId",
+                as: "ratings",
+            },
+        },
+        {
+            $addFields: {
+                averageRating: { $avg: "$ratings.star" },
+            },
+        },
+        {
             $project: {
                 _id: 0,
-                dish: "$dish",
+                dish: 1,
                 totalOrders: 1,
+                averageRating: 1,
             },
         },
         { $sort: { totalOrders: -1 } },
@@ -1337,16 +1350,9 @@ exports.getMostSellingDishes = asyncHandler(async (req, res) => {
 
     const result = await Order.aggregate(aggregatePipeline).exec();
 
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                result,
-                "Most selling products fetched successfully",
-            ),
-        );
+    return res.status(200).json(new ApiResponse(200, result, "Most selling products fetched successfully"));
 });
+
 
 exports.addVideos = asyncHandler(async (req, res) => {
     if (!req.files || req.files.length === 0) {
