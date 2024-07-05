@@ -115,7 +115,7 @@ exports.getAllPromoCodes = asyncHandler(async (req, res) => {
     if (isActive) dbQuery.isActive = isActive;
     if (codeType) dbQuery.codeType = codeType;
 
-    const allPromoCodes = await promoCode.find(dbQuery);
+    const allPromoCodes = await promoCode.find(dbQuery).sort({ createdAt: -1 });
     return res
         .status(200)
         .json(

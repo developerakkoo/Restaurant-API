@@ -160,6 +160,9 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
             $match: dbQuery,
         },
         {
+            $sort: { createdAt: -1 }, // Sort by createdAt field in descending order (latest first)
+        },
+        {
             $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
         },
         {
@@ -333,6 +336,9 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
     let deliveryBoyAggregation = [
         {
             $match: dbQuery,
+        },
+        {
+            $sort: { createdAt: -1 }, // Sort by createdAt field in descending order (latest first)
         },
         {
             $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
@@ -666,6 +672,9 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
     let hotelAggregation = [
         {
             $match: dbQuery,
+        },
+        {
+            $sort: { createdAt: -1 }, // Sort by createdAt field in descending order (latest first)
         },
         {
             $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
