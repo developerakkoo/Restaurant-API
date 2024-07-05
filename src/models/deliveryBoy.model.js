@@ -43,7 +43,7 @@ const deliveryBoySchema = new Schema(
         },
         city: {
             type: String,
-            required: true,
+            // required: true,
         },
         address: {
             type: String,
@@ -53,10 +53,10 @@ const deliveryBoySchema = new Schema(
             type: [String],
             required: true,
         },
-        password: {
-            type: String,
-            required: true,
-        },
+        // password: {
+        //     type: String,
+        //     required: true,
+        // },
         refreshToken: {
             type: String,
             require: true,
@@ -77,19 +77,19 @@ const deliveryBoySchema = new Schema(
  * @param {import('mongoose').Document} doc - The document being saved.
  * @param {Function} next - A callback function to invoke after saving the document.
  */
-deliveryBoySchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    this.password = await bcrypt.hash(this.password, hash);
-});
+// deliveryBoySchema.pre("save", async function (next) {
+//     if (!this.isModified("password")) return next();
+//     this.password = await bcrypt.hash(this.password, hash);
+// });
 
 /**
  * Compares the given plaintext password with the hashed password stored in the database.
  * @param {string} password - The plaintext password to compare with the hashed password.
  * @returns {boolean} `true` if the passwords match, `false` otherwise.
  */
-deliveryBoySchema.methods.isPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.password);
-};
+// deliveryBoySchema.methods.isPasswordCorrect = async function (password) {
+//     return await bcrypt.compare(password, this.password);
+// };
 
 deliveryBoySchema.index(
     { name: "text" },

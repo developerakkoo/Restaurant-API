@@ -51,7 +51,7 @@ exports.registerDeliveryBoy = asyncHandler(async (req, res) => {
         password,
     });
     const createdUser = await DeliverBoy.findById(user._id).select(
-        "-password -refreshToken",
+        "-refreshToken",
     );
     if (!createdUser) {
         throw new ApiError(500, responseMessage.userMessage.userNotCreated);
