@@ -1179,9 +1179,13 @@ exports.orderChartData = asyncHandler(async (req, res) => {
             },
         },
     ];
-    const data = await Order.aggregate(pipeline);
+    const result = await Order.aggregate(pipeline);
+    const label = result.map((item) =>
+        moment().month(item.month).format("MMMM"),
+    );
+    const data = result.map((item) => item.orderCount);
     res.status(200).json(
-        new ApiResponse(200, data, responseMessage.userMessage.orderChartData),
+        new ApiResponse(200, {label,data}, responseMessage.userMessage.orderChartData),
     );
 });
 
@@ -1214,12 +1218,16 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
         },
     ];
 
-    const data = await Order.aggregate(pipeline);
+    const result = await Order.aggregate(pipeline);
+    const label = result.map((item) =>
+        moment().month(item.month).format("MMMM"),
+    );
+    const data = result.map((item) => item.revenue);
 
     res.status(200).json(
         new ApiResponse(
             200,
-            data,
+            { label, data },
             responseMessage.userMessage.revenueChartData,
         ),
     );
@@ -1273,7 +1281,7 @@ exports.updateData = asyncHandler(async (req, res) => {
 });
 
 exports.getMostSellingDishes = asyncHandler(async (req, res) => {
-    const { period } = req.query; // period can be 'daily', 'weekly', or 'monthly'
+    const { period ="monthly" } = req.query; // period can be 'daily', 'weekly', or 'monthly'
 
     // Define the date range based on the period
     let startDate, endDate;
