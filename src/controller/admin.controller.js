@@ -1180,15 +1180,27 @@ exports.orderChartData = asyncHandler(async (req, res) => {
         },
     ];
     const result = await Order.aggregate(pipeline);
-    console.log('====================================');
-    console.log(result);
-    console.log('====================================');
-    const label = result.map((item) =>
-        moment().date(item.dayOfMonth).format("dddd"),
-    );
+    const label = result.map((item) => {
+        if (item.dayOfMonth) {
+            return moment().date(item.dayOfMonth).format("dddd");
+        }
+        if (item.week) {
+            return item.week;
+        }
+        if (item.month) {
+            return moment().month(item.month).format("MMMM");
+        }
+        if (item.year) {
+            return item.year;
+        }
+    });
     const data = result.map((item) => item.orderCount);
     res.status(200).json(
-        new ApiResponse(200, {label,data}, responseMessage.userMessage.orderChartData),
+        new ApiResponse(
+            200,
+            { label, data },
+            responseMessage.userMessage.orderChartData,
+        ),
     );
 });
 
@@ -1222,9 +1234,20 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
     ];
 
     const result = await Order.aggregate(pipeline);
-    const label = result.map((item) =>
-        moment().month(item.month).format("MMMM"),
-    );
+    const label = result.map((item) => {
+        if (item.dayOfMonth) {
+            return moment().date(item.dayOfMonth).format("dddd");
+        }
+        if (item.week) {
+            return item.week;
+        }
+        if (item.month) {
+            return moment().month(item.month).format("MMMM");
+        }
+        if (item.year) {
+            return item.year;
+        }
+    });
     const data = result.map((item) => item.revenue);
 
     res.status(200).json(
@@ -1298,7 +1321,9 @@ exports.getMostSellingDishes = asyncHandler(async (req, res) => {
         startDate = moment().startOf("month").toDate();
         endDate = moment().endOf("month").toDate();
     } else {
-        return res.status(400).json(new ApiResponse(400, null, "Invalid period"));
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Invalid period"));
     }
 
     const matchStage = {
@@ -1353,9 +1378,16 @@ exports.getMostSellingDishes = asyncHandler(async (req, res) => {
 
     const result = await Order.aggregate(aggregatePipeline).exec();
 
-    return res.status(200).json(new ApiResponse(200, result, "Most selling products fetched successfully"));
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                result,
+                "Most selling products fetched successfully",
+            ),
+        );
 });
-
 
 exports.addVideos = asyncHandler(async (req, res) => {
     if (!req.files || req.files.length === 0) {
