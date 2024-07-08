@@ -76,8 +76,9 @@ const { partnerRoutes } = require("./routes/partner.route");
 const { favoriteRoutes } = require("./routes/favorite.route");
 const { deliverBoyRoutes } = require("./routes/deliveryBoy.route");
 const { messageRoutes } = require("./routes/message.route");
-const {notificationRoutes} = require('./routes/notification.route')
+const { notificationRoutes } = require("./routes/notification.route");
 const { ApiResponse } = require("./utils/ApiResponseHandler");
+const { paymentRoutes } = require("./routes/payment.route");
 
 /*Api Logger */
 app.use(morganMiddleware);
@@ -93,7 +94,8 @@ app.use(`${BASE_URL}/health-check`, (req, res) => {
 });
 app.use(`${BASE_URL}/auth`, authRoutes);
 app.use(`${BASE_URL}/admin`, adminRoutes);
-app.use(verify_access_token);
+// app.use(verify_access_token);
+app.use(`${BASE_URL}/payment`, paymentRoutes);
 app.use(`${BASE_URL}/user`, userRoutes);
 app.use(`${BASE_URL}/order`, orderRoutes);
 app.use(`${BASE_URL}/user/cart`, cartRoutes);
