@@ -1193,3 +1193,365 @@ exports.getDishByHotelId = asyncHandler(async (req, res) => {
         ),
     );
 });
+
+exports.getHotelsAndDishes = asyncHandler(async (req, res) => {
+    let dishPipeline = [
+        {
+            $lookup: {
+                from: "categories",
+                localField: "categoryId",
+                foreignField: "_id",
+                as: "categoryDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            name: 1,
+                            image_url: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: {
+                path: "$categoryDetails",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $lookup: {
+                from: "hotels",
+                localField: "hotelId",
+                foreignField: "_id",
+                as: "hotelDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            hotelName: 1,
+                            image_url: 1,
+                            address: 1,
+                            userId: 1,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            as: "hotelOwner",
+                            from: "partners",
+                            foreignField: "_id",
+                            localField: "userId",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        name: 1,
+                                        profile_image: 1,
+                                        email: 1,
+                                        phoneNumber: 1,
+                                        status: 1,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        $unwind: {
+                            path: "$hotelOwner",
+                            preserveNullAndEmptyArrays: true,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: {
+                path: "$hotelDetails",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $lookup: {
+                as: "dishStars",
+                from: "dishstars",
+                foreignField: "dishId",
+                localField: "_id",
+                pipeline: [
+                    {
+                        $lookup: {
+                            as: "user",
+                            from: "users",
+                            foreignField: "_id",
+                            localField: "userId",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        name: 1,
+                                        profile_image: {
+                                            $ifNull: ["$profile_image", ""],
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        $unwind: {
+                            path: "$user",
+                            preserveNullAndEmptyArrays: true,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: {
+                path: "$dishStars",
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $group: {
+                _id: {
+                    _id: "$_id",
+                    dishName: "$name",
+                    image_url: "$image_url",
+                    dishType: "$dishType",
+                    partnerPrice: "$partnerPrice",
+                    userPrice: "$userPrice",
+                    spicLevel: "$spicLevel",
+                    stock: "$stock",
+                    status: "$status",
+                    hotelDetails: "$hotelDetails",
+                    categoryDetails: "$categoryDetails",
+                },
+                totalCount: { $sum: 1 },
+                "1starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$dishStars.star", 1] }, 1, 0],
+                    },
+                },
+                "2starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$dishStars.star", 2] }, 1, 0],
+                    },
+                },
+                "3starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$dishStars.star", 3] }, 1, 0],
+                    },
+                },
+                "4starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$dishStars.star", 4] }, 1, 0],
+                    },
+                },
+                "5starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$dishStars.star", 5] }, 1, 0],
+                    },
+                },
+                starData: { $push: "$dishStars" },
+                avgRating: { $avg: "$dishStars.star" }, // Calculate average rating
+            },
+        },
+        {
+            $project: {
+                _id: "$_id._id",
+                dishName: "$_id.dishName",
+                image_url: "$_id.image_url",
+                dishType: "$_id.dishType",
+                partnerPrice: "$_id.partnerPrice",
+                userPrice: "$_id.userPrice",
+                spicLevel: "$_id.spicLevel",
+                stock: "$_id.stock",
+                status: "$_id.status",
+                hotelDetails: "$_id.hotelDetails",
+                categoryDetails: "$_id.categoryDetails",
+                ratingData: {
+                    $map: {
+                        input: "$starData",
+                        as: "star",
+                        in: {
+                            _id: "$$star._id",
+                            dishId: "$$star.dishId",
+                            userId: "$$star.userId",
+                            description: "$$star.description",
+                            star: "$$star.star",
+                            createdAt: "$$star.createdAt",
+                            updatedAt: "$$star.updatedAt",
+                            user: {
+                                _id: "$$star.user._id",
+                                name: "$$star.user.name",
+                                profile_image: {
+                                    $ifNull: ["$$star.user.profile_image", ""],
+                                },
+                            },
+                        },
+                    },
+                },
+                starCounts: {
+                    totalCount: "$totalCount",
+                    "1starCount": "$1starCount",
+                    "2starCount": "$2starCount",
+                    "3starCount": "$3starCount",
+                    "4starCount": "$4starCount",
+                    "5starCount": "$5starCount",
+                },
+                avgRating: "$avgRating", // Include average rating
+                isHotel: { $literal: false }, // Set isHotel to false for dishes
+            },
+        },
+    ];
+
+    let hotelPipeline = [
+        {
+            $lookup: {
+                as: "categoryDetails",
+                from: "categories",
+                foreignField: "_id",
+                localField: "category",
+                pipeline: [
+                    {
+                        $project: {
+                            name: 1,
+                            image_url: 1,
+                            local_imagePath: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $lookup: {
+                as: "hotelOwner",
+                from: "partners",
+                foreignField: "_id",
+                localField: "userId",
+                pipeline: [
+                    {
+                        $project: {
+                            name: 1,
+                            profile_image: 1,
+                            email: 1,
+                            phoneNumber: 1,
+                            status: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $lookup: {
+                as: "hotelstars",
+                from: "hotelstars",
+                foreignField: "hotelId",
+                localField: "_id",
+                pipeline: [
+                    {
+                        $lookup: {
+                            as: "user",
+                            from: "users",
+                            foreignField: "_id",
+                            localField: "userId",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        name: 1,
+                                        profile_image: 1,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        $unwind: "$user",
+                    },
+                ],
+            },
+        },
+        {
+            $unwind: "$hotelstars",
+        },
+        {
+            $group: {
+                _id: {
+                    hotelId: "$_id",
+                    hotelName: "$hotelName",
+                    image_url: "$image_url",
+                    address: "$address",
+                    hotelOwner: "$hotelOwner",
+                    categoryDetails: "$categoryDetails",
+                },
+                totalCount: { $sum: 1 },
+                "1starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$hotelstars.star", 1] }, 1, 0],
+                    },
+                },
+                "2starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$hotelstars.star", 2] }, 1, 0],
+                    },
+                },
+                "3starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$hotelstars.star", 3] }, 1, 0],
+                    },
+                },
+                "4starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$hotelstars.star", 4] }, 1, 0],
+                    },
+                },
+                "5starCount": {
+                    $sum: {
+                        $cond: [{ $eq: ["$hotelstars.star", 5] }, 1, 0],
+                    },
+                },
+                starData: { $push: "$hotelstars" },
+                avgRating: { $avg: "$hotelstars.star" }, // Calculate average rating
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                hotelId: "$_id.hotelId",
+                hotelName: "$_id.hotelName",
+                image_url: "$_id.image_url",
+                address: "$_id.address",
+                categoryDetails: "$_id.categoryDetails",
+                starCounts: {
+                    "1starCount": "$1starCount",
+                    "2starCount": "$2starCount",
+                    "3starCount": "$3starCount",
+                    "4starCount": "$4starCount",
+                    "5starCount": "$5starCount",
+                    totalCount: "$totalCount",
+                },
+                hotelOwner: "$_id.hotelOwner",
+                ratingData: {
+                    $map: {
+                        input: "$starData",
+                        as: "star",
+                        in: {
+                            _id: "$$star._id",
+                            hotelId: "$$star.hotelId",
+                            userId: "$$star.userId",
+                            description: "$$star.description",
+                            star: "$$star.star",
+                            createdAt: "$$star.createdAt",
+                            updatedAt: "$$star.updatedAt",
+                            user: "$$star.user",
+                        },
+                    },
+                },
+                avgRating: "$avgRating", // Include average rating
+                isHotel: { $literal: true }, // Set isHotel to true for hotels
+            },
+        },
+    ];
+
+    let dishes = await Dish.aggregate(dishPipeline);
+    let hotels = await Hotel.aggregate(hotelPipeline);
+
+    res.json([...hotels, ...dishes]);
+});
+
