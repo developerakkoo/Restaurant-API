@@ -19,7 +19,7 @@ exports.initiatePhonePePayment = asyncHandler(async (req, res) => {
         APP_BE_URL = "https://api.dropeat.in";
     }
 
-    const { amount = 100, userId = "666befce1ae4735d66a896ec" } = req.body;
+    const { amount, userId } = req.body;
     let merchantTransactionId = uniqid();
 
     let normalPayLoad = {
@@ -66,7 +66,7 @@ exports.initiatePhonePePayment = asyncHandler(async (req, res) => {
             );
         })
         .catch(function (error) {
-            res.send(error.message);
+            res.status(400).json(new ApiResponse(400, {}, error.message));
         });
 });
 
