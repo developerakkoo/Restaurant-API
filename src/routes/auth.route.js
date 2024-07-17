@@ -85,4 +85,10 @@ router.get('/get-current-user', authController.getCurrentUserStatus)
 
 router.post("/get-access-token", authController.reGenerateAccessToken);
 
+/***** OTP Routes *****/
+
+router.post("/send-otp", authController.sendOtp);
+
+router.post("/verify-otp", authController.verifyOtp);
+
 module.exports = { authRoutes: router };

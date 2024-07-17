@@ -5,12 +5,16 @@ const Partner = require("../models/partner.model");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
-const { responseMessage } = require("../constant");
+const { responseMessage, otpType } = require("../constant");
 const { generateTokens } = require("../utils/generateToken");
 const jwt = require("jsonwebtoken");
 const { findUserByEmail } = require("../utils/helper.util");
 const sendEmail = require("../utils/email.utils");
+const { sendMobileOtp, verifyMobileOtp } = require("../utils/otp.utils");
 const { hash } = require("bcrypt");
+const MSG91_LOGIN_OTP_TEMPLATE_ID = process.env.MSG91_LOGIN_OTP_TEMPLATE_ID;
+const MSG91_FORGOTPASS_OTP_TEMPLATE_ID =
+    process.env.MSG91_FORGOTPASS_OTP_TEMPLATE_ID;
 
 /**
  * @function logoutUser
@@ -276,4 +280,37 @@ exports.getCurrentUserStatus = asyncHandler(async (req, res) => {
                 );
         },
     );
+});
+
+/* Send OTP to user */
+exports.sendOtp = asyncHandler(async (req, res) => {
+    const { phoneNumber } = req.body;
+    if (req.body.otpType == otpType.LOGIN) {
+        const data = await sendMobileOtp(
+            phoneNumber,
+            MSG91_LOGIN_OTP_TEMPLATE_ID,
+        );
+        return res
+            .status(200)
+            .json(new ApiResponse(200, data, "OTP sent successfully"));
+    }
+    const data = await sendMobileOtp(
+        phoneNumber,
+        MSG91_FORGOTPASS_OTP_TEMPLATE_ID,
+    );
+    return res
+        .status(200)
+        .json(new ApiResponse(200, data, "OTP sent successfully"));
+});
+
+/* Verify OTP */
+
+exports.verifyOtp = asyncHandler(async (req, res) => {
+    const { phoneNumber, otp } = req.body;
+    const data = await verifyMobileOtp(phoneNumber, otp);
+    if (data.type === "success") {
+        return res.status(200).json(new ApiResponse(200, data, "OTP verified"));
+    } else {
+        return res.status(400).json(new ApiResponse(400, data, "Invalid OTP"));
+    }
 });

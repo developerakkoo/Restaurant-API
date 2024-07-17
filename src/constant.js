@@ -3,6 +3,10 @@ module.exports = {
     API_VERSION: "1.0.0",
     BASE_URL: "/api/v1",
     hash: 14,
+    otpType: {
+        LOGIN: 0,
+        FORGOT_PASSWORD: 1,
+    },
     cookieOptions: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
         sameSite: "none",

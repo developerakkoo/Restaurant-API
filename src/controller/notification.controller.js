@@ -25,7 +25,7 @@ exports.getNotificationById = asyncHandler(async (req, res) => {
     if (!notification) {
         return res
             .status(404)
-            .json(ApiResponse.errorResponse(404, {}, "Notification not found"));
+            .json(ApiResponse(404, {}, "Notification not found"));
     }
     return res.status.json(
         new ApiResponse(200, notification, "Notification found"),
