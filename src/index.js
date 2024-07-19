@@ -25,25 +25,28 @@ connectDB()
             );
             const io = require("./utils/socket").init(server);
             io.on("connection", async (socket) => {
-                let { userId } = await jwt.verify(
-                    socket.handshake.auth.token,
-                    process.env.JWT_ACCESS_SECRET_KEY,
-                );
-                console.log("User connected", userId);
+                console.log("user Connected");
+                // console.log(socket.Headers);
+                // console.log('====================================');
+                // let { userId } = await jwt.verify(
+                //     socket.handshake.auth.token,
+                //     process.env.JWT_ACCESS_SECRET_KEY,
+                // );
+                // console.log("User connected", userId);
 
-                await User.findByIdAndUpdate(
-                    userId,
-                    { $set: { isOnline: true } },
-                    { new: true },
-                ); //update user status to online
-                socket.broadcast.emit("onlineUsers", { user: userId });
+                // await User.findByIdAndUpdate(
+                //     userId,
+                //     { $set: { isOnline: true } },
+                //     { new: true },
+                // ); //update user status to online
+                // socket.broadcast.emit("onlineUsers", { user: userId });
                 socket.on("disconnect", async () => {
-                    const userId = socket.handshake.auth.token;
-                    await User.findByIdAndUpdate(userId, {
-                        $set: { isOnline: false },
-                    }); //update user status to offline
-                    socket.broadcast.emit("offlineUsers", { user: userId });
-                    // console.log('User Disconnected');
+                    // const userId = socket.handshake.auth.token;
+                    // await User.findByIdAndUpdate(userId, {
+                    //     $set: { isOnline: false },
+                    // }); //update user status to offline
+                    // socket.broadcast.emit("offlineUsers", { user: userId });
+                    console.log('User Disconnected');
                 });
             });
         });
