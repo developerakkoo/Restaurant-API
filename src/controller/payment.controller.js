@@ -3,6 +3,7 @@ const sha256 = require("sha256");
 const uniqid = require("uniqid");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
+const { getIO } = require("../utils/socket");
 const { BASE_URL } = require("../constant");
 // UAT environment
 const MERCHANT_ID = process.env.MERCHANT_ID;
@@ -61,8 +62,16 @@ exports.initiatePhonePePayment = asyncHandler(async (req, res) => {
         .request(options)
         .then(function (response) {
             console.log("response->", response.data);
-            res.redirect(
-                response.data.data.instrumentResponse.redirectInfo.url,
+            res.status(200).json(
+                new ApiResponse(
+                    200,
+                    {
+                        url: response.data.data.instrumentResponse.redirectInfo
+                            .url,
+                        merchantTransactionId,
+                    },
+                    "PhonePe payment initiated successfully",
+                ),
             );
         })
         .catch(function (error) {
@@ -72,7 +81,6 @@ exports.initiatePhonePePayment = asyncHandler(async (req, res) => {
 
 exports.validatePayment = asyncHandler(async (req, res) => {
     const { merchantTransactionId } = req.params;
-
     // check the status of the payment using merchantTransactionId
     if (merchantTransactionId) {
         let statusUrl =
@@ -95,9 +103,10 @@ exports.validatePayment = asyncHandler(async (req, res) => {
                 },
             })
             .then(function (response) {
-                console.log("response->", response.data);
+                // console.log("response->", response.data);
                 if (response.data && response.data.code === "PAYMENT_SUCCESS") {
                     // redirect to FE payment success status page
+                    getIO().emit(merchantTransactionId, response.data);
                     return res
                         .status(200)
                         .json(new ApiResponse(200, response.data, "success"));
