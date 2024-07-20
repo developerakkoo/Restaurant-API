@@ -10,10 +10,25 @@ const morganMiddleware = require("./logger/morgan.logger");
 const { errorHandler } = require("./middleware/error.middlewares");
 const cookieParser = require("cookie-parser");
 const { apiRateLimiter } = require("./utils/apiRateLimiter");
+const session = require("express-session");
+const { setupPassports } = require("./passport");
+const passport = require("passport");
 const path = require("path");
 
 app.use(cors());
 app.use(cookieParser());
+
+setupPassports(passport);
+
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: true,
+        saveUninitialized: true,
+    }),
+); // session secret
+app.use(passport.initialize());
+app.use(passport.session());
 
 /**
  * Sets the response headers to allow cross-origin requests (CORS)
@@ -79,6 +94,7 @@ const { messageRoutes } = require("./routes/message.route");
 const { notificationRoutes } = require("./routes/notification.route");
 const { ApiResponse } = require("./utils/ApiResponseHandler");
 const { paymentRoutes } = require("./routes/payment.route");
+const { setupPassport } = require("./passport");
 
 /*Api Logger */
 app.use(morganMiddleware);

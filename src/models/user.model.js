@@ -29,7 +29,7 @@ const userSchema = new Schema(
         },
         phoneNumber: {
             type: String,
-            required: true,
+            // required: true,
             unique: true,
             default: "_",
         },
@@ -40,7 +40,7 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: true,
+            // required: true,
         },
         refreshToken: {
             type: String,

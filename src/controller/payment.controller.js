@@ -32,7 +32,7 @@ exports.initiatePhonePePayment = asyncHandler(async (req, res) => {
         redirectMode: "REDIRECT",
         callbackUrl: `${APP_BE_URL}${BASE_URL}/payment/validate/${merchantTransactionId}`,
         paymentInstrument: {
-            type: "PAY_PAGE",
+            type: "UPI_COLLECT",
         },
     };
 

@@ -314,3 +314,31 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
         return res.status(400).json(new ApiResponse(400, data, "Invalid OTP"));
     }
 });
+
+/* Handel social media login */
+exports.handleSocialAuth = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user?._id);
+
+    if (!user) {
+        throw new ApiError(404, "User does not exist");
+    }
+
+    const { accessToken, refreshToken } = await generateTokens(user._id, 2);
+
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+    };
+    let hostname = `https://api.dropeat.in`;
+    if (process.env.NODE_ENV !== "production") {
+        hostname = `http://localhost:8000`;
+    }
+    return res
+        .status(301)
+        .cookie("accessToken", accessToken, options) // set the access token in the cookie
+        .cookie("refreshToken", refreshToken, options) // set the refresh token in the cookie
+        .redirect(
+            // redirect user to the frontend with access and refresh token in case user is not using cookies
+            `${hostname}/api/v1/auth/sso/success?accessToken=${accessToken}&refreshToken=${refreshToken}`,
+        );
+});

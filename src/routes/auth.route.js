@@ -8,6 +8,8 @@ const userController = require("../controller/user.controller");
 const authController = require("../controller/auth.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
 const { dataValidationResult } = require("../validators/validationResult");
+const passport = require("passport");
+const { ApiResponse } = require("../utils/ApiResponseHandler");
 
 /** Admin Auth Routes */
 router.post(
@@ -81,7 +83,7 @@ router.post("/rest-password/:id/:token", authController.ResetPassword);
 
 /** Common Routes  */
 
-router.get('/get-current-user', authController.getCurrentUserStatus)
+router.get("/get-current-user", authController.getCurrentUserStatus);
 
 router.post("/get-access-token", authController.reGenerateAccessToken);
 
@@ -90,5 +92,24 @@ router.post("/get-access-token", authController.reGenerateAccessToken);
 router.post("/send-otp", authController.sendOtp);
 
 router.post("/verify-otp", authController.verifyOtp);
+
+/******************************************************************************* Google Auth *********************************************************************************************/
+
+router.route("/google").get(
+    passport.authenticate("google", {
+        scope: ["profile", "email"],
+    }),
+    (req, res) => {
+        res.send("redirecting to google...");
+    },
+);
+
+router
+    .route("/google/callback")
+    .get(passport.authenticate("google"), authController.handleSocialAuth);
+
+router.get("/sso/success", async (req, res) => {
+    res.status(200).json(new ApiResponse(200, req.query, "Login success"));
+});
 
 module.exports = { authRoutes: router };
