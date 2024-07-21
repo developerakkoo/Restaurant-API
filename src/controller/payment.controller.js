@@ -27,12 +27,12 @@ exports.initiatePhonePePayment = asyncHandler(async (req, res) => {
         merchantId: MERCHANT_ID, //* PHONEPE_MERCHANT_ID . Unique for each account (private)
         merchantTransactionId: merchantTransactionId,
         merchantUserId: userId, //userId
-        amount: amount * 100, // converting to paise
+        amount: Math.ceil(amount) * 100, // converting to paise
         redirectUrl: `${APP_BE_URL}${BASE_URL}/payment/validate/${merchantTransactionId}`,
         redirectMode: "REDIRECT",
         callbackUrl: `${APP_BE_URL}${BASE_URL}/payment/validate/${merchantTransactionId}`,
         paymentInstrument: {
-            type: "UPI_COLLECT",
+            type: "PAY_PAGE",
         },
     };
 
