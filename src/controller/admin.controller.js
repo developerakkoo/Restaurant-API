@@ -695,10 +695,27 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
             0,
             {
                 $lookup: {
-                    as: "hotelOwner",
-                    from: "partners",
+                    from: "categories",
+                    localField: "category",
                     foreignField: "_id",
+                    as: "categories",
+                    pipeline: [
+                        { $project: { _id: 1, name: 1, image_url: 1 } },
+                    ],
+                },
+            },
+            // {
+            //     $unwind: {
+            //         path: "$categories",
+            //         preserveNullAndEmptyArrays: true,
+            //     },
+            // },
+            {
+                $lookup: {
+                    from: "partners",
                     localField: "userId",
+                    foreignField: "_id",
+                    as: "hotelOwner",
                     pipeline: [
                         {
                             $project: {
@@ -712,21 +729,25 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                     ],
                 },
             },
-            // Add a lookup stage to fetch hotel stars data
+            {
+                $unwind: {
+                    path: "$hotelOwner",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
             {
                 $lookup: {
-                    as: "hotelstars",
                     from: "hotelstars",
-                    foreignField: "hotelId",
                     localField: "_id",
-                    // adding a pipeline for getting user who starred the hotel
+                    foreignField: "hotelId",
+                    as: "hotelstars",
                     pipeline: [
                         {
                             $lookup: {
-                                as: "user",
                                 from: "users",
-                                foreignField: "_id",
                                 localField: "userId",
+                                foreignField: "_id",
+                                as: "user",
                                 pipeline: [
                                     {
                                         $project: {
@@ -737,7 +758,6 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                                 ],
                             },
                         },
-                        // Unwind the user array to work with individual user object
                         {
                             $unwind: {
                                 path: "$user",
@@ -747,14 +767,12 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                     ],
                 },
             },
-            // Unwind the hotelstars array to work with individual star ratings
             {
                 $unwind: {
                     path: "$hotelstars",
                     preserveNullAndEmptyArrays: true,
                 },
             },
-            // Group by hotel details and calculate star counts
             {
                 $group: {
                     _id: {
@@ -763,8 +781,8 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                         image_url: "$image_url",
                         address: "$address",
                         hotelOwner: "$hotelOwner",
+                        categories: "$categories",
                     },
-                    // Count the total number of stars for each hotel
                     totalCount: { $sum: 1 },
                     "1starCount": {
                         $sum: {
@@ -776,7 +794,6 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                             $cond: [{ $eq: ["$hotelstars.star", 2] }, 1, 0],
                         },
                     },
-                    // Similar counts for other star ratings
                     "3starCount": {
                         $sum: {
                             $cond: [{ $eq: ["$hotelstars.star", 3] }, 1, 0],
@@ -792,18 +809,9 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                             $cond: [{ $eq: ["$hotelstars.star", 5] }, 1, 0],
                         },
                     },
-                    // Push each star data into an array
                     starData: { $push: "$hotelstars" },
                 },
             },
-            // Unwind the hotelOwner array to flatten it
-            {
-                $unwind: {
-                    path: "$_id.hotelOwner",
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            // Project the final result with necessary fields
             {
                 $project: {
                     _id: 0,
@@ -811,7 +819,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                     hotelName: "$_id.hotelName",
                     image_url: "$_id.image_url",
                     address: "$_id.address",
-                    // Structure star counts
+                    categories: "$_id.categories",
                     starCounts: {
                         "1starCount": { $ifNull: ["$1starCount", 0] },
                         "2starCount": { $ifNull: ["$2starCount", 0] },
@@ -820,7 +828,6 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                         "5starCount": { $ifNull: ["$5starCount", 0] },
                         totalCount: { $ifNull: ["$totalCount", 0] },
                     },
-                    // Include the array of star data
                     ratingData: {
                         $cond: {
                             if: { $gt: [{ $size: "$starData" }, 0] },
@@ -828,7 +835,6 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                             else: [],
                         },
                     },
-                    // Flatten the partner/hotelOwner array
                     partner: { $ifNull: ["$_id.hotelOwner", {}] },
                 },
             },
