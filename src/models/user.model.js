@@ -30,8 +30,7 @@ const userSchema = new Schema(
         phoneNumber: {
             type: String,
             // required: true,
-            unique: true,
-            default: "_",
+            // unique: true,
         },
         isOnline: {
             type: Boolean,

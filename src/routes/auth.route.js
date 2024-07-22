@@ -108,6 +108,21 @@ router
     .route("/google/callback")
     .get(passport.authenticate("google"), authController.handleSocialAuth);
 
+/******************************************************************************* Facebook Auth *********************************************************************************************/
+
+router
+    .route("/facebook")
+    .get(
+        passport.authenticate("facebook", { scope: ["email"] }),
+        (req, res) => {
+            res.send("redirecting to google...");
+        },
+    );
+
+router
+    .route("/facebook/callback")
+    .get(passport.authenticate("facebook"), authController.handleSocialAuth);
+
 router.get("/sso/success", async (req, res) => {
     res.status(200).json(new ApiResponse(200, req.query, "Login success"));
 });
