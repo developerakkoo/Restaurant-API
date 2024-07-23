@@ -153,7 +153,7 @@ exports.getMyFavoritesList = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 favorites,
-                responseMessage.userMessage.ADD_FAVORITED_SUCCESSFULLY,
+                responseMessage.userMessage.FAVORITED_SUCCESSFULLY,
             ),
         );
 });
