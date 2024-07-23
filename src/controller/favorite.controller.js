@@ -103,7 +103,6 @@ exports.removeFavorite = asyncHandler(async (req, res) => {
         }
         await Favorite.deleteOne({ userId, hotelId });
     }
-    await Favorite.deleteOne({ userId, dishId });
     return res
         .status(200)
         .json(
