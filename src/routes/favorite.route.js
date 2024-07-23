@@ -7,6 +7,6 @@ router.get("/get-favorite/:id", favoriteController.getFavorite);
 
 router.get("/getMy/favorites/:userId", favoriteController.getMyFavoritesList);
 
-router.delete("/remove/favorite", favoriteController.removeFavorite);
+router.post("/remove/favorite", favoriteController.removeFavorite);
 
 module.exports = { favoriteRoutes: router };
