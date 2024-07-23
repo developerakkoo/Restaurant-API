@@ -6,23 +6,53 @@ const { responseMessage } = require("../constant");
 
 exports.addFavorite = asyncHandler(async (req, res) => {
     const { userId, dishId, hotelId } = req.body;
-    const favorite = await Favorite.findOne({ userId, dishId });
-    if (favorite) {
+    // Check if either dishId or hotelId is provided
+    if (!dishId && !hotelId) {
         return res
             .status(400)
             .json(
                 new ApiResponse(
                     400,
-                    {},
-                    responseMessage.userMessage.ALREADY_FAVORITED,
+                    null,
+                    "Either dishId or hotelId must be provided",
                 ),
             );
     }
-    let newFavorite;
+
+    let favorite;
+
+    // If dishId is provided, check if the dish is already favorited
     if (dishId) {
-        newFavorite = await Favorite.create({ userId, dishId });
-    } else {
-        newFavorite = await Favorite.create({ userId, hotelId });
+        favorite = await Favorite.findOne({ userId, dishId });
+        if (favorite) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        {},
+                        responseMessage.userMessage.ALREADY_FAVORITED,
+                    ),
+                );
+        }
+        favorite = await Favorite.create({ userId, dishId });
+    }
+
+    // If hotelId is provided, check if the hotel is already favorited
+    if (hotelId) {
+        favorite = await Favorite.findOne({ userId, hotelId });
+        if (favorite) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        {},
+                        responseMessage.userMessage.ALREADY_FAVORITED,
+                    ),
+                );
+        }
+        favorite = await Favorite.create({ userId, hotelId });
     }
     return res
         .status(200)
