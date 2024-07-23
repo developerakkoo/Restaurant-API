@@ -36,18 +36,42 @@ exports.addFavorite = asyncHandler(async (req, res) => {
 });
 
 exports.removeFavorite = asyncHandler(async (req, res) => {
-    const { userId, dishId } = req.body;
-    const favorite = await Favorite.findOne({ userId, dishId });
-    if (!favorite) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    responseMessage.userMessage.NOT_FAVORITED,
-                ),
-            );
+    const { userId, dishId, hotelId } = req.body;
+
+    let favorite;
+
+    // If dishId is provided, find the favorite dish
+    if (dishId) {
+        favorite = await Favorite.findOne({ userId, dishId });
+        if (!favorite) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        responseMessage.userMessage.NOT_FAVORITED,
+                    ),
+                );
+        }
+        await Favorite.deleteOne({ userId, dishId });
+    }
+
+    // If hotelId is provided, find the favorite hotel
+    if (hotelId) {
+        favorite = await Favorite.findOne({ userId, hotelId });
+        if (!favorite) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        responseMessage.userMessage.NOT_FAVORITED,
+                    ),
+                );
+        }
+        await Favorite.deleteOne({ userId, hotelId });
     }
     await Favorite.deleteOne({ userId, dishId });
     return res
@@ -79,7 +103,6 @@ exports.getFavorite = asyncHandler(async (req, res) => {
         );
 });
 
-
 //TODO:  need all data like rating and all sam link get all dish and hotel
 exports.getMyFavoritesList = asyncHandler(async (req, res) => {
     const { userId } = req.params;
@@ -88,10 +111,11 @@ exports.getMyFavoritesList = asyncHandler(async (req, res) => {
             path: "dishId",
             select: "-partnerPrice",
         })
-        .populate({path:"hotelId",
+        .populate({
+            path: "hotelId",
             populate: {
                 path: "category", // Populate the category field within hotelId
-            }
+            },
         });
     return res
         .status(200)
