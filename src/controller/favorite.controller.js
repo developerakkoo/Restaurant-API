@@ -59,7 +59,7 @@ exports.addFavorite = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                newFavorite,
+                favorite,
                 responseMessage.userMessage.ADD_FAVORITED_SUCCESSFULLY,
             ),
         );
