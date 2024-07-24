@@ -207,7 +207,7 @@ router.delete(
     bannerController.deleteBanner,
 );
 
-/* DATA */
+/* gst and platform fee data routes */
 
 router.get("/most-selling-products", adminController.getMostSellingDishes);
 
@@ -216,6 +216,19 @@ router.post("/add/data", adminController.createData);
 router.get("/get/data", adminController.getData);
 
 router.put("/update/data/:id", adminController.updateData);
+
+/* delivery charges data routes */
+router.post(
+    "/add/deliveryCharges/data",
+    adminController.createDeliveryChargesData,
+);
+
+router.get("/get/deliveryCharges/data", adminController.getDeliveryChargesData);
+
+router.put(
+    "/update/deliveryCharges/data/:id",
+    adminController.updateDeliveryChargesData,
+);
 
 /* Video add routes */
 
@@ -264,7 +277,6 @@ router.post(
 router.get("/get/:messageId", messageController.getMessageById);
 
 router.get("/get/chat/:chatId", messageController.getMessageByChatId);
-
 
 router.get("/get/all/:userId", messageController.getAllMessageByUserId);
 

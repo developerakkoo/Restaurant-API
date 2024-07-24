@@ -14,10 +14,13 @@ const promoCodeModel = require("../models/promoCode.model");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { sendNotification } = require("./notification.controller");
 const hotelModel = require("../models/hotel.model");
+const deliveryChargesModel = require("../models/deliveryCharges.model");
+const { getDistance } = require("../utils/getDistance.utils");
 let instance = new razorpay({
     key_id: process.env.KEY_ID,
     key_secret: process.env.KEY_SECRET,
 });
+
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     const data = await dataModel.find();
     if (!data || data.length === 0) {
@@ -32,21 +35,15 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
             );
     }
 
-    const { gstPercentage, deliveryCharges, platformFee } = data[0];
-    const { userId, code } = req.body;
+    const { gstPercentage, gstIsActive, platformFee } = data[0];
+    const { userId, code, userLat, userLong, shopLat, shopLong } = req.body;
 
     // Find the user's cart
     const cart = await Cart.findOne({ userId });
     if (!cart || cart.products.length === 0) {
         return res
             .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    responseMessage.userMessage.emptyCart,
-                ),
-            );
+            .json(new ApiResponse(400, null, "Your cart is empty."));
     }
 
     // Calculate the subtotal (total product cost)
@@ -60,10 +57,48 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     ).reduce((total, price) => total + price, 0);
 
     // Calculate GST
-    const gstAmount = (subtotal * gstPercentage) / 100;
+    let gstAmount = 0;
+    if (gstIsActive) {
+        gstAmount = (subtotal * gstPercentage) / 100;
+    }
+
+    // Calculate the distance using Google Maps API
+    let distanceInKm;
+    try {
+        distanceInKm = await getDistance(userLat, userLong, shopLat, shopLong);
+    } catch (error) {
+        return res.status(500).json(new ApiResponse(500, null, error.message));
+    }
+
+    // Fetch delivery charges from the database
+    const deliveryChargesConfig = await deliveryChargesModel.findOne();
+    let deliveryCharges = 0;
+
+    if (
+        distanceInKm >= deliveryChargesConfig.range1MinKm &&
+        distanceInKm <= deliveryChargesConfig.range1MaxKm
+    ) {
+        deliveryCharges = deliveryChargesConfig.range1Price;
+    } else if (
+        distanceInKm > deliveryChargesConfig.range2MinKm &&
+        distanceInKm <= deliveryChargesConfig.range2MaxKm
+    ) {
+        deliveryCharges = deliveryChargesConfig.range2Price;
+    } else if (
+        distanceInKm > deliveryChargesConfig.range3MinKm &&
+        distanceInKm <= deliveryChargesConfig.range3MaxKm
+    ) {
+        deliveryCharges = deliveryChargesConfig.range3Price;
+    } else {
+        deliveryCharges = deliveryChargesConfig.range3Price;
+    }
+
+    // Calculate platform fee as a percentage of the subtotal
+    const platformFeePercentage = (subtotal * platformFee) / 100;
 
     // Calculate the initial total amount to pay
-    let totalAmountToPay = subtotal + gstAmount + deliveryCharges + platformFee;
+    let totalAmountToPay =
+        subtotal + gstAmount + deliveryCharges + platformFeePercentage;
 
     let discount = 0;
     let promoCodeId = null;
@@ -85,7 +120,6 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         ) {
             throw new ApiError(400, "Promo code expired");
         }
-        console.log(subtotal, promoCode.minOrderAmount);
         if (subtotal < promoCode.minOrderAmount) {
             throw new ApiError(
                 400,
@@ -116,7 +150,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
                 }
                 discount = promoCode.discountAmount;
                 deliveryBoyCompensation = deliveryCharges;
-                promoCodeDetails = `NEW_USER `;
+                promoCodeDetails = `NEW_USER`;
                 totalAmountToPay -= promoCode.discountAmount;
                 break;
             default:
@@ -136,11 +170,12 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     const breakdown = {
         subtotal,
         gstAmount,
+        distanceInKm,
         deliveryCharges:
             promoCodeDetails && promoCodeDetails.startsWith("FREE_DELIVERY")
                 ? 0
                 : deliveryCharges,
-        platformFee,
+        platformFeePercentage,
         discount,
         totalAmountToPay,
         promoCodeId,

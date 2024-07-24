@@ -7,6 +7,7 @@ const { generateTokens } = require("../utils/generateToken");
 const DeliveryBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
 const Data = require("../models/data.model");
+const deliveryChargesModel = require("../models/deliveryCharges.model");
 const userAddress = require("../models/userAddress.model");
 const Hotel = require("../models/hotel.model");
 const HotelDish = require("../models/hotelDish.model");
@@ -699,9 +700,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                     localField: "category",
                     foreignField: "_id",
                     as: "categories",
-                    pipeline: [
-                        { $project: { _id: 1, name: 1, image_url: 1 } },
-                    ],
+                    pipeline: [{ $project: { _id: 1, name: 1, image_url: 1 } }],
                 },
             },
             // {
@@ -1274,12 +1273,12 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
     );
 });
 
+/***** Gst and platform fee data  *****/
 exports.createData = asyncHandler(async (req, res) => {
-    const { gstPercentage, deliveryCharges, platformFee } = req.body;
+    const { gstPercentage, platformFee } = req.body;
 
     const data = await Data.create({
         gstPercentage,
-        deliveryCharges,
         platformFee,
     });
     res.status(200).json(
@@ -1301,13 +1300,144 @@ exports.getData = asyncHandler(async (req, res) => {
 
 exports.updateData = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { gstPercentage, deliveryCharges, platformFee } = req.body;
+    const { gstPercentage, platformFee } = req.body;
     const data = await Data.findByIdAndUpdate(
         id,
         {
             gstPercentage,
             deliveryCharges,
             platformFee,
+        },
+        { new: true },
+    );
+    if (!data) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Data not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "Data updated successfully"),
+    );
+});
+
+/***** Gst and platform fee data  *****/
+exports.createData = asyncHandler(async (req, res) => {
+    const { gstPercentage, platformFee } = req.body;
+
+    const data = await Data.create({
+        gstPercentage,
+        platformFee,
+    });
+    res.status(200).json(
+        new ApiResponse(200, data, "Data created successfully"),
+    );
+});
+
+exports.getData = asyncHandler(async (req, res) => {
+    const data = await Data.find();
+    if (!data) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Data not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "Data fetched successfully"),
+    );
+});
+
+exports.updateData = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { gstPercentage, platformFee, gstIsActive } = req.body;
+    const data = await Data.findByIdAndUpdate(
+        id,
+        {
+            gstPercentage,
+            gstIsActive,
+            platformFee,
+        },
+        { new: true },
+    );
+    if (!data) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Data not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "Data updated successfully"),
+    );
+});
+
+/***** Delivery charges data  *****/
+exports.createDeliveryChargesData = asyncHandler(async (req, res) => {
+    const {
+        range1Price,
+        range1MinKm,
+        range1MaxKm,
+        range2Price,
+        range2MinKm,
+        range2MaxKm,
+        range3Price,
+        range3MinKm,
+        range3MaxKm,
+    } = req.body;
+
+    const data = await deliveryChargesModel.create({
+        range1Price,
+        range1MinKm,
+        range1MaxKm,
+        range2Price,
+        range2MinKm,
+        range2MaxKm,
+        range3Price,
+        range3MinKm,
+        range3MaxKm,
+    });
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            data,
+            "Delivery charges data created successfully",
+        ),
+    );
+});
+
+exports.getDeliveryChargesData = asyncHandler(async (req, res) => {
+    const data = await deliveryChargesModel.find();
+    if (!data) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Data not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "Data fetched successfully"),
+    );
+});
+
+exports.updateDeliveryChargesData = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const {
+        range1Price,
+        range1MinKm,
+        range1MaxKm,
+        range2Price,
+        range2MinKm,
+        range2MaxKm,
+        range3Price,
+        range3MinKm,
+        range3MaxKm,
+    } = req.body;
+    const data = await deliveryChargesModel.findByIdAndUpdate(
+        id,
+        {
+            range1Price,
+            range1MinKm,
+            range1MaxKm,
+            range2Price,
+            range2MinKm,
+            range2MaxKm,
+            range3Price,
+            range3MinKm,
+            range3MaxKm,
         },
         { new: true },
     );
