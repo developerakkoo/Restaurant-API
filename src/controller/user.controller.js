@@ -129,7 +129,7 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
 exports.addAddresses = asyncHandler(async (req, res) => {
     const { type, address, selected, lng, lat } = req.body;
     const savedAddress = await userAddress.create({
-        userId: req.user.userId,
+        userId: req.query.userId || req.user.userId,
         type,
         address,
         selected,
