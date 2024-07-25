@@ -108,7 +108,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
 });
 
 exports.updateUserProfile = asyncHandler(async (req, res) => {
-    const { name, email, phoneNumber } = req.body;
+    const { name, email, phoneNumber, firebaseToken } = req.body;
     const updatedUser = await User.findByIdAndUpdate(
         req.user.userId,
         {
@@ -116,6 +116,7 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
                 name: name,
                 email: email,
                 phoneNumber: phoneNumber,
+                firebaseToken,
             },
         },
         { new: true },

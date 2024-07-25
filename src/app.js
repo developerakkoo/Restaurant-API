@@ -18,6 +18,8 @@ const path = require("path");
 app.use(cors());
 app.use(cookieParser());
 
+require("./cron job/firebaseNotification.cron");
+
 setupPassports(passport);
 
 app.use(

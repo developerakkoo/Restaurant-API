@@ -32,10 +32,13 @@ const userSchema = new Schema(
             // required: true,
             // unique: true,
         },
+        firebaseToken: {
+            type: String,
+        },
         isOnline: {
             type: Boolean,
             required: true,
-            default:false,
+            default: false,
         },
         password: {
             type: String,
@@ -50,8 +53,8 @@ const userSchema = new Schema(
             type: Number,
             required: true,
             default: 0, // default
-            enum:[0,1] //  1= block
-        }
+            enum: [0, 1], //  1= block
+        },
     },
     { timestamps: true },
 );
