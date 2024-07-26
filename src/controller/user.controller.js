@@ -63,10 +63,10 @@ exports.registerUser = asyncHandler(async (req, res) => {
  */
 exports.loginUser = asyncHandler(async (req, res) => {
     // Extract user login details from the request body
-    const { email, password } = req.body;
+    const { phoneNumber } = req.body;
 
     // Find a user with the provided email in the database
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ phoneNumber });
 
     // If the user is not found, return a 404 response
     if (!user) {
@@ -74,12 +74,12 @@ exports.loginUser = asyncHandler(async (req, res) => {
     }
 
     // Check if the provided password is correct
-    const isPasswordValid = await user.isPasswordCorrect(password);
+    // const isPasswordValid = await user.isPasswordCorrect(password);
 
-    // If the password is incorrect, return a 401 response
-    if (!isPasswordValid) {
-        throw new ApiError(401, responseMessage.userMessage.incorrectPassword);
-    }
+    // // If the password is incorrect, return a 401 response
+    // if (!isPasswordValid) {
+    //     throw new ApiError(401, responseMessage.userMessage.incorrectPassword);
+    // }
 
     // Generate access and refresh tokens for the logged-in user
     const { accessToken, refreshToken } = await generateTokens(user._id, 2);
