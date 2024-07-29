@@ -5,6 +5,15 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { getIO } = require("../utils/socket");
 const { BASE_URL } = require("../constant");
+const razorpay = require("razorpay");
+const key = process.env.RAZORPAY_ID;
+const secret = process.env.RAZORPAY_SECRET;
+
+var instance = new razorpay({
+    key_id: key,
+    key_secret: secret,
+});
+
 // UAT environment
 const MERCHANT_ID = process.env.MERCHANT_ID;
 const PHONE_PE_HOST_URL = process.env.PHONE_PE_HOST_URL;
@@ -128,4 +137,17 @@ exports.validatePayment = asyncHandler(async (req, res) => {
             .status(500)
             .json(new ApiResponse(500, null, "Sorry!! Error"));
     }
+});
+
+// Initiate payment request
+exports.initiateRazorPayPayment = asyncHandler(async (req, res) => {
+    const { amount } = req.body;
+
+    const options = {
+        amount: amount * 100, // Razorpay expects the amount in paise
+        currency: "INR",
+    };
+
+    const order = await instance.orders.create(options);
+    sendResponse(res, 200, order, "Order Created.");
 });
