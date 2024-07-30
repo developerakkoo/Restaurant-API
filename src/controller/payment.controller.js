@@ -144,10 +144,10 @@ exports.initiateRazorPayPayment = asyncHandler(async (req, res) => {
     const { amount } = req.body;
 
     const options = {
-        amount: amount * 100, // Razorpay expects the amount in paise
+        amount: Math.ceil(amount) * 100, // Razorpay expects the amount in paise
         currency: "INR",
     };
 
     const order = await instance.orders.create(options);
-    sendResponse(res, 200, order, "Order Created.");
+    res.status(200).json(new ApiResponse(200, order, "Order Created."));
 });
