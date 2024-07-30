@@ -146,7 +146,7 @@ exports.deleteProductFromCart = asyncHandler(async (req, res) => {
 
 exports.getMyCart = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const cart = await Cart.findOne({ userId }).populate({
+    const cart = await Cart.findOne({ userId }).populate({path:"hotelId",select:"location"}).populate({
         path: "products.dishId",
         select: "-partnerPrice",
     });
