@@ -35,7 +35,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
             );
     }
 
-    const { gstPercentage, gstIsActive, platformFee } = data[0];
+    const { gstPercentage, gstIsActive } = data[0];
     const { userId, code, userLat, userLong, shopLat, shopLong } = req.body;
 
     // Find the user's cart
@@ -94,11 +94,10 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     }
 
     // Calculate platform fee as a percentage of the subtotal
-    const platformFeePercentage = (subtotal * platformFee) / 100;
+    const platformFee = (subtotal * data[0].platformFee) / 100;
 
     // Calculate the initial total amount to pay
-    let totalAmountToPay =
-        subtotal + gstAmount + deliveryCharges + platformFeePercentage;
+    let totalAmountToPay = subtotal + gstAmount + deliveryCharges + platformFee;
 
     let discount = 0;
     let promoCodeId = null;
@@ -175,7 +174,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
             promoCodeDetails && promoCodeDetails.startsWith("FREE_DELIVERY")
                 ? 0
                 : deliveryCharges,
-        platformFeePercentage,
+        platformFee,
         discount,
         totalAmountToPay,
         promoCodeId,
@@ -236,7 +235,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             },
         ],
     });
-    const hotel = await hotelModel.findById(hotelId);
+    const hotel = await hotelModel.findOne({_id:cart.hotelId});
     sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
 
     // Clear the cart
