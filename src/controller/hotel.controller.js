@@ -435,6 +435,11 @@ exports.deleteDish = asyncHandler(async (req, res) => {
 
 exports.addStartToDish = asyncHandler(async (req, res) => {
     const { dishId, userId, description, star } = req.body;
+    const images = req.files
+        ? req.files.map(
+              (file) => `https://${req.hostname}/upload/${file.filename}`,
+          )
+        : [];
     const dish = await Dish.findById(dishId);
     if (!dish) {
         throw new ApiError(404, responseMessage.userMessage.dishNotFound);
@@ -449,6 +454,7 @@ exports.addStartToDish = asyncHandler(async (req, res) => {
         userId,
         description,
         star,
+        images,
     });
     res.status(201).json(
         new ApiResponse(
@@ -1554,4 +1560,3 @@ exports.getHotelsAndDishes = asyncHandler(async (req, res) => {
 
     res.json([...hotels, ...dishes]);
 });
-

@@ -33,6 +33,19 @@ const hotelSchema = new Schema(
             type: String,
             required: true,
         },
+        location: {
+            type: {
+                type: String,
+                enum: ["Point"], // Only 'Point' type is allowed
+                required: true,
+                default: "Point",
+            },
+            coordinates: {
+                type: [Number], // Longitude and latitude
+                required: true,
+                default: 0,
+            },
+        },
         isTop: {
             type: Number,
             required: true,
