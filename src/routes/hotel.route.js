@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const HotelStarController = require("../controller/hotel.controller");
 const { getAllHotel } = require("../controller/admin.controller");
+const { upload } = require("../middleware/fileHandler.middleware");
 
 router.get("/get/byId/:hotelId", HotelStarController.getHotelById);
 
@@ -29,7 +30,11 @@ router.delete(
 
 /* Hotel Dish */
 
-router.post("/dish/add-star", HotelStarController.addStartToDish);
+router.post(
+    "/dish/add-star",
+    upload.array("image", 5),
+    HotelStarController.addStartToDish,
+);
 
 router.get("/dish/get/:hotelId", HotelStarController.getDishByHotelId);
 

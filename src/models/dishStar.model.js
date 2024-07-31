@@ -18,6 +18,9 @@ const dishStarSchema = new Schema(
             required: true,
             default: null,
         },
+        images: {
+            type: [String],
+        },
         star: {
             type: Number,
             required: true,
