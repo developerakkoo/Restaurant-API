@@ -172,7 +172,11 @@ router.delete(
 
 router.get("/order/get-all", orderController.getAllOrders);
 
-router.put("/order/update", orderController.updateOrder);
+router.put(
+    "/order/update",
+    upload.single("screenshot"),
+    orderController.updateOrder,
+);
 
 router.post(
     "/order/send-pickup-request/deliveryBoy",

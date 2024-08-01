@@ -197,8 +197,15 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
 });
 
 exports.placeOrder = asyncHandler(async (req, res) => {
-    const { userId, addressId, phone, description, priceDetails, paymentId } =
-        req.body;
+    const {
+        userId,
+        addressId,
+        phone,
+        description,
+        priceDetails,
+        paymentId,
+        paymentMode,
+    } = req.body;
 
     // Generate UUIDv4
     const uuid = uuidv4();
@@ -232,6 +239,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         address: addressId,
         promoCode: priceDetails.promoCodeId,
         paymentId,
+        paymentMode,
         phone,
         description,
         orderTimeline: [
@@ -309,8 +317,14 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
 });
 
 exports.updateOrder = asyncHandler(async (req, res) => {
-    const { orderId, status, deliveryBoyId } = req.body;
+    const { orderId, status, deliveryBoyId, paymentMode } = req.body;
     const savedOrder = await Order.findById(orderId);
+    let url;
+    if (paymentMode === "UPI") {
+        if (!req.file) throw new ApiError(400, "Payment photo is require");
+        const { filename } = req.file;
+        url = `https://${req.hostname}/upload/${filename}`;
+    }
 
     // Check if the order is already assigned and trying to assign again
     if (
@@ -328,11 +342,12 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 ),
             );
     }
-
     const update = {
         $set: {
             orderStatus: status,
             assignedDeliveryBoy: deliveryBoyId,
+            paymentMode: paymentMode,
+            upi_paymentScreenShot: url,
         },
     };
 

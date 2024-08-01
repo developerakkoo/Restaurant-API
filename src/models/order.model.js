@@ -73,7 +73,14 @@ const orderSchema = new Schema(
         },
         paymentId: {
             type: String,
+        },
+        paymentMode: {
+            type: String,
             required: true,
+            enum: ["COD", "CASH", "UPI", "RAZORPAY"],
+        },
+        upi_paymentScreenShot: {
+            type: String,
         },
         phone: {
             type: String,
