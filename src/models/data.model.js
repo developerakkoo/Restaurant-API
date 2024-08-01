@@ -15,6 +15,9 @@ const dataSchema = new Schema(
             required: true,
             default: 0,
         },
+        deliveryBoyIncentive: {
+            type: Number,
+        },
     },
     { timestamps: true },
 );

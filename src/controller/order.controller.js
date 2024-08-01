@@ -35,7 +35,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
             );
     }
 
-    const { gstPercentage, gstIsActive } = data[0];
+    const { gstPercentage, gstIsActive, deliveryBoyIncentive } = data[0];
     const { userId, code, userLat, userLong, shopLat, shopLong } = req.body;
 
     // Find the user's cart
@@ -73,24 +73,32 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     // Fetch delivery charges from the database
     const deliveryChargesConfig = await deliveryChargesModel.findOne();
     let deliveryCharges = 0;
+    let deliveryBoyCompensationAmount = 0;
 
     if (
         distanceInKm >= deliveryChargesConfig.range1MinKm &&
         distanceInKm <= deliveryChargesConfig.range1MaxKm
     ) {
         deliveryCharges = deliveryChargesConfig.range1Price;
+        deliveryBoyCompensationAmount = deliveryChargesConfig.range1Price;
     } else if (
         distanceInKm > deliveryChargesConfig.range2MinKm &&
         distanceInKm <= deliveryChargesConfig.range2MaxKm
     ) {
         deliveryCharges = deliveryChargesConfig.range2Price;
+        deliveryBoyCompensationAmount = deliveryChargesConfig.range2Price;
     } else if (
         distanceInKm > deliveryChargesConfig.range3MinKm &&
         distanceInKm <= deliveryChargesConfig.range3MaxKm
     ) {
         deliveryCharges = deliveryChargesConfig.range3Price;
+        deliveryBoyCompensationAmount = deliveryChargesConfig.range3Price;
     } else {
         deliveryCharges = deliveryChargesConfig.range3Price;
+        deliveryBoyCompensationAmount = deliveryChargesConfig.range3Price;
+    }
+    if (subtotal >= 500) {
+        deliveryCharges = 0; // Free delivery for orders above 500
     }
 
     // Calculate platform fee as a percentage of the subtotal
@@ -129,15 +137,13 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         switch (promoCode.codeType) {
             case 1: // FREE_DELIVERY
                 discount = deliveryCharges;
-                deliveryBoyCompensation = deliveryCharges;
-                promoCodeDetails = `FREE_DELIVERY`;
+                promoCodeDetails = "FREE_DELIVERY";
                 totalAmountToPay -= deliveryCharges;
                 break;
             case 2: // GET_OFF
                 discount = promoCode.discountAmount;
-                promoCodeDetails = `GET_OFF`;
+                promoCodeDetails = "GET_OFF";
                 totalAmountToPay -= promoCode.discountAmount;
-                deliveryBoyCompensation = deliveryCharges;
                 break;
             case 3: // NEW_USER
                 const userOrderExist = await Order.findOne({ userId });
@@ -148,8 +154,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
                     );
                 }
                 discount = promoCode.discountAmount;
-                deliveryBoyCompensation = deliveryCharges;
-                promoCodeDetails = `NEW_USER`;
+                promoCodeDetails = "NEW_USER";
                 totalAmountToPay -= promoCode.discountAmount;
                 break;
             default:
@@ -176,9 +181,11 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
                 : deliveryCharges,
         platformFee,
         discount,
-        totalAmountToPay,
+        totalAmountToPay: Number(totalAmountToPay.toFixed(2)),
         promoCodeId,
         promoCodeDetails: promoCodeData,
+        deliveryBoyCompensation:
+            deliveryBoyCompensationAmount + deliveryBoyIncentive,
     };
 
     // Return the calculated amounts and breakdown
@@ -235,7 +242,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             },
         ],
     });
-    const hotel = await hotelModel.findOne({_id:cart.hotelId});
+    const hotel = await hotelModel.findOne({ _id: cart.hotelId });
     sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
 
     // Clear the cart
