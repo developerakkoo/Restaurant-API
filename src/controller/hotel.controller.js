@@ -1560,3 +1560,17 @@ exports.getHotelsAndDishes = asyncHandler(async (req, res) => {
 
     res.json([...hotels, ...dishes]);
 });
+
+exports.bulkDishCreate = asyncHandler(async (req, res) => {
+    const { dishes } = req.body;
+    if (!Array.isArray(dishes) || dishes.length === 0) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Invalid dishes array"));
+    }
+    const bulkDishOperations = await Dish.insertMany(dishes);
+
+    res.status(201).json(
+        new ApiResponse(201, bulkDishOperations, "Dishes created successfully"),
+    );
+});

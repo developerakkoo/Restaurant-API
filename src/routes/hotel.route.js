@@ -30,6 +30,8 @@ router.delete(
 
 /* Hotel Dish */
 
+router.post("/dish/bulk/add", HotelStarController.bulkDishCreate);
+
 router.post(
     "/dish/add-star",
     upload.array("image", 5),
