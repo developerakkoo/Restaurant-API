@@ -23,4 +23,8 @@ router.post("/ask-for-leave", deliveryBoyController.askForLeave);
 
 router.get("/get/leave-requests", deliveryBoyController.getAllLeaveRequests);
 
+/* Earnings */
+
+router.get("/earnings/:deliveryBoyId", deliveryBoyController.getEarnings);
+
 module.exports = { deliverBoyRoutes: router };

@@ -1,5 +1,6 @@
-const DeliverBoy = require("../models/deliveryBoy.model");
 const DeliverBoyDocument = require("../models/userDocument.model");
+const Order = require("../models/order.model");
+const DeliverBoy = require("../models/deliveryBoy.model");
 const leaveModel = require("../models/deliveryBoyLeave.model");
 const { responseMessage, cookieOptions } = require("../constant");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -7,6 +8,7 @@ const { ApiError } = require("../utils/ApiErrorHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
+const moment = require("moment");
 const { Types } = require("mongoose");
 
 /**
@@ -477,4 +479,121 @@ exports.getLeaveRequestById = asyncHandler(async (req, res) => {
                 "Leave Request Fetched Successfully",
             ),
         );
+});
+
+exports.getEarnings = asyncHandler(async (req, res) => {
+    const deliveryBoyId = req.params.deliveryBoyId;
+
+    if (!deliveryBoyId) {
+        return res.status(400).json({
+            message: "Delivery boy ID is required",
+        });
+    }
+
+    // Start of the month and end of the month for current month calculations
+    const startOfMonth = moment().startOf("month").toDate();
+    const endOfMonth = moment().endOf("month").toDate();
+
+    // Define all the queries
+    const queries = [
+        // Total Earnings
+        Order.aggregate([
+            {
+                $match: {
+                    assignedDeliveryBoy: new Types.ObjectId(deliveryBoyId),
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalEarnings: {
+                        $sum: "$priceDetails.deliveryBoyCompensation",
+                    },
+                },
+            },
+        ]).exec(),
+
+        // Total Deliveries
+        Order.countDocuments({
+            assignedDeliveryBoy: new Types.ObjectId(deliveryBoyId),
+        }).exec(),
+
+        // Current Month's Total Deliveries and Earnings
+        Order.aggregate([
+            {
+                $match: {
+                    assignedDeliveryBoy: new Types.ObjectId(deliveryBoyId),
+                    createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalEarnings: {
+                        $sum: "$priceDetails.deliveryBoyCompensation",
+                    },
+                    totalDeliveries: { $count: {} },
+                },
+            },
+        ]).exec(),
+
+        // Daily Earnings List with Order Count
+        Order.aggregate([
+            {
+                $match: {
+                    assignedDeliveryBoy: new Types.ObjectId(deliveryBoyId),
+                    createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: "$createdAt",
+                        },
+                    },
+                    dailyEarnings: {
+                        $sum: "$priceDetails.deliveryBoyCompensation",
+                    },
+                    totalOrders: { $count: {} },
+                },
+            },
+            { $sort: { _id: 1 } },
+        ]).exec(),
+    ];
+
+    try {
+        // Run all queries in parallel
+        const [
+            totalEarningsResult,
+            totalDeliveries,
+            currentMonthResult,
+            dailyEarnings,
+        ] = await Promise.all(queries);
+
+        const totalEarnings = totalEarningsResult[0]
+            ? totalEarningsResult[0].totalEarnings
+            : 0;
+
+        const currentMonthData = currentMonthResult[0]
+            ? currentMonthResult[0]
+            : { totalEarnings: 0, totalDeliveries: 0 };
+
+        res.status(200).json(
+            new ApiResponse(
+                200,
+                {
+                    totalEarnings,
+                    totalDeliveries,
+                    currentMonthData,
+                    dailyEarnings,
+                },
+                "Earnings Fetched Successfully",
+            ),
+        );
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server Error" });
+    }
 });
