@@ -168,27 +168,36 @@ function generateInvoiceTable(doc, invoice) {
             .stroke();
         doc.font("Helvetica")
             .text(
-                `Subtotal:                        ${5000}`,
+                `Subtotal:                        ${invoice.subtotal}`,
                 400,
                 y + 10 + (invoice.items.length + 1) * rowHeight,
             )
             .text(
-                `Platform fee:                  ${5000}`,
+                `Platform fee:                  ${invoice.platformFee}`,
                 400,
                 y + 25 + (invoice.items.length + 1) * rowHeight,
             )
             .text(
-                `Delivery charges:           ${5000}`,
+                `Delivery charges:           ${invoice.deliveryCharges}`,
                 400,
                 y + 40 + (invoice.items.length + 1) * rowHeight,
-            );
-        doc.moveTo(380, y + 55 + (invoice.items.length + 1) * rowHeight)
-            .lineTo(565, y + 55 + (invoice.items.length + 1) * rowHeight)
-            .stroke()
+            )
             .text(
-                `TOTAL:                            ${5000}`,
+                `GST:                               ${invoice.gst}`,
                 400,
                 y + 60 + (invoice.items.length + 1) * rowHeight,
+            );
+        doc.moveTo(380, y + 75 + (invoice.items.length + 1) * rowHeight)
+            .lineTo(565, y + 75 + (invoice.items.length + 1) * rowHeight)
+            .stroke()
+
+            // doc.moveTo(380, y + 55 + (invoice.items.length + 1) * rowHeight)
+            //     .lineTo(565, y + 55 + (invoice.items.length + 1) * rowHeight)
+            //     .stroke()
+            .text(
+                `TOTAL:                         ${invoice.total}`,
+                400,
+                y + 90 + (invoice.items.length + 1) * rowHeight,
             );
     }
 

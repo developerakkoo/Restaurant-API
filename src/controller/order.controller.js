@@ -841,30 +841,53 @@ const sampleData = {
 // Invoice controller
 exports.generateInvoice = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
-    // const doc = new PDFDocument({ margin: "40" });
-    const orderData = await Order.findById(orderId).populate({
-        path: "userId",
-        select: "name",
+    const doc = new PDFDocument({ margin: "40" });
+    const orderData = await Order.findById(orderId)
+        .populate({
+            path: "userId",
+            select: "name",
+        })
+        .populate({ path: "address", select: "address" })
+        .populate({
+            path: "products.dishId",
+            select: "name userPrice",
+        })
+        .select("priceDetails userId address products");
+
+    const items = orderData.products.map((product) => {
+        return {
+            item: product.dishId.name,
+            quantity: product.quantity,
+            amount: product.dishId.userPrice,
+        };
     });
-
+    const data = {
+        name: orderData.userId.name,
+        address: orderData.address.address,
+        country: "India",
+        items,
+        subtotal: orderData.priceDetails.subtotal,
+        platformFee: orderData.priceDetails.platformFee,
+        deliveryCharges: orderData.priceDetails.deliveryCharges,
+        gst: orderData.priceDetails.gstAmount,
+        total: orderData.priceDetails.totalAmountToPay,
+    };
     // Set response headers
-    // res.setHeader("Content-Type", "application/pdf");
-    // res.setHeader(
-    //     "Content-Disposition",
-    //     `attachment; filename=invoice-${Date.now()}.pdf`,
-    // );
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=invoice-${Date.now()}.pdf`,
+    );
 
-    // // Pipe the PDF to the response
-    // doc.pipe(res);
+    // Pipe the PDF to the response
+    doc.pipe(res);
 
-    // // Generate PDF content
-    // generateHeader(doc);
-    // generateCustomerInformation(doc, sampleData);
-    // generateInvoiceTable(doc, sampleData);
-    // generateFooter(doc);
+    // Generate PDF content
+    generateHeader(doc);
+    generateCustomerInformation(doc, data);
+    generateInvoiceTable(doc, data);
+    generateFooter(doc);
 
-    // // Finalize the PDF and end the stream
-    // doc.end();
-
-    res.status(200).json(orderData);
+    // Finalize the PDF and end the stream
+    doc.end();
 });
