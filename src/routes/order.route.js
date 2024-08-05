@@ -14,7 +14,7 @@ router.get("/get/order-by-id/:id", orderController.getOrderById);
 
 router.get("/get-order/:orderId", orderController.getOrderByOrderId);
 
-router.put("/update/order-status",orderController.updateOrder)
+router.put("/update/order-status", orderController.updateOrder);
 
 router.get(
     "/get/all-order/deliveryBoyId/:deliveryBoyId",
@@ -24,5 +24,9 @@ router.get(
 router.get("/get/all-order/userId/:userId", orderController.getOrdersByUserId);
 
 router.post("/apply/promoCode", applyPromoCode);
+
+// invoice route
+
+router.get("/get/invoice/:orderId", orderController.generateInvoice);
 
 module.exports = { orderRoutes: router };

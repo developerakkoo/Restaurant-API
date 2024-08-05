@@ -74,6 +74,9 @@ const orderSchema = new Schema(
         paymentId: {
             type: String,
         },
+        invoiceUrl: {
+            type: String,
+        },
         paymentMode: {
             type: String,
             required: true,

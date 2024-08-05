@@ -1,21 +1,31 @@
-const Order = require("../models/order.model");
-const Cart = require("../models/cart.model");
-const dishModel = require("../models/hotelDish.model");
-const { v4: uuidv4 } = require("uuid");
+const deliveryChargesModel = require("../models/deliveryCharges.model");
+const { sendNotification } = require("./notification.controller");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
+const { getDistance } = require("../utils/getDistance.utils");
+const promoCodeModel = require("../models/promoCode.model");
 const { asyncHandler } = require("../utils/asyncHandler");
+const { ApiError } = require("../utils/ApiErrorHandler");
+const dishModel = require("../models/hotelDish.model");
+const hotelModel = require("../models/hotel.model");
 const { responseMessage } = require("../constant");
 const dataModel = require("../models/data.model");
-const moment = require("moment");
-const razorpay = require("razorpay");
+const Order = require("../models/order.model");
+const Cart = require("../models/cart.model");
 const { getIO } = require("../utils/socket");
+const { v4: uuidv4 } = require("uuid");
+const { Readable } = require("stream");
 const { Types } = require("mongoose");
-const promoCodeModel = require("../models/promoCode.model");
-const { ApiError } = require("../utils/ApiErrorHandler");
-const { sendNotification } = require("./notification.controller");
-const hotelModel = require("../models/hotel.model");
-const deliveryChargesModel = require("../models/deliveryCharges.model");
-const { getDistance } = require("../utils/getDistance.utils");
+const PDFDocument = require("pdfkit");
+const razorpay = require("razorpay");
+const moment = require("moment");
+const path = require("path");
+const fs = require("fs");
+const {
+    generateHeader,
+    generateFooter,
+    generateInvoiceTable,
+    generateCustomerInformation,
+} = require("../utils/invoice");
 let instance = new razorpay({
     key_id: process.env.KEY_ID,
     key_secret: process.env.KEY_SECRET,
@@ -314,6 +324,67 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
     sendNotification(order.userId, message, order);
 
     return res.status(200).json(new ApiResponse(200, order, message));
+});
+
+exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
+    const { orderId, deliveryBoyIds } = req.body;
+
+    // Validate input
+    if (
+        !orderId ||
+        !Array.isArray(deliveryBoyIds) ||
+        deliveryBoyIds.length === 0
+    ) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Invalid input"));
+    }
+
+    // Find and update the order
+    const order = await Order.findByIdAndUpdate(
+        orderId,
+        {
+            $set: {
+                orderStatus: 2,
+                assignedDeliveryBoy: null,
+            },
+        },
+        { new: true },
+    );
+
+    if (!order) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    // Send notifications to all delivery boys
+    await Promise.all(
+        deliveryBoyIds.map(async (deliveryBoyId) => {
+            try {
+                await sendNotification(
+                    deliveryBoyId,
+                    "New Order. Accept it fast to start delivering this order.",
+                    order,
+                );
+            } catch (notificationError) {
+                console.error(
+                    `Failed to send notification to delivery boy ${deliveryBoyId}:`,
+                    notificationError,
+                );
+            }
+        }),
+    );
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                order,
+                "Notification sent successfully to all delivery boys",
+            ),
+        );
 });
 
 exports.updateOrder = asyncHandler(async (req, res) => {
@@ -739,4 +810,61 @@ exports.initiatePayment = asyncHandler(async (req, res, next) => {
                 ),
             );
     });
+});
+
+const sampleData = {
+    name: "John Doe",
+    Gst: "12ABCPQ1234R1Z5",
+    address: "123 Sample Street, Sample City, India",
+    country: "India",
+    items: [
+        {
+            item: "Sample Subscription",
+            quantity: 1,
+            amount: 1000,
+        },
+        {
+            item: "Sample Subscription1",
+            quantity: 2,
+            amount: 1000,
+        },
+        {
+            item: "Sample Subscription1",
+            quantity: 2,
+            amount: 1000,
+        },
+    ],
+    sac: "SAC1234",
+    subtotal: 1000,
+    invoice_nr: "INV-2024-0001",
+};
+// Invoice controller
+exports.generateInvoice = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    // const doc = new PDFDocument({ margin: "40" });
+    const orderData = await Order.findById(orderId).populate({
+        path: "userId",
+        select: "name",
+    });
+
+    // Set response headers
+    // res.setHeader("Content-Type", "application/pdf");
+    // res.setHeader(
+    //     "Content-Disposition",
+    //     `attachment; filename=invoice-${Date.now()}.pdf`,
+    // );
+
+    // // Pipe the PDF to the response
+    // doc.pipe(res);
+
+    // // Generate PDF content
+    // generateHeader(doc);
+    // generateCustomerInformation(doc, sampleData);
+    // generateInvoiceTable(doc, sampleData);
+    // generateFooter(doc);
+
+    // // Finalize the PDF and end the stream
+    // doc.end();
+
+    res.status(200).json(orderData);
 });
