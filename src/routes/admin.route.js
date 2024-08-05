@@ -306,4 +306,6 @@ router.post(
     adminController.uploadImage,
 );
 
+router.post(`/send/order/pickup/request`,orderController.sendOrderToAllDeliveryBoy)
+
 module.exports = { adminRoutes: router };

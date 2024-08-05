@@ -812,32 +812,6 @@ exports.initiatePayment = asyncHandler(async (req, res, next) => {
     });
 });
 
-const sampleData = {
-    name: "John Doe",
-    Gst: "12ABCPQ1234R1Z5",
-    address: "123 Sample Street, Sample City, India",
-    country: "India",
-    items: [
-        {
-            item: "Sample Subscription",
-            quantity: 1,
-            amount: 1000,
-        },
-        {
-            item: "Sample Subscription1",
-            quantity: 2,
-            amount: 1000,
-        },
-        {
-            item: "Sample Subscription1",
-            quantity: 2,
-            amount: 1000,
-        },
-    ],
-    sac: "SAC1234",
-    subtotal: 1000,
-    invoice_nr: "INV-2024-0001",
-};
 // Invoice controller
 exports.generateInvoice = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
