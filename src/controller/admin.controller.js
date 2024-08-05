@@ -1603,3 +1603,69 @@ exports.getVideoById = asyncHandler(async (req, res) => {
         new ApiResponse(200, video, "Video fetched successfully"),
     );
 });
+
+/* Pin code data  */
+const PinCodeModel = require("../models/pincode.model");
+
+exports.addPinCode = asyncHandler(async (req, res) => {
+    const { pinCode } = req.body;
+    const existingPinCode = await PinCodeModel.findOne({ pinCode });
+    if (existingPinCode) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Pin code already exists"));
+    }
+    const data = await PinCodeModel.create({ pinCode });
+    res.status(200).json(
+        new ApiResponse(200, data, "Pin code added successfully"),
+    );
+});
+
+exports.getAllPinCodes = asyncHandler(async (req, res) => {
+    const data = await PinCodeModel.find();
+    if (data.length == 0) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "No pin codes found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, data, "All pin codes fetched successfully"),
+    );
+});
+
+exports.deletePinCode = asyncHandler(async (req, res) => {
+    const { pinCode } = req.params;
+    const pinCodeData = await PinCodeModel.findByIdAndDelete(pinCode);
+    if (!pinCodeData) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Pin code not found"));
+    }
+    res.status(200).json(
+        new ApiResponse(200, pinCodeData, "Pin code deleted successfully"),
+    );
+});
+
+exports.checkPinCodeIdDeliverable = asyncHandler(async (req, res) => {
+    const { pinCode } = req.params;
+    const pinCodeData = await PinCodeModel.findOne({ pinCode });
+    if (!pinCodeData) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, false, "Pin code not deliverable"));
+    }
+    res.status(200).json(new ApiResponse(200, true, "Pin code is deliverable"));
+});
+
+exports.uploadImage = asyncHandler(async (req, res) => {
+    // console.log(req.file);
+    const { filename } = req.file;
+    let image_url = `https://${req.hostname}/upload/${filename}`;
+    if (process.env.NODE_ENV !== "production") {
+        image_url = `https://${req.hostname}:8000/upload/${filename}`;
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, image_url, "Image Uploaded Successfully"));
+});

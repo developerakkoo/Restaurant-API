@@ -288,4 +288,22 @@ router.put("/markAsRead/:messageId", messageController.markAsRead);
 
 router.delete("/delete/:messageId", messageController.deleteMessageById);
 
+/* Pin code routes */
+router.post("/add/pinCode", adminController.addPinCode);
+
+router.get("/pinCode/get", adminController.getAllPinCodes);
+
+router.delete("/delete/pinCode/:pinCode", adminController.deletePinCode);
+
+router.get(
+    "/check/delivery-available/:pinCode",
+    adminController.checkPinCodeIdDeliverable,
+);
+
+router.post(
+    "/upload/image",
+    upload.single("image"),
+    adminController.uploadImage,
+);
+
 module.exports = { adminRoutes: router };
