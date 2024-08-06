@@ -66,11 +66,11 @@ exports.loginUser = asyncHandler(async (req, res) => {
     const { phoneNumber } = req.body;
 
     // Find a user with the provided email in the database
-    const user = await User.findOne({ phoneNumber });
+    let user = await User.findOne({ phoneNumber });
 
     // If the user is not found, return a 404 response
     if (!user) {
-        throw new ApiError(404, responseMessage.userMessage.userNotFound);
+        user = await User.create({ phoneNumber });
     }
 
     // Check if the provided password is correct
