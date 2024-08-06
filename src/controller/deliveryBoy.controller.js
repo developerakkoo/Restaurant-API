@@ -125,6 +125,7 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
                 200,
                 {
                     userId: loggedInUser._id,
+                    status:user.status,
                     isRegistered: true,
                     accessToken,
                     refreshToken,
