@@ -30,6 +30,11 @@ router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
 router.get("/get/all-users", adminController.getAllUsers);
 
+router.post(
+    "/send/firebaseNotification",
+    adminController.sendFirebaseNotificationToUser,
+);
+
 /* Dashboard routes*/
 router.get("/get/dashboard-data", adminController.getDashboardStats);
 
@@ -306,6 +311,9 @@ router.post(
     adminController.uploadImage,
 );
 
-router.post(`/send/order/pickup/request`,orderController.sendOrderToAllDeliveryBoy)
+router.post(
+    `/send/order/pickup/request`,
+    orderController.sendOrderToAllDeliveryBoy,
+);
 
 module.exports = { adminRoutes: router };

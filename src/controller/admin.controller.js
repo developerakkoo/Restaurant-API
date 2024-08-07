@@ -118,7 +118,7 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
 
 exports.getAllUsers = asyncHandler(async (req, res) => {
     let dbQuery = {};
-    const { q, startDate, populate, status } = req.query;
+    const { q, startDate, populate, status, sortByOrderCount } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
 
     const pageNumber = parseInt(req.query.page) || 1;
@@ -147,7 +147,7 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
         };
     }
 
-    //sort by status
+    // Sort by status
     if (status === "false" || status == 0) {
         dbQuery.isOnline = false;
     } else {
@@ -161,10 +161,28 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
             $match: dbQuery,
         },
         {
-            $sort: { createdAt: -1 }, // Sort by createdAt field in descending order (latest first)
+            $lookup: {
+                from: "orders",
+                localField: "_id",
+                foreignField: "userId",
+                as: "userOrders",
+            },
         },
         {
-            $project: { password: 0, refreshToken: 0 }, // Exclude password and refreshToken fields from the result
+            $addFields: {
+                orderCount: { $size: "$userOrders" }, // Calculate the count of orders
+            },
+        },
+        {
+            $project: {
+                password: 0,
+                refreshToken: 0,
+                userOrders: 0, // Exclude the userOrders field from the result
+            },
+        },
+        {
+            $sort:
+                sortByOrderCount == 1 ? { orderCount: -1 } : { createdAt: -1 }, // Sort by orderCount if query parameter is present
         },
         {
             $skip: skip,
@@ -1669,3 +1687,33 @@ exports.uploadImage = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, image_url, "Image Uploaded Successfully"));
 });
+
+// const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
+// exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
+//     const { userIds, notificationTitle, description } = req.body;
+
+//     // Find users with the given user IDs
+//     const users = await User.find({ _id: { $in: userIds } }).lean();
+
+//     if (users.length === 0) {
+//         return res
+//             .status(404)
+//             .json(new ApiResponse(404, null, "No users found"));
+//     }
+
+//     // Extract and filter valid Firebase tokens
+//     const userFirebaseTokens = users
+//         .map((user) => user.firebaseToken) // Extract firebaseToken
+//         .filter((token) => token !== null && token !== undefined); // Filter out invalid tokens
+//     if (userFirebaseTokens.length === 0) {
+//         return res
+//             .status(404)
+//             .json(new ApiResponse(404, "No valid Firebase tokens found..."));
+//     }
+//     const data = await sendFirebaseNotification(
+//         userFirebaseTokens,
+//         notificationTitle,
+//         description,
+//     );
+//     res.status(200).json(new ApiResponse(200, data, "User Firebase Token"));
+// });

@@ -1,7 +1,7 @@
 // const Cart = require("../models/cart.model");
 // const cron = require("node-cron");
 // const { asyncHandler } = require("../utils/asyncHandler");
-// const { sendNotification } = require("../utils/firebaseNotifier.utils");
+// const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
 
 // cron.schedule("* * * * *", async () => {
 //     try {
@@ -38,7 +38,7 @@
 //         }
 
 //         // Send notifications
-//         const data = await sendNotification(userFirebaseToken);
+//         const data = await sendFirebaseNotification(userFirebaseToken);
 //         console.log(data);
 //     } catch (error) {
 //         console.log(error.message);

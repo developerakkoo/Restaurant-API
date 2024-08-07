@@ -12,7 +12,11 @@
 //  * @param {Object} message - The message payload.
 //  * @param {Object} options - The notification options.
 //  */
-// exports.sendNotification = async (tokens) => {
+// exports.sendFirebaseNotification = async (
+//     tokens,
+//     title = `🛒 Don't Forget Your Items!`,
+//     body = "You have some great items waiting in your cart. Complete your purchase now and enjoy! 🎉",
+// ) => {
 //     if (!tokens || tokens.length === 0) {
 //         console.log("No tokens provided for notification.");
 //         return;
@@ -25,8 +29,8 @@
 //         };
 //         const message = {
 //             notification: {
-//                 title: `🛒 Don't Forget Your Items!`,
-//                 body: "You have some great items waiting in your cart. Complete your purchase now and enjoy! 🎉",
+//                 title: title,
+//                 body: body,
 //                 sound: "default",
 //                 image: "https://api.dropeat.in/upload/dropit-logo.jpeg",
 //             },
