@@ -700,7 +700,8 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
         .populate({
             path: "promoCode",
             select: "-createdAt -updatedAt -__v",
-        });
+        })
+        .sort({ createdAt: -1 });
     return res
         .status(200)
         .json(
