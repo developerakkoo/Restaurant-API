@@ -144,7 +144,7 @@ exports.initiateRazorPayPayment = asyncHandler(async (req, res) => {
     const { amount } = req.body;
 
     const options = {
-        amount: Math.ceil(amount) * 100, // Razorpay expects the amount in paise
+        amount: amount * 100, // Razorpay expects the amount in paise
         currency: "INR",
     };
 

@@ -179,6 +179,11 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     if (totalAmountToPay < 0) {
         totalAmountToPay = 0;
     }
+    // Round the total amount to the nearest integer
+    const roundedAmount = Math.ceil(totalAmountToPay);
+
+    // Calculate the round-off value
+    const roundOffValue = roundedAmount - totalAmountToPay;
 
     // Construct the detailed breakdown
     const breakdown = {
@@ -191,7 +196,9 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
                 : deliveryCharges,
         platformFee,
         discount,
-        totalAmountToPay: Number(totalAmountToPay.toFixed(2)),
+        total: Number(totalAmountToPay.toFixed(2)),
+        roundOffValue: Number(roundOffValue.toFixed(2)),
+        totalAmountToPay: roundedAmount,
         promoCodeId,
         promoCodeDetails: promoCodeData,
         deliveryBoyCompensation:
