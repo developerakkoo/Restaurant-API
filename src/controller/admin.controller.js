@@ -1340,11 +1340,20 @@ exports.updateData = asyncHandler(async (req, res) => {
 
 /***** Gst and platform fee data  *****/
 exports.createData = asyncHandler(async (req, res) => {
-    const { gstPercentage, platformFee } = req.body;
+    const {
+        gstPercentage,
+        gstIsActive,
+        platformFee,
+        deliveryBoyIncentiveFor16delivery,
+        deliveryBoyIncentiveFor21delivery,
+    } = req.body;
 
     const data = await Data.create({
         gstPercentage,
+        gstIsActive,
         platformFee,
+        deliveryBoyIncentiveFor16delivery,
+        deliveryBoyIncentiveFor21delivery,
     });
     res.status(200).json(
         new ApiResponse(200, data, "Data created successfully"),
@@ -1365,13 +1374,21 @@ exports.getData = asyncHandler(async (req, res) => {
 
 exports.updateData = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { gstPercentage, platformFee, gstIsActive } = req.body;
+    const {
+        gstPercentage,
+        gstIsActive,
+        platformFee,
+        deliveryBoyIncentiveFor16delivery,
+        deliveryBoyIncentiveFor21delivery,
+    } = req.body;
     const data = await Data.findByIdAndUpdate(
         id,
         {
             gstPercentage,
             gstIsActive,
             platformFee,
+            deliveryBoyIncentiveFor16delivery,
+            deliveryBoyIncentiveFor21delivery,
         },
         { new: true },
     );

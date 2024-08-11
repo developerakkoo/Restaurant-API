@@ -45,7 +45,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
             );
     }
 
-    const { gstPercentage, gstIsActive, deliveryBoyIncentive } = data[0];
+    const { gstPercentage, gstIsActive, deliveryBoyAllowance } = data[0];
     const { userId, code, userLat, userLong, shopLat, shopLong } = req.body;
 
     // Find the user's cart
@@ -202,7 +202,7 @@ exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
         promoCodeId,
         promoCodeDetails: promoCodeData,
         deliveryBoyCompensation:
-            deliveryBoyCompensationAmount + deliveryBoyIncentive,
+            deliveryBoyCompensationAmount + deliveryBoyAllowance,
     };
 
     // Return the calculated amounts and breakdown
@@ -398,8 +398,9 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     const { orderId, status, deliveryBoyId, paymentMode } = req.body;
     const savedOrder = await Order.findById(orderId);
     let url;
+
     if (paymentMode === "UPI") {
-        if (!req.file) throw new ApiError(400, "Payment photo is require");
+        if (!req.file) throw new ApiError(400, "Payment photo is required");
         const { filename } = req.file;
         url = `https://${req.hostname}/upload/${filename}`;
     }
@@ -420,6 +421,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 ),
             );
     }
+
     const update = {
         $set: {
             orderStatus: status,
@@ -468,21 +470,47 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         update.$push = { orderTimeline: timelineEntry };
     }
 
+    // Update order status and other details
     const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
 
-    // Send notifications based on actions
-    if (deliveryBoyId) {
+    if (deliveryBoyId && status === 3) {
+        // Fetch today's orders for the delivery boy
+        const todayStart = moment().startOf('day').toDate();
+        const todayEnd = moment().endOf('day').toDate();
+        
+        const deliveryBoyOrders = await Order.find({
+            assignedDeliveryBoy: deliveryBoyId,
+            orderStatus: 3, // Delivered status
+            createdAt: { $gte: todayStart, $lte: todayEnd }
+        });
+
+        const deliveryCount = deliveryBoyOrders.length;
+
+        const data = await Data.findOne(); // Fetching incentive data
+        let incentive = 0;
+
+        if (deliveryCount >= 21) {
+            incentive = data.deliveryBoyIncentiveFor21delivery || 200; // Default to 200 if not set
+        } else if (deliveryCount >= 16) {
+            incentive = data.deliveryBoyIncentiveFor16delivery || 100; // Default to 100 if not set
+        }
+
+        if (incentive > 0) {
+            await Order.updateMany(
+                { assignedDeliveryBoy: deliveryBoyId, orderStatus: 3 },
+                { $set: { deliveryBoyIncentive: incentive } }
+            );
+        }
+
+        // Send notifications to delivery boy and others
         const hotel = await hotelModel.findById(order.hotelId);
         sendNotification(hotel.userId, "Order pick up confirm", order);
-        sendNotification(deliveryBoyId, "Order assign to you", order);
-        sendNotification(
-            order.userId,
-            "Delivery boy assigned to your order",
-            order,
-        );
-    }
-    if (status === 3) {
-        sendNotification(savedOrder.userId, "Order delivered", order);
+        sendNotification(deliveryBoyId, "Order assigned to you", order);
+        sendNotification(order.userId, "Delivery boy assigned to your order", order);
+
+        if (status === 3) {
+            sendNotification(savedOrder.userId, "Order delivered", order);
+        }
     }
 
     return res

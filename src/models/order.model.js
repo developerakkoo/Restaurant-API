@@ -101,6 +101,16 @@ const orderSchema = new Schema(
             type: String,
             required: true,
         },
+        is16delivery: {
+            type: Boolean,
+        },
+        is21delivery: {
+            type: Number,
+        },
+        deliveryBoyIncentive: {
+            type: Number,
+            default: 0,
+        },
         compensationPaidToDeliveryBoy: {
             type: Boolean,
             required: true,

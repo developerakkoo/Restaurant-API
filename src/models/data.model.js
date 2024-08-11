@@ -15,7 +15,13 @@ const dataSchema = new Schema(
             required: true,
             default: 0,
         },
-        deliveryBoyIncentive: {
+        deliveryBoyAllowance: {
+            type: Number,
+        },
+        deliveryBoyIncentiveFor16delivery: {
+            type: Number,
+        },
+        deliveryBoyIncentiveFor21delivery: {
             type: Number,
         },
     },
