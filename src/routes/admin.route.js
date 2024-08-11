@@ -188,6 +188,10 @@ router.post(
     adminController.sendOrderPickUpRequestToDeliveryBoys,
 );
 
+router.put("/order/settlement", orderController.orderSettlement);
+
+router.delete("/order/delete-data", orderController.bulkDelete);
+
 /* Banner Routes*/
 
 router.post(

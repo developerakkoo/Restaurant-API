@@ -475,13 +475,13 @@ exports.updateOrder = asyncHandler(async (req, res) => {
 
     if (deliveryBoyId && status === 3) {
         // Fetch today's orders for the delivery boy
-        const todayStart = moment().startOf('day').toDate();
-        const todayEnd = moment().endOf('day').toDate();
-        
+        const todayStart = moment().startOf("day").toDate();
+        const todayEnd = moment().endOf("day").toDate();
+
         const deliveryBoyOrders = await Order.find({
             assignedDeliveryBoy: deliveryBoyId,
             orderStatus: 3, // Delivered status
-            createdAt: { $gte: todayStart, $lte: todayEnd }
+            createdAt: { $gte: todayStart, $lte: todayEnd },
         });
 
         const deliveryCount = deliveryBoyOrders.length;
@@ -498,7 +498,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         if (incentive > 0) {
             await Order.updateMany(
                 { assignedDeliveryBoy: deliveryBoyId, orderStatus: 3 },
-                { $set: { deliveryBoyIncentive: incentive } }
+                { $set: { deliveryBoyIncentive: incentive } },
             );
         }
 
@@ -506,7 +506,11 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         const hotel = await hotelModel.findById(order.hotelId);
         sendNotification(hotel.userId, "Order pick up confirm", order);
         sendNotification(deliveryBoyId, "Order assigned to you", order);
-        sendNotification(order.userId, "Delivery boy assigned to your order", order);
+        sendNotification(
+            order.userId,
+            "Delivery boy assigned to your order",
+            order,
+        );
 
         if (status === 3) {
             sendNotification(savedOrder.userId, "Order delivered", order);
@@ -658,6 +662,24 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
                         },
                         {
                             $unwind: "$categoryDetails",
+                        },
+                    ],
+                },
+            },
+            {
+                $lookup: {
+                    as: "deliveryboyDetails",
+                    from: "deliveryboys",
+                    foreignField: "_id",
+                    localField: "assignedDeliveryBoy",
+                    pipeline: [
+                        {
+                            $project: {
+                                firstName: 1,
+                                lastName: 1,
+                                phoneNumber: 1,
+                                address: 1,
+                            },
                         },
                     ],
                 },
@@ -900,4 +922,51 @@ exports.generateInvoice = asyncHandler(async (req, res) => {
 
     // Finalize the PDF and end the stream
     doc.end();
+});
+
+exports.orderSettlement = asyncHandler(async (req, res) => {
+    const {
+        orderIds,
+        compensationPaidToDeliveryBoy,
+        compensationPaidToHotelPartner,
+    } = req.body;
+
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+        return res
+            .status(400)
+            .send(new ApiResponse(400, null, "Order IDs are required"));
+    }
+
+    await Order.updateMany(
+        { _id: { $in: orderIds } },
+        {
+            $set: {
+                compensationPaidToDeliveryBoy,
+                compensationPaidToHotelPartner,
+            },
+        },
+        { new: true }, // Optional: This is not required but included for clarity
+    );
+
+    // Fetch the updated orders
+    const updatedOrders = await Order.find({ _id: { $in: orderIds } });
+
+    res.status(200).send(
+        new ApiResponse(200, updatedOrders, "Order settlement updated"),
+    );
+});
+
+//bulk delete
+exports.bulkDelete = asyncHandler(async (req, res) => {
+    // Delete all orders
+    const result = await Order.deleteMany({});
+
+    // Return the number of deleted documents
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            result.deletedCount,
+            "All orders deleted successfully",
+        ),
+    );
 });

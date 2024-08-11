@@ -118,7 +118,14 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
 
 exports.getAllUsers = asyncHandler(async (req, res) => {
     let dbQuery = {};
-    const { q, startDate, populate, status, sortByOrderCount } = req.query;
+    const {
+        q,
+        startDate,
+        populate,
+        status,
+        sortByOrderCount,
+        isBlocked = 0,
+    } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
 
     const pageNumber = parseInt(req.query.page) || 1;
@@ -152,6 +159,11 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
         dbQuery.isOnline = false;
     } else {
         dbQuery.isOnline = true;
+    }
+
+    // Sort by status
+    if (isBlocked == 1) {
+        dbQuery.status = 1;
     }
 
     const dataCount = await User.countDocuments(dbQuery);
@@ -251,7 +263,7 @@ exports.getAllPartner = asyncHandler(async (req, res) => {
     }
     //sort by status
     if (status) {
-        dbQuery.status = status;
+        dbQuery.status = Number(status);
     }
     // sort by date rang
     if (startDate) {
@@ -335,7 +347,7 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
 
     // Sort by status
     if (status) {
-        dbQuery.status = status;
+        dbQuery.status = Number(status);
     }
 
     // Sort by date range
@@ -1068,15 +1080,33 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
 );
 
 exports.getDashboardStats = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth" } = req.query;
-    const startDate = moment().startOf(sort); // Today's date at 00:00:00
-    const endDate = moment().endOf(sort);
+    const { sort = "dayOfMonth", startDate, endDate } = req.query;
+
+    // Parse dates from query parameters using DD-MM-YYYY format or default to current date range
+    const start = startDate
+        ? moment(startDate, "DD-MM-YYYY")
+        : moment().startOf(sort);
+    const end = endDate ? moment(endDate, "DD-MM-YYYY") : moment().endOf(sort);
+
+    // Validate the parsed dates
+    if (!start.isValid() || !end.isValid()) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    "Invalid date format. Please use DD-MM-YYYY.",
+                ),
+            );
+    }
+
     const DateFilterPipeline = [
         {
             $match: {
                 createdAt: {
-                    $gte: startDate.toDate(),
-                    $lte: endDate.toDate(),
+                    $gte: start.toDate(),
+                    $lte: end.toDate(),
                 },
             },
         },
@@ -1093,6 +1123,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
         totalDeliveredOrders,
         totalCanceledOrders,
         totalUsers,
+        totalOnlineUsers,
         totalPartners,
         totalDeliveryBoys,
         totalRevenue,
@@ -1107,6 +1138,10 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
             orderStatus: 5, // Corrected to match 'cancel order' status
         }),
         User.countDocuments(DateFilterPipeline[0].$match),
+        User.countDocuments({
+            ...DateFilterPipeline[0].$match,
+            isOnline: true,
+        }),
         Partner.countDocuments(DateFilterPipeline[0].$match),
         DeliveryBoy.countDocuments(DateFilterPipeline[0].$match),
         Order.aggregate([
@@ -1132,11 +1167,12 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
                 totalDeliveredOrders,
                 totalCanceledOrders,
                 totalUsers,
+                totalOnlineUsers,
                 totalPartners,
                 totalDeliveryBoys,
                 totalRevenue:
                     totalRevenue.length > 0
-                        ? totalRevenue[0].sum_totalPrice
+                        ? Number(totalRevenue[0].sum_totalPrice.toFixed(2))
                         : 0,
             },
             "Dashboard data fetched successfully",
@@ -1184,10 +1220,49 @@ exports.customerMapChartData = asyncHandler(async (req, res) => {
 });
 
 exports.orderChartData = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth" } = req.query;
-    const startDate = moment().startOf(sort); // Today's date at 00:00:00
-    const endDate = moment().endOf(sort);
+    const { sort = "dayOfMonth", startDate, endDate } = req.query;
+
+    // Parse and validate dates
+    const start = startDate
+        ? moment(startDate, "DD-MM-YYYY")
+        : moment().startOf(sort);
+    const end = endDate ? moment(endDate, "DD-MM-YYYY") : moment().endOf(sort);
+
+    if (!start.isValid() || !end.isValid()) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    "Invalid date format. Please use DD-MM-YYYY.",
+                ),
+            );
+    }
+
+    // Ensure endDate is not before startDate
+    if (end.isBefore(start)) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    "End date must be after start date.",
+                ),
+            );
+    }
+
+    // Define aggregation pipeline
     const pipeline = [
+        {
+            $match: {
+                createdAt: {
+                    $gte: start.toDate(),
+                    $lte: end.toDate(),
+                },
+            },
+        },
         {
             $project: {
                 sortField: {
@@ -1211,7 +1286,11 @@ exports.orderChartData = asyncHandler(async (req, res) => {
             },
         },
     ];
+
+    // Execute aggregation pipeline
     const result = await Order.aggregate(pipeline);
+
+    // Process results
     const label = result.map((item) => {
         if (item.dayOfMonth) {
             return moment().date(item.dayOfMonth).format("dddd");
@@ -1227,11 +1306,13 @@ exports.orderChartData = asyncHandler(async (req, res) => {
         }
     });
     const data = result.map((item) => item.orderCount);
+
+    // Send response
     res.status(200).json(
         new ApiResponse(
             200,
             { label, data },
-            responseMessage.userMessage.orderChartData,
+            "Order chart data fetched successfully", // Replace with your actual message
         ),
     );
 });

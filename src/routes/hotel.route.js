@@ -61,6 +61,8 @@ router.get("/search-dish", HotelStarController.getAllDishes);
 
 /* get Hotels And Dishes data */
 
+router.get("/nearby", HotelStarController.getHotelsNearby);
+
 router.get("/get-hotel-and-dishes", HotelStarController.getHotelsAndDishes);
 
 module.exports = { hotelStarRoutes: router };

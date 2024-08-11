@@ -255,7 +255,7 @@ exports.deleteAddress = asyncHandler(async (req, res) => {
 
 exports.getUserById = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-refreshToken -password");
     if (!user) {
         throw new ApiError(404, responseMessage.userMessage.userNotFound);
     }

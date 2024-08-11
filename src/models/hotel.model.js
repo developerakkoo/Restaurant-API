@@ -68,4 +68,5 @@ const hotelSchema = new Schema(
 );
 
 hotelSchema.index({ hotelName: "text" });
+hotelSchema.index({ location: "2dsphere" });
 module.exports = mongoose.model("Hotel", hotelSchema);

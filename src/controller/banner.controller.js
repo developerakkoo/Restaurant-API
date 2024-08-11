@@ -6,7 +6,7 @@ const { responseMessage } = require("../constant");
 const { ApiError } = require("../utils/ApiErrorHandler");
 
 exports.addBanner = asyncHandler(async (req, res) => {
-    const { title, description, type, hotelId } = req.body;
+    const { type } = req.body;
     // console.log(req.file);
     const { filename } = req.file;
     const local_filePath = `upload/${filename}`;
@@ -19,15 +19,12 @@ exports.addBanner = asyncHandler(async (req, res) => {
         deleteFile(savedBanner?.local_imagePath);
     }
     const data = {
-        title,
-        description,
         type,
         image_url,
         local_imagePath: local_filePath,
-        hotelId,
     };
 
-    if (req.body.redirect_url) data.redirect_url = req.body.redirect_url;
+    // if (req.body.redirect_url) data.redirect_url = req.body.redirect_url;
     const banner = await bannerModel.create(data);
     return res
         .status(200)
@@ -41,15 +38,11 @@ exports.addBanner = asyncHandler(async (req, res) => {
 });
 
 exports.updateBanner = asyncHandler(async (req, res) => {
-    const { title, description, redirect_url, type, hotelId } = req.body;
+    const { type } = req.body;
     const updatedBanner = await bannerModel.findByIdAndUpdate(
         req.params.bannerId,
         {
             $set: {
-                title,
-                description,
-                redirect_url,
-                hotelId,
                 type,
             },
         },

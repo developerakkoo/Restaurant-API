@@ -17,7 +17,7 @@ const deliveryBoySchema = new Schema(
         fatherName: {
             type: String,
             required: true,
-        },        
+        },
         dateOfBirth: {
             type: String,
             required: true,
@@ -61,6 +61,9 @@ const deliveryBoySchema = new Schema(
             type: String,
             require: true,
             default: "-",
+        },
+        isOnline: {
+            type: Boolean,
         },
         status: {
             type: Number,

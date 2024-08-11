@@ -18,6 +18,8 @@ router.get("/get/document-by-id", deliveryBoyController.getDocumentById);
 
 router.put("/accept/order-pickup-request", updateOrder);
 
+router.put("/update", deliveryBoyController.updateDeliveryBoy);
+
 /* Leave Request */
 router.post("/ask-for-leave", deliveryBoyController.askForLeave);
 

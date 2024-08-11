@@ -1574,3 +1574,104 @@ exports.bulkDishCreate = asyncHandler(async (req, res) => {
         new ApiResponse(201, bulkDishOperations, "Dishes created successfully"),
     );
 });
+
+const axios = require("axios");
+
+exports.getHotelsNearby = asyncHandler(async (req, res) => {
+    const { latitude, longitude } = req.query;
+
+    if (!latitude || !longitude) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    "Latitude and Longitude are required",
+                ),
+            );
+    }
+
+    // Fetch all hotels and count the total number
+    const [hotels, dataCount] = await Promise.all([
+        Hotel.find().lean(), // Consider adding a geospatial filter here if needed
+        Hotel.countDocuments(),
+    ]);
+
+    if (hotels.length === 0) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Hotels not found"));
+    }
+
+    // Calculate road distances
+    const apiKey = process.env.GOOGLE_MAP_API_KEY; // Replace with your Google Maps API key
+    const origins = [`${latitude},${longitude}`];
+    const destinations = hotels.map(
+        (hotel) =>
+            `${hotel.location?.coordinates[1]},${hotel.location?.coordinates[0]}`,
+    );
+
+    // Check if destinations are valid
+    if (destinations.length === 0) {
+        return res
+            .status(500)
+            .json(new ApiResponse(500, null, "No destinations found"));
+    }
+
+    const response = await axios.get(
+        "https://maps.googleapis.com/maps/api/distancematrix/json",
+        {
+            params: {
+                origins: origins.join("|"),
+                destinations: destinations.join("|"),
+                key: apiKey,
+            },
+        },
+    );
+
+    const distanceMatrix = response.data;
+
+    // Ensure correct structure of the distance matrix
+    if (
+        !distanceMatrix ||
+        !distanceMatrix.rows ||
+        !distanceMatrix.rows[0].elements
+    ) {
+        return res
+            .status(500)
+            .json(
+                new ApiResponse(500, null, "Invalid distance matrix response"),
+            );
+    }
+
+    // Add road distance to each hotel
+    hotels.forEach((hotel, index) => {
+        const element = distanceMatrix.rows[0].elements[index];
+        if (element && element.distance) {
+            hotel.distance = `${(element.distance.value * 0.001).toFixed(2)} km`; // Convert meters to kilometers
+        } else {
+            hotel.distance = "N/A"; // Handle case where distance is not available
+        }
+    });
+
+    // Sort hotels by distance (nearest first)
+    hotels.sort((a, b) => {
+        return (
+            (parseFloat(a.distance) || Infinity) -
+            (parseFloat(b.distance) || Infinity)
+        );
+    });
+
+    // Send the final response
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                content: hotels,
+                totalCount: dataCount, // Include total count of hotels
+            },
+            "Hotels fetched successfully",
+        ),
+    );
+});

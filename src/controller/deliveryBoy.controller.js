@@ -125,7 +125,7 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
                 200,
                 {
                     userId: loggedInUser._id,
-                    status:user.status,
+                    status: user.status,
                     isRegistered: true,
                     accessToken,
                     refreshToken,
@@ -597,4 +597,27 @@ exports.getEarnings = asyncHandler(async (req, res) => {
         console.error(error);
         res.status(500).json({ message: "Server Error" });
     }
+});
+
+exports.updateDeliveryBoy = asyncHandler(async (req, res) => {
+    const { deliveryBoyId, isOnline } = req.params;
+    const deliveryBoy = await DeliverBoy.findByIdAndUpdate(
+        deliveryBoyId,
+        isOnline,
+        { new: true },
+    );
+    if (!deliveryBoy) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Delivery Boy Not Found"));
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                deliveryBoy,
+                "Delivery Boy Updated Successfully",
+            ),
+        );
 });

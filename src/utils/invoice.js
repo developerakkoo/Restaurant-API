@@ -12,35 +12,30 @@ function generateHeader(doc) {
         align: "center",
         fit: [100, 100],
     });
-    doc.font("Times-BoldItalic").text(
-        `"Deliciously Delivered to Your Doorstep"`,
-        0,
-        90,
-        {
-            align: "center",
-        },
-    );
+    doc.font("Times-BoldItalic").fontSize(16).text(`"We Drop You Eat"`, 0, 100, {
+        align: "center",
+    });
     //     .fontSize(12);
     // doc.font("Helvetica-Bold")
     //     .text("GSTIN: 27AACCF5797L1ZY", 70, 100, { align: "center" })
     //     .fontSize(10.5);
-    doc.font("Helvetica").text(
-        `Shiv samarth Apt, shop no.105, diva-agasan road, near siddhivinayak
-            gate, diva E, Priyanka Niwas, bear govt school save gaon diva east Thane
-            400613, Thane, THANE, MAHARASHTRA, 400612`,
-        0,
-        120,
-        {
-            align: "center",
-        },
-    );
-    doc.font("Helvetica-Bold")
-        .text("Ph:+91 7045217929", 0, 165, {
+    // doc.font("Helvetica").text(
+    //     `Shiv samarth Apt, shop no.105, diva-agasan road, near siddhivinayak
+    //         gate, diva E, Priyanka Niwas, bear govt school save gaon diva east Thane
+    //         400613, Thane, THANE, MAHARASHTRA, 400612`,
+    //     0,
+    //     120,
+    //     {
+    //         align: "center",
+    //     },
+    // );
+    doc.font("Helvetica-Bold").fontSize(12)
+        .text("Email: dropeatdiva@gmail.com", 0, 125, {
             align: "center",
         })
         .moveDown();
     doc.font("Helvetica-Bold").fontSize(12);
-    doc.text(`INVOICE`, 0, 200, { align: "center" });
+    doc.text(`INVOICE`, 0, 180, { align: "center" });
     // doc.moveTo(40, 360) // line position
     //     .lineTo(565, 360) //line postion and length
     //     .stroke()
@@ -127,26 +122,26 @@ function generateTableRow(doc, y, product, quantity, price, total, c5, c6, c7) {
  */
 function generateInvoiceTable(doc, invoice) {
     let i,
-        invoiceTableTop = 350;
+        invoiceTableTop = 325;
     // const tableTop = 350;
     const rowHeight = 30;
     let y = invoiceTableTop;
     doc.font("Helvetica-Bold")
         .fontSize(12)
-        .text(`Product`, 50, 330)
-        .text(`Product`, 50, 330)
-        .text(`Quantity`, 290, 330)
-        .text(`Quantity`, 290, 330)
-        .text(`Price`, 410, 330)
-        .text(`Price`, 410, 330)
+        .text(`Product`, 50, 315)
+        .text(`Product`, 50, 315)
+        .text(`Quantity`, 290, 315)
+        .text(`Quantity`, 290, 315)
+        .text(`Price`, 410, 315)
+        .text(`Price`, 410, 315)
         // .text(`IGST     18%`, 290, 330, { width: 40 })
         // .text(`IGST     18%`, 290, 330, { width: 40 })
         // .text(`CGST     9%`, 360, 330, { width: 40 })
         // .text(`CGST     9%`, 360, 330, { width: 40 })
         // .text(`IGST     9%`, 440, 330, { width: 40 })
         // .text(`IGST     9%`, 440, 330, { width: 40 })
-        .text(`Total`, 508, 330)
-        .text(`Total`, 508, 330);
+        .text(`Total`, 508, 315)
+        .text(`Total`, 508, 315);
     for (i = 0; i < invoice.items.length; i++) {
         const item = invoice.items[i];
         const position = invoiceTableTop + (i + 1) * 30;
@@ -201,12 +196,12 @@ function generateInvoiceTable(doc, invoice) {
             );
     }
 
-    doc.moveTo(40, 360) // line position
-        .lineTo(565, 360) //line postion and length
+    doc.moveTo(40, 340) // line position
+        .lineTo(565, 340) //line postion and length
         .stroke()
         .moveDown();
-    doc.moveTo(40, 320) // line position
-        .lineTo(565, 320) //line postion and length
+    doc.moveTo(40, 300) // line position
+        .lineTo(565, 300) //line postion and length
         .stroke()
         .moveDown();
 }
