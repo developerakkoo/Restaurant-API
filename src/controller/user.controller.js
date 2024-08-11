@@ -76,10 +76,18 @@ exports.loginUser = asyncHandler(async (req, res) => {
     // Check if the provided password is correct
     // const isPasswordValid = await user.isPasswordCorrect(password);
 
-    // // If the password is incorrect, return a 401 response
-    // if (!isPasswordValid) {
-    //     throw new ApiError(401, responseMessage.userMessage.incorrectPassword);
-    // }
+    // If the user is blocked
+    if (user.status == 1) {
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    { isBlocked: true },
+                    "'Your account has been blocked. Please contact support for more information.'",
+                ),
+            );
+    }
 
     // Generate access and refresh tokens for the logged-in user
     const { accessToken, refreshToken } = await generateTokens(user._id, 2);
@@ -105,6 +113,25 @@ exports.loginUser = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.loginSuccessful,
             ),
         );
+});
+
+exports.checkUserStatus = asyncHandler(async (req, res) => {
+    const { phoneNumber } = req.body;
+
+    // Find a user with the provided phone number in the database
+    const user = await User.findOne({ phoneNumber });
+    if (user.status == 1) {
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    { isBlocked: true },
+                    "'Your account has been blocked. Please contact support for more information.'",
+                ),
+            );
+    }
+    res.status(200).json(new ApiResponse(200, { isBlocked: false }, "success"));
 });
 
 exports.updateUserProfile = asyncHandler(async (req, res) => {

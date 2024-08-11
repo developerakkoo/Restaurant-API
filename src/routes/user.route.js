@@ -57,4 +57,6 @@ router.get("/video/all", getAllVideos);
 
 router.get("/video/get/:videoId", getVideoById);
 
+router.post("/check/status", userController.checkUserStatus);
+
 module.exports = { userRoutes: router };
