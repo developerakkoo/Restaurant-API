@@ -45,7 +45,7 @@ exports.videoUpload = multer({
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error("Only JPEG, PNG, and JPG images are allowed."));
+            cb(new Error("Only mp4, webm, and mkv videos are allowed."));
         }
     },
 });
