@@ -3,7 +3,7 @@ const cron = require("node-cron");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 11 * * *", async () => {
     try {
         console.log(`Firebase Notification Scheduler...`);
 

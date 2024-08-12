@@ -1786,32 +1786,32 @@ exports.uploadImage = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, image_url, "Image Uploaded Successfully"));
 });
 
-// const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
-// exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
-//     const { userIds, notificationTitle, description } = req.body;
+const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
+exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
+    const { userIds, notificationTitle, description } = req.body;
 
-//     // Find users with the given user IDs
-//     const users = await User.find({ _id: { $in: userIds } }).lean();
+    // Find users with the given user IDs
+    const users = await User.find({ _id: { $in: userIds } }).lean();
 
-//     if (users.length === 0) {
-//         return res
-//             .status(404)
-//             .json(new ApiResponse(404, null, "No users found"));
-//     }
+    if (users.length === 0) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "No users found"));
+    }
 
-//     // Extract and filter valid Firebase tokens
-//     const userFirebaseTokens = users
-//         .map((user) => user.firebaseToken) // Extract firebaseToken
-//         .filter((token) => token !== null && token !== undefined); // Filter out invalid tokens
-//     if (userFirebaseTokens.length === 0) {
-//         return res
-//             .status(404)
-//             .json(new ApiResponse(404, "No valid Firebase tokens found..."));
-//     }
-//     const data = await sendFirebaseNotification(
-//         userFirebaseTokens,
-//         notificationTitle,
-//         description,
-//     );
-//     res.status(200).json(new ApiResponse(200, data, "User Firebase Token"));
-// });
+    // Extract and filter valid Firebase tokens
+    const userFirebaseTokens = users
+        .map((user) => user.firebaseToken) // Extract firebaseToken
+        .filter((token) => token !== null && token !== undefined); // Filter out invalid tokens
+    if (userFirebaseTokens.length === 0) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, "No valid Firebase tokens found..."));
+    }
+    const data = await sendFirebaseNotification(
+        userFirebaseTokens,
+        notificationTitle,
+        description,
+    );
+    res.status(200).json(new ApiResponse(200, data, "User Firebase Token"));
+});

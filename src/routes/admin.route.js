@@ -30,10 +30,10 @@ router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
 router.get("/get/all-users", adminController.getAllUsers);
 
-// router.post(
-//     "/send/firebaseNotification",
-//     adminController.sendFirebaseNotificationToUser,
-// );
+router.post(
+    "/send/firebaseNotification",
+    adminController.sendFirebaseNotificationToUser,
+);
 
 /* Dashboard routes*/
 router.get("/get/dashboard-data", adminController.getDashboardStats);
