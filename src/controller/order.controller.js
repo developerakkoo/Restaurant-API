@@ -745,7 +745,19 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
         dbQuery.orderStatus = req.query.status;
     }
     const orders = await Order.find(dbQuery)
-        .populate({ path: "userId", select: "name phoneNumber" })
+        .sort({ createdAt: -1 })
+        .populate({
+            path: "userId",
+            select: "name profile_image phoneNumber",
+        })
+        .populate({
+            path: "assignedDeliveryBoy",
+            select: "firstName lastName phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "type address location",
+        })
         .populate({
             path: "hotelId",
             select: "-createdAt -updatedAt -__v",
@@ -757,8 +769,7 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
         .populate({
             path: "promoCode",
             select: "-createdAt -updatedAt -__v",
-        })
-        .sort({ createdAt: -1 });
+        });
     return res
         .status(200)
         .json(
@@ -773,6 +784,18 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
 exports.getOrderById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const order = await Order.findById(id)
+        .populate({
+            path: "userId",
+            select: "name profile_image phoneNumber",
+        })
+        .populate({
+            path: "assignedDeliveryBoy",
+            select: "firstName lastName phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "type address location",
+        })
         .populate({
             path: "hotelId",
             select: "-createdAt -updatedAt -__v",
@@ -813,6 +836,18 @@ exports.deleteOrderById = asyncHandler(async (req, res) => {
 exports.getOrdersByUserId = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const orders = await Order.find({ userId })
+        .populate({
+            path: "userId",
+            select: "name profile_image phoneNumber",
+        })
+        .populate({
+            path: "assignedDeliveryBoy",
+            select: "firstName lastName phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "type address location",
+        })
         .populate({
             path: "hotelId",
             select: "-createdAt -updatedAt -__v",
