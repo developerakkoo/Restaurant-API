@@ -215,7 +215,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/v1/admin/get/dashboard-data?sort=year",
+									"raw": "{{url}}/api/v1/admin/get/dashboard-data?startDate=06-08-2024&endDate=11-08-2024",
 									"host": [
 										"{{url}}"
 									],
@@ -229,7 +229,16 @@
 									"query": [
 										{
 											"key": "sort",
-											"value": "year"
+											"value": "year",
+											"disabled": true
+										},
+										{
+											"key": "startDate",
+											"value": "06-08-2024"
+										},
+										{
+											"key": "endDate",
+											"value": "11-08-2024"
 										}
 									]
 								}
@@ -242,7 +251,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/v1/admin/get/orderChartData?sort=month",
+									"raw": "{{url}}/api/v1/admin/get/orderChartData?sort=year",
 									"host": [
 										"{{url}}"
 									],
@@ -256,7 +265,7 @@
 									"query": [
 										{
 											"key": "sort",
-											"value": "month"
+											"value": "year"
 										}
 									]
 								}
@@ -269,7 +278,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/v1/admin/get/revenueChartData?sort=month",
+									"raw": "{{url}}/api/v1/admin/get/revenueChartData?sort=year",
 									"host": [
 										"{{url}}"
 									],
@@ -283,7 +292,7 @@
 									"query": [
 										{
 											"key": "sort",
-											"value": "month"
+											"value": "year"
 										}
 									]
 								}
@@ -299,7 +308,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"testgmail.com\",\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"email\":\"admin-dev@gmail.com\",\r\n    \"password\":\"Pass@123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -329,7 +338,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"test@gmail.com\",\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"email\":\"admindropeat@email.com\",\r\n    \"password\":\"Pass@123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -359,7 +368,7 @@
 						"header": [
 							{
 								"key": "x-access-token",
-								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBhN2UxZmJmODA2ZjExZTc2MmZjMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzEyMDM4MDIwLCJleHAiOjE3MTIyOTcyMjB9.owW-YDYCzVr-vS780GZXwq6P0n5xXzOe5z7_8u8s7BE",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE5MTI2NDU2LCJleHAiOjE3MjE3MTg0NTZ9.-FGmM5jGQvU9t_8Rnfcz2pFOweS545U9BIMZkatQKBM",
 								"type": "text"
 							}
 						],
@@ -385,12 +394,12 @@
 						"header": [
 							{
 								"key": "x-access-token",
-								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBhN2UxZmJmODA2ZjExZTc2MmZjMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzEyMzA3ODc0LCJleHAiOjE3MTI1NjcwNzR9.kqryURgkB-Q3JnRCDZUfbR71KQlBFW3KCR1a4dZOddQ",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MTg5NTk1LCJleHAiOjE3MTg0NDg3OTV9.-L3vGUaWIaaofl-4zpq3zZv44J3SnCNozrBgzYE1-IY",
 								"type": "text"
 							}
 						],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/get/all-users?populate=true",
+							"raw": "{{url}}/api/v1/admin/get/all-users?isBlocked=1",
 							"host": [
 								"{{url}}"
 							],
@@ -404,7 +413,7 @@
 							"query": [
 								{
 									"key": "q",
-									"value": "Quinten_Murphy@hotmail.com",
+									"value": "testUser4",
 									"disabled": true
 								},
 								{
@@ -414,7 +423,7 @@
 								},
 								{
 									"key": "pageSize",
-									"value": "5",
+									"value": "50",
 									"disabled": true
 								},
 								{
@@ -429,7 +438,22 @@
 								},
 								{
 									"key": "populate",
-									"value": "true"
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "sortByOrderCount",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "isBlocked",
+									"value": "1"
 								}
 							]
 						}
@@ -443,12 +467,12 @@
 						"header": [
 							{
 								"key": "x-access-token",
-								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBhN2UxZmJmODA2ZjExZTc2MmZjMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE0MDI1MDYwLCJleHAiOjE3MTQyODQyNjB9.AUBBnG8ryftnRexcahPF-Ivt7DkX1cg9pkV7GMzcoqY",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MjU2MzEzLCJleHAiOjE3MTg1MTU1MTN9.nu5btEI0i9RQhjvFRLsoRHnNVUwN4MgKXhGHqJeHSPs",
 								"type": "text"
 							}
 						],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/get/all-partners?populate=1",
+							"raw": "{{url}}/api/v1/admin/get/all-partners?status=1",
 							"host": [
 								"{{url}}"
 							],
@@ -467,12 +491,12 @@
 								},
 								{
 									"key": "page",
-									"value": "2",
+									"value": "1",
 									"disabled": true
 								},
 								{
 									"key": "pageSize",
-									"value": "5",
+									"value": "50",
 									"disabled": true
 								},
 								{
@@ -487,6 +511,11 @@
 								},
 								{
 									"key": "populate",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "status",
 									"value": "1"
 								}
 							]
@@ -506,7 +535,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/get/all-deliveryBoy?populate=1",
+							"raw": "{{url}}/api/v1/admin/get/all-deliveryBoy?status=1",
 							"host": [
 								"{{url}}"
 							],
@@ -545,6 +574,11 @@
 								},
 								{
 									"key": "populate",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "status",
 									"value": "1"
 								}
 							]
@@ -559,12 +593,12 @@
 						"header": [
 							{
 								"key": "x-access-token",
-								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjIzNWIxMDQ0ZDc4YzFmYTE4NGNhZjEiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEzOTQyOTg2LCJleHAiOjE3MTQyMDIxODZ9.kC92yaAGpD9aQB568BlksFBLl5K_ibPOaMzl9a2MrqM",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MjU2MzEzLCJleHAiOjE3MTg1MTU1MTN9.nu5btEI0i9RQhjvFRLsoRHnNVUwN4MgKXhGHqJeHSPs",
 								"type": "text"
 							}
 						],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/get/all-hotels?populate=true",
+							"raw": "{{url}}/api/v1/admin/get/all-hotels?page=2&pageSize=1&q=t&startDate=2024-04-01&endDate=2024-04-01&populate=1",
 							"host": [
 								"{{url}}"
 							],
@@ -577,33 +611,28 @@
 							],
 							"query": [
 								{
-									"key": "populate",
-									"value": "true"
-								},
-								{
 									"key": "page",
-									"value": "2",
-									"disabled": true
+									"value": "2"
 								},
 								{
 									"key": "pageSize",
-									"value": "1",
-									"disabled": true
+									"value": "1"
 								},
 								{
 									"key": "q",
-									"value": "t",
-									"disabled": true
+									"value": "t"
 								},
 								{
 									"key": "startDate",
-									"value": "2024-04-01",
-									"disabled": true
+									"value": "2024-04-01"
 								},
 								{
 									"key": "endDate",
-									"value": "2024-04-01",
-									"disabled": true
+									"value": "2024-04-01"
+								},
+								{
+									"key": "populate",
+									"value": "1"
 								}
 							]
 						}
@@ -701,6 +730,36 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "admin send firebase notification",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userIds\": [\"6677c354290578ee9350b322\",\"6683e955407cac2df6faa38d\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/send/firebaseNotification",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"send",
+								"firebaseNotification"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -717,13 +776,13 @@
 								"header": [
 									{
 										"key": "x-access-token",
-										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBmYzVhMWZlNTU5YWVjYTUyOTZjZTEiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEyMzA5NjczLCJleHAiOjE3MTI1Njg4NzN9.Jz8ycSTCADGbuPu7wwlZyty5pgy-u3gD7pU4kYbJL7A",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc2ZDg0MmFmNjg5MWMwMjY2NjRkYzEiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5MTM0NjM4LCJleHAiOjE3MjE3MjY2Mzh9.CuiOry2Xvckcr4hlwc6ncqKrP5KrH7C3y7sSaZ1jxFI",
 										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"address\":\"test address 2\",\r\n    \"selected\":true\r\n}",
+									"raw": "{\r\n    \"type\": \"HOME\",\r\n    \"address\": \"test address 2\",\r\n    \"lat\": 18.50074,\r\n    \"lng\": 73.79012,\r\n    \"selected\": true\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -752,13 +811,13 @@
 								"header": [
 									{
 										"key": "x-access-token",
-										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBiZGRhM2U5M2ZiNmYxZjgwZGQyYmYiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEyMDU1NDAyLCJleHAiOjE3MTIzMTQ2MDJ9.CUEk1VnXOwbdx0Xd12dNN5aBieEdiJpps10uYhiGX_o",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc4MGZmMTM0YzU3ZDExYTZiZWFjYzMiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5MTQ0OTI4LCJleHAiOjE3MjE3MzY5Mjh9.xqimjO7xyIKZdSVXY94n7tj7IE7pPSFesTgY-cf7Iro",
 										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"addressId\":\"660be4aca330b082a7cf3bf3\",\r\n    \"selected\":true\r\n}",
+									"raw": "{\r\n    \"addressId\":\"667810f534c57d11a6beacd0\",\r\n    \"selected\":false\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -822,12 +881,12 @@
 								"header": [
 									{
 										"key": "x-access-token",
-										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBiZGRhM2U5M2ZiNmYxZjgwZGQyYmYiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEyMDU1NDAyLCJleHAiOjE3MTIzMTQ2MDJ9.CUEk1VnXOwbdx0Xd12dNN5aBieEdiJpps10uYhiGX_o",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc4MGZmMTM0YzU3ZDExYTZiZWFjYzMiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5MTQ0OTI4LCJleHAiOjE3MjE3MzY5Mjh9.xqimjO7xyIKZdSVXY94n7tj7IE7pPSFesTgY-cf7Iro",
 										"type": "text"
 									}
 								],
 								"url": {
-									"raw": "{{url}}/api/v1/user/delete-address/660bef553c5440048b927829",
+									"raw": "{{url}}/api/v1/user/delete-address/667810f534c57d11a6beacd0",
 									"host": [
 										"{{url}}"
 									],
@@ -836,7 +895,7 @@
 										"v1",
 										"user",
 										"delete-address",
-										"660bef553c5440048b927829"
+										"667810f534c57d11a6beacd0"
 									]
 								}
 							},
@@ -849,12 +908,12 @@
 								"header": [
 									{
 										"key": "x-access-token",
-										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjBiZGRhM2U5M2ZiNmYxZjgwZGQyYmYiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEyMDU1NDAyLCJleHAiOjE3MTIzMTQ2MDJ9.CUEk1VnXOwbdx0Xd12dNN5aBieEdiJpps10uYhiGX_o",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc4MGZmMTM0YzU3ZDExYTZiZWFjYzMiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5MTQ0NDg1LCJleHAiOjE3MjE3MzY0ODV9.DBKe-HfsqqG-OD7tzrs5_d2WYxCKJP8-mG2roh71UE8",
 										"type": "text"
 									}
 								],
 								"url": {
-									"raw": "{{url}}/api/v1/user/get/all-address/660bdda3e93fb6f1f80dd2bf",
+									"raw": "{{url}}/api/v1/user/get/all-address/66780ff134c57d11a6beacc3",
 									"host": [
 										"{{url}}"
 									],
@@ -864,7 +923,7 @@
 										"user",
 										"get",
 										"all-address",
-										"660bdda3e93fb6f1f80dd2bf"
+										"66780ff134c57d11a6beacc3"
 									]
 								}
 							},
@@ -879,7 +938,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\":\"testUser4\",\r\n    \"email\":\"testUser4@gmail.com\",\r\n    \"phoneNumber\":9637957349,\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"name\":\"sd96\",\r\n    \"email\":\"sakibdevlekar96@gmail.com\",\r\n    \"phoneNumber\":9637957340,\r\n    \"password\":\"Pass@123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -906,10 +965,16 @@
 					"name": "user login",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc4MGZmMTM0YzU3ZDExYTZiZWFjYzMiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5MTQ0NzMzLCJleHAiOjE3MjE3MzY3MzN9.B8L2wwQ6af9aqjun5KjrgJxToBL6niLeGKzT3NlkSMA",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"testUser1@gmail.com\",\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"phoneNumber\":1887888512\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -997,11 +1062,11 @@
 								{
 									"key": "document",
 									"type": "file",
-									"src": "coddder.png"
+									"src": "test files/img/ground.png"
 								},
 								{
 									"key": "userId",
-									"value": "660fc5a1fe559aeca5296ce1",
+									"value": "66780ff134c57d11a6beacc3",
 									"type": "text"
 								}
 							]
@@ -1052,6 +1117,102 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "category/get-all",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/user/category/get-all",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"category",
+								"get-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user/get/recommended/dishes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/user/get/recommended/dishes/666befce1ae4735d66a2e6ec",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"get",
+								"recommended",
+								"dishes",
+								"666befce1ae4735d66a2e6ec"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "{{url}}/api/v1/user/get/user/6677c354290578ee9350b322",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/user/get/user/6677c354290578ee9350b322",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"get",
+								"user",
+								"6677c354290578ee9350b322"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "check user status",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phoneNumber\": \"416-334-1199\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/user/check/status",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"check",
+								"status"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1078,22 +1239,23 @@
 										{
 											"key": "document",
 											"type": "file",
-											"src": "coddder.png"
+											"src": "dropeat/Test Data/pan.jpg"
 										},
 										{
 											"key": "userId",
-											"value": "660e62edc96f25395bfdefe3",
+											"value": "668185117757ab25eabed94d",
 											"type": "text"
 										},
 										{
 											"key": "documentType",
-											"value": "11",
+											"value": "22",
 											"type": "text"
 										},
 										{
 											"key": "documentNumber",
-											"value": "465165165165121",
-											"type": "text"
+											"value": "5656496456542",
+											"type": "text",
+											"disabled": true
 										}
 									]
 								},
@@ -1174,7 +1336,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{url}}/api/v1/deliver-boy//get/document-by-id?documentId=660fb2d9900248ccb5334afd",
+									"raw": "{{url}}/api/v1/deliver-boy/get/document-by-id?documentId=6676dbea0e985b996efebbb7",
 									"host": [
 										"{{url}}"
 									],
@@ -1182,14 +1344,13 @@
 										"api",
 										"v1",
 										"deliver-boy",
-										"",
 										"get",
 										"document-by-id"
 									],
 									"query": [
 										{
 											"key": "documentId",
-											"value": "660fb2d9900248ccb5334afd"
+											"value": "6676dbea0e985b996efebbb7"
 										}
 									]
 								}
@@ -1205,7 +1366,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\":\"testUser1\",\r\n    \"email\":\"testUser1@gmail.com\",\r\n    \"phoneNumber\":9637957346,\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"firstName\": \"{{$randomFirstName}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"lastName\": \"{{$randomLastName}}\",\r\n    \"fatherName\": \"{{$randomFullName}}\",\r\n    \"phoneNumber\": \"{{$randomPhoneNumber}}\",\r\n    \"dateOfBirth\": \"30-12-1998\",\r\n    \"bloodGroup\": \"B+\",\r\n    \"city\": \"{{$randomCity}}\",\r\n    \"address\": \"{{$randomStreetAddress}}\",\r\n    \"languageKnown\": [\r\n        \"marathi\",\r\n        \"hindi\",\r\n        \"english\"\r\n    ],\r\n    \"password\": \"Pass@123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1235,7 +1396,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"testUser1@gmail.com\",\r\n    \"phoneNumber\":9637957346,\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"phoneNumber\": \"824-451-5247\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1348,20 +1509,70 @@
 						}
 					},
 					"response": []
-				}
-			]
-		},
-		{
-			"name": "Partner",
-			"item": [
+				},
 				{
-					"name": "register partner ",
+					"name": "get my profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/deliver-boy/profile?userId=6676d9cd0e985b996efebb90",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"deliver-boy",
+								"profile"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "6676d9cd0e985b996efebb90"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Assinged order by delievry boy id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/order/get/all-order/deliveryBoyId/6676d9cd0e985b996efebb90?status=2",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"order",
+								"get",
+								"all-order",
+								"deliveryBoyId",
+								"6676d9cd0e985b996efebb90"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ask for leave",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\":\"testUser1\",\r\n    \"email\":\"testUser1@gmail.com\",\r\n    \"phoneNumber\":9637957346,\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"deliveryBoyId\": \"6676d9cd0e985b996efebb90\",\r\n    \"reason\": \" test leave\",\r\n    \"startDate\": \"02-07-2024\",\r\n    \"endDate\": \"10-07-2024\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1369,12 +1580,498 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/v1/auth/partner/register",
-							"protocol": "http",
+							"raw": "{{url}}/api/v1/deliver-boy/ask-for-leave",
 							"host": [
-								"localhost"
+								"{{url}}"
 							],
-							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"deliver-boy",
+								"ask-for-leave"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get leave-requests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/deliver-boy/get/leave-requests?deliveryBoyId=6676d9cd0e985b996efebb90",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"deliver-boy",
+								"get",
+								"leave-requests"
+							],
+							"query": [
+								{
+									"key": "deliveryBoyId",
+									"value": "6676d9cd0e985b996efebb90"
+								},
+								{
+									"key": "status",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deliver-boy earnings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/deliver-boy/earnings/6676d9cd0e985b996efebb90",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"deliver-boy",
+								"earnings",
+								"6676d9cd0e985b996efebb90"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get filter values",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/product/get/filter/values",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product",
+								"get",
+								"filter",
+								"values"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add ratting",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productId\": \"66acae69a7240bb30ecce6e0\",\r\n    \"userId\": \"65eea9fcb418152dda565606\",\r\n    \"description\": \"tedchvhj\",\r\n    \"star\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/product/add/ratting",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product",
+								"add",
+								"ratting"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Partner",
+			"item": [
+				{
+					"name": "Hotel",
+					"item": [
+						{
+							"name": "Set hotel online/offline",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"hotelId\":\"666a83ec1fd2c47f2807b46f\",\r\n    \"isOnline\":0\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/partner/hotel/update",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"hotel",
+										"update"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Mark category out off stock / in stock",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"isOutOfStock\":0\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/partner/category/666a8cf4fd48c92ea8979d9c/toggleStoke/666a83ec1fd2c47f2807b46f",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"category",
+										"666a8cf4fd48c92ea8979d9c",
+										"toggleStoke",
+										"666a83ec1fd2c47f2807b46f"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update dish as in /out off stcok",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"dishId\":\"666a91e83dd909c513146247\",\r\n    \"stock\":1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/partner/hotel/dish/update",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"hotel",
+										"dish",
+										"update"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get earnings",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/v1/partner/get/earnings/6682564e46ecefc85242d754",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"get",
+										"earnings",
+										"6682564e46ecefc85242d754"
+									],
+									"query": [
+										{
+											"key": "startDate",
+											"value": "2024-06-25",
+											"disabled": true
+										},
+										{
+											"key": "endDate",
+											"value": "2024-07-30",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get order",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/v1/partner/get/orders?hotelId=6683c2b93e39eeda18b7e7cc&populate=1",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"get",
+										"orders"
+									],
+									"query": [
+										{
+											"key": "hotelId",
+											"value": "6683c2b93e39eeda18b7e7cc"
+										},
+										{
+											"key": "status",
+											"value": "0",
+											"disabled": true
+										},
+										{
+											"key": "populate",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get hotel by partner Id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/v1/partner/get/hotels/666a81fa1fd2c47f2807b43e",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"get",
+										"hotels",
+										"666a81fa1fd2c47f2807b43e"
+									],
+									"query": [
+										{
+											"key": "populate",
+											"value": "1",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "add Dish",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"hotelId\": \"6682716ed40cb78f84982b9d\",\r\n    \"categoryId\": \"666a8ed33dd909c51314622b\",\r\n    \"name\": \"Aloo partha\",\r\n    \"dishType\": \"veg\",\r\n    \"timeToPrepare\":20,\r\n    \"partnerPrice\": 100,\r\n    \"spicLevel\": 1,\r\n    \"stock\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/partner/hotel/add-dish",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"hotel",
+										"add-dish"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "dish upload-image",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "dishId",
+											"value": "66827431099738780449326f",
+											"type": "text"
+										},
+										{
+											"key": "document",
+											"type": "file",
+											"src": "dropeat/Test Data/Dish/aloo-paratha.jpg"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/partner/hotel/dish/upload-image",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"partner",
+										"hotel",
+										"dish",
+										"upload-image"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get most-selling-products",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/api/v1/admin/most-selling-products?period=weekly",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"admin",
+										"most-selling-products"
+									],
+									"query": [
+										{
+											"key": "period",
+											"value": "weekly"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "accept-reject order",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"orderId\":\"{{orderId}}\",\r\n    \"status\":4 // 5 for reject 4 for accept\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/order/accept-reject",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"order",
+										"accept-reject"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "order update",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"orderId\": \"{{orderId}}\",\r\n    \"status\": 6 // 1 for prepairing order 3 for delivered 6 for confrim pickup\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url}}/api/v1/order/update/order-status",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"order",
+										"update",
+										"order-status"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "register partner ",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Techlapse Pvt.Ltd\",\r\n    \"email\": \"developer@techalpe.in\",\r\n    \"phoneNumber\": 8007477149,\r\n    \"password\": \"Test@123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/partner/register",
+							"host": [
+								"{{url}}"
+							],
 							"path": [
 								"api",
 								"v1",
@@ -1393,7 +2090,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"testUser1@gmail.com\",\r\n    \"password\":\"Pass@123\"\r\n}",
+							"raw": "{\r\n    \"phoneNumber\":\"308-860-9313\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1401,12 +2098,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/v1/auth/partner/login",
-							"protocol": "http",
+							"raw": "{{url}}/api/v1/auth/partner/login",
 							"host": [
-								"localhost"
+								"{{url}}"
 							],
-							"port": "8000",
 							"path": [
 								"api",
 								"v1",
@@ -1429,13 +2124,20 @@
 								"type": "text"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "http://localhost:8000/api/v1/partner/logout",
-							"protocol": "http",
+							"raw": "{{url}}/api/v1/partner/logout",
 							"host": [
-								"localhost"
+								"{{url}}"
 							],
-							"port": "8000",
 							"path": [
 								"api",
 								"v1",
@@ -1474,6 +2176,80 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "get dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/partner/get/dashboard/6682564e46ecefc85242d754",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"partner",
+								"get",
+								"dashboard",
+								"6682564e46ecefc85242d754"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all dish by hotelid",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/hotel/dish/get/6683b8c588f560bfe4c77cad",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"hotel",
+								"dish",
+								"get",
+								"6683b8c588f560bfe4c77cad"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update partner",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"test\",\r\n    \"email\": \"test@gmail.com\",\r\n    \"phoneNumber\": \"9874561235\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/partner/update/668185c529af36aa3f93838e",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"partner",
+								"update",
+								"668185c529af36aa3f93838e"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1490,13 +2266,13 @@
 								"header": [
 									{
 										"key": "x-access-token",
-										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjIzNWIxMDQ0ZDc4YzFmYTE4NGNhZjEiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEzNTkzMTI5LCJleHAiOjE3MTM4NTIzMjl9.LUJyLNi9ip5aoeqsMkSI8KaKqA6NUCUrYdpCZwUnS0s",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc4MGZmMTM0YzU3ZDExYTZiZWFjYzMiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5MjA5OTUwLCJleHAiOjE3MjE4MDE5NTB9.QMtABH2igEt3mhWHiKjNcqcfPpD2dMZTrGm9ZD8s3l0",
 										"type": "text"
 									}
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"hotelId\":\"66239efafa2f3fb532a090b5\",\r\n    \"userId\":\"66235b1044d78c1fa184caf1\",\r\n    \"description\":\"test\",\r\n    \"star\":1\r\n}",
+									"raw": "{\r\n    \"hotelId\":\"666a85121fd2c47f2807b47f\",\r\n    \"userId\":\"6676d847af6891c026664dcd\",\r\n    \"description\":\"{{$randomLorem}}\",\r\n    \"star\":4\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1697,13 +2473,13 @@
 						"header": [
 							{
 								"key": "x-access-token",
-								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjIzNWIxMDQ0ZDc4YzFmYTE4NGNhZjEiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEzNTkzMTI5LCJleHAiOjE3MTM4NTIzMjl9.LUJyLNi9ip5aoeqsMkSI8KaKqA6NUCUrYdpCZwUnS0s",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MjU2MzEzLCJleHAiOjE3MTg1MTU1MTN9.nu5btEI0i9RQhjvFRLsoRHnNVUwN4MgKXhGHqJeHSPs",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userId\":\"66110eb0d8284e65f7d73363\",\r\n    \"hotelName\":\"Test hotel2\",\r\n    \"address\":\"test sddress\"\r\n}",
+							"raw": "{\r\n    \"userId\":\"666a828e1fd2c47f2807b462\",\r\n    \"hotelName\":\"Novotel \",\r\n    \"address\":\"Weikfield IT City Infopark, Survey No 30/3, Ramwadi, Viman Nagar, Pune, Maharashtra 411014\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1733,7 +2509,7 @@
 						"header": [
 							{
 								"key": "x-access-token",
-								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjIzNWIxMDQ0ZDc4YzFmYTE4NGNhZjEiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzEzNTkzMTI5LCJleHAiOjE3MTM4NTIzMjl9.LUJyLNi9ip5aoeqsMkSI8KaKqA6NUCUrYdpCZwUnS0s",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MjU2MzEzLCJleHAiOjE3MTg1MTU1MTN9.nu5btEI0i9RQhjvFRLsoRHnNVUwN4MgKXhGHqJeHSPs",
 								"type": "text"
 							}
 						],
@@ -1742,13 +2518,13 @@
 							"formdata": [
 								{
 									"key": "hotelId",
-									"value": "66239efafa2f3fb532a090b5",
+									"value": "666a85331fd2c47f2807b481",
 									"type": "text"
 								},
 								{
 									"key": "document",
 									"type": "file",
-									"src": "test files/illustration_dashboard.png"
+									"src": "dropeat/Test Data/Hotel Data/Novotel.jpg"
 								}
 							]
 						},
@@ -1825,6 +2601,64 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "get-top",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/hotel/get-top",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"hotel",
+								"get-top"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-by category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/hotel/get-by/666a8cf4fd48c92ea8979d9c/category?q=k",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"hotel",
+								"get-by",
+								"666a8cf4fd48c92ea8979d9c",
+								"category"
+							],
+							"query": [
+								{
+									"key": "populate",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "q",
+									"value": "k"
+								},
+								{
+									"key": "sort",
+									"value": "tr",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1841,7 +2675,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"dishId\":\"6628e4d6a2e9c81fc99675ea\",\r\n    \"userId\":\"66235b1044d78c1fa184caf1\",\r\n    \"description\":\"teshgchuxvhvchjxvyu\",\r\n    \"star\":3\r\n\r\n}",
+									"raw": "{\r\n    \"dishId\":\"668517815d7efc119f3e698c\",\r\n    \"userId\":\"66780ff134c57d11a6beacc3\",\r\n    \"description\":\"{{$randomLoremText}}\",\r\n    \"star\":4\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1986,10 +2820,16 @@
 					"name": "admin/hotel/add-dish",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MjU2MzEzLCJleHAiOjE3MTg1MTU1MTN9.nu5btEI0i9RQhjvFRLsoRHnNVUwN4MgKXhGHqJeHSPs",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"hotelId\": \"6613a12fcb18872d77c85d3c\",\r\n    \"categoryId\": \"6628ae62a00937d2d090e156\",\r\n    \"name\": \"test\",\r\n    \"dishType\": \"veg\",\r\n    \"partnerPrice\": 120,\r\n    \"spicLevel\": 1,\r\n    \"stock\": 1\r\n}",
+							"raw": "{\r\n    \"hotelId\": \"666a85331fd2c47f2807b481\",\r\n    \"categoryId\": \"666a8cf4fd48c92ea8979d9c\",\r\n    \"name\": \"Chicken  Biryani\",\r\n    \"dishType\": \"non-veg\",\r\n    \"partnerPrice\": 150,\r\n    \"spicLevel\": 1,\r\n    \"stock\": 1\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2136,12 +2976,12 @@
 					"response": []
 				},
 				{
-					"name": "search-dish?q=sabha",
+					"name": "search-dish",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/hotel/search-dish?q=sabha",
+							"raw": "{{url}}/api/v1/hotel/search-dish?hotelId=666a83ec1fd2c47f2807b46f",
 							"host": [
 								"{{url}}"
 							],
@@ -2158,9 +2998,55 @@
 									"disabled": true
 								},
 								{
+									"key": "hotelId",
+									"value": "666a83ec1fd2c47f2807b46f"
+								},
+								{
 									"key": "q",
-									"value": "sabha"
+									"value": "Biryani ",
+									"disabled": true
+								},
+								{
+									"key": "dishType",
+									"value": "non-veg",
+									"disabled": true
+								},
+								{
+									"key": "categoryId",
+									"value": "666a8cf4fd48c92ea8979d9c,666a8d501fd2c47f2807b4b6",
+									"disabled": true
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk dish add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"dishes\": [\r\n        {\r\n            \"hotelId\": \"666a83ec1fd2c47f2807b46f\",\r\n            \"categoryId\": \"666a8cf4fd48c92ea8979d9c\",\r\n            \"name\": \"bulk test\",\r\n            \"image_url\": \"https://api.dropeat.in/upload/1719996967845-432713865.jpg\",\r\n            \"dishType\": \"veg\",\r\n            \"partnerPrice\": 100,\r\n            \"userPrice\": 150,\r\n            \"spicLevel\": 1,\r\n            \"timeToPrepare\": 30,\r\n            \"stock\": 1,\r\n            \"status\": 2\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/hotel/dish/bulk/add",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"hotel",
+								"dish",
+								"bulk",
+								"add"
 							]
 						}
 					},
@@ -2175,10 +3061,16 @@
 					"name": "category add",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE5OTE5MDM5LCJleHAiOjE3MjI1MTEwMzl9.Ky-rZOrZCg9DcvPhNqJsKcwOclrGrTYJEUImfC2VM70",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"categoryName\":\"South indian\"\r\n}",
+							"raw": "{\r\n    \"categoryName\":\"Chines\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2205,19 +3097,25 @@
 					"name": "category upload image",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE5OTE5MDM5LCJleHAiOjE3MjI1MTEwMzl9.Ky-rZOrZCg9DcvPhNqJsKcwOclrGrTYJEUImfC2VM70",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "formdata",
 							"formdata": [
 								{
 									"key": "categoryId",
-									"value": "6628abd6e90864ffcd73c48c",
+									"value": "6683e1e0407cac2df6faa237",
 									"type": "text"
 								},
 								{
 									"key": "document",
 									"type": "file",
-									"src": "test files/Delivery Location.png"
+									"src": "dropeat/Test Data/Dish/chines.jpeg"
 								}
 							]
 						},
@@ -2244,7 +3142,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/category/get/all?search=south indian",
+							"raw": "{{url}}/api/v1/admin/category/get/all?search=b",
 							"host": [
 								"{{url}}"
 							],
@@ -2269,7 +3167,7 @@
 								},
 								{
 									"key": "search",
-									"value": "south indian"
+									"value": "b"
 								}
 							]
 						}
@@ -2332,7 +3230,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\":\"Black friday sale\",\r\n    \"code\": \"cbbzdc+dccnnj\",\r\n    \"codeType\": 1,\r\n    \"discountAmount\": 200,\r\n    \"minOrderAmount\": 700,\r\n    \"description\": \"Order upto 700 get 20% off\",\r\n    \"expiry\": \"25-06-2024\"\r\n}",
+							"raw": "{\r\n    \"name\":\"Black friday sale\",\r\n    \"code\": \"DRET\",\r\n    \"codeType\": 1,\r\n    \"discountAmount\": 200,\r\n    \"minOrderAmount\": 700,\r\n    \"description\": \"Order upto 700 get 20% off\",\r\n    \"expiry\": \"25-06-2024\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2414,7 +3312,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/promoCode/get-all?codeType=2&isActive=1",
+							"raw": "{{url}}/api/v1/admin/promoCode/get-all",
 							"host": [
 								"{{url}}"
 							],
@@ -2428,11 +3326,13 @@
 							"query": [
 								{
 									"key": "codeType",
-									"value": "2"
+									"value": "2",
+									"disabled": true
 								},
 								{
 									"key": "isActive",
-									"value": "1"
+									"value": "1",
+									"disabled": true
 								}
 							]
 						}
@@ -2451,7 +3351,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userId\":\"660fc5a1fe559aeca5296ce1\",\r\n    \"dishId\":\"6628e47da2e9c81fc99675d9\"\r\n}",
+							"raw": "{\r\n    \"userId\":\"6682564e46ecefc85242d754\",\r\n    \"hotelId\":\"666a83ec1fd2c47f2807b46f\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2533,7 +3433,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/user/favorite/getMy/favorites/660fc5a1fe559aeca5296ce1",
+							"raw": "{{url}}/api/v1/user/favorite/getMy/favorites/6677c354290578ee9350b322",
 							"host": [
 								"{{url}}"
 							],
@@ -2544,7 +3444,7 @@
 								"favorite",
 								"getMy",
 								"favorites",
-								"660fc5a1fe559aeca5296ce1"
+								"6677c354290578ee9350b322"
 							]
 						}
 					},
@@ -2562,7 +3462,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userId\": \"660fc5a1fe559aeca5296ce1\",\r\n    \"products\": [\r\n        {\r\n            \"dishId\": \"6628e47da2e9c81fc99675d9\",\r\n            \"quantity\": 2\r\n        },\r\n        {\r\n            \"dishId\": \"6628e4cda2e9c81fc99675e6\",\r\n            \"quantity\": 1\r\n        }\r\n    ],\r\n    \"totalPrice\":320\r\n}",
+							"raw": "{\r\n    \"userId\": \"6683e955407cac2df6faa38d\",\r\n    \"hotelId\":\"666a83ec1fd2c47f2807b46f\",\r\n    \"products\": [\r\n        {\r\n            \"dishId\": \"666a921a3dd909c51314624b\",\r\n            \"quantity\": 1\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2589,11 +3489,11 @@
 				{
 					"name": "cart delete product",
 					"request": {
-						"method": "DELETE",
+						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userId\": \"660fc5a1fe559aeca5296ce1\",\r\n    \"dishId\": \"6628e47da2e9c81fc99675d9\",\r\n    \"totalPrice\":220\r\n}",
+							"raw": "{\r\n    \"userId\": \"66780ff134c57d11a6beacc3\",\r\n    \"dishId\": \"666a925f3dd909c513146257\",\r\n    \"quantityToRemove\":1\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2623,7 +3523,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/user/cart/get-cart/660fc5a1fe559aeca5296ce1",
+							"raw": "{{url}}/api/v1/user/cart/get-cart/6683e955407cac2df6faa38d",
 							"host": [
 								"{{url}}"
 							],
@@ -2633,7 +3533,7 @@
 								"user",
 								"cart",
 								"get-cart",
-								"660fc5a1fe559aeca5296ce1"
+								"6683e955407cac2df6faa38d"
 							]
 						}
 					},
@@ -2661,6 +3561,28 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "clear cart",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/user/cart/669e100941016c22165cce62/clear",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"cart",
+								"669e100941016c22165cce62",
+								"clear"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -2668,13 +3590,70 @@
 			"name": "Order",
 			"item": [
 				{
-					"name": "place-order",
+					"name": " calculate amount-to-pay",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userId\": \"660fc5a1fe559aeca5296ce1\",\r\n    \"hotelId\": \"6613a12fcb18872d77c85d3c\",\r\n    \"addressId\": \"660fc5c3fe559aeca5296ce8\",\r\n    \"gst\":38.40,\r\n    \"deliveryCharge\":0,\r\n    \"totalPrice\": 320,\r\n    \"paymentId\": \"order_O5aRa5wBsob47r\",\r\n    \"phone\": \"846465181\",\r\n    \"description\": \"test test \"\r\n}",
+							"raw": "{\r\n    \"userId\": \"6683e955407cac2df6faa38d\",\r\n    \"userLat\": 18.598372410944155, \r\n    \"userLong\": 73.72979994780117,\r\n    \"shopLat\": 18.596541603034428,\r\n    \"shopLong\": 73.71820627128781//,\r\n    // \"code\":\"CCOG\" \r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/order/calculate/amount-to-pay",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"order",
+								"calculate",
+								"amount-to-pay"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "place-order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const id = pm.response.json().data._id\r",
+									"// set the value of the \"id\" variable to a collection variable also called \"id\".\r",
+									"console.log(id)\r",
+									"pm.collectionVariables.set(\"orderId\", id)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userId\": \"669e100941016c22165cce62\",\r\n  \"addressId\": \"6677ef03bd009610e721b2fa\",\r\n  \"priceDetails\":{\r\n        \"subtotal\": 360,\r\n        \"gstAmount\": 10.8,\r\n        \"distanceInKm\": 2.021,\r\n        \"deliveryCharges\": 0,\r\n        \"platformFee\": 72,\r\n        \"discount\": 70,\r\n        \"totalAmountToPay\": 442.8,\r\n        \"promoCodeId\": \"66781e37f864d69d66be9dd6\",\r\n        \"promoCodeDetails\": {\r\n            \"_id\": \"66781e37f864d69d66be9dd6\",\r\n            \"name\": \"Black friday sale\",\r\n            \"code\": \"CCOG\",\r\n            \"codeType\": 1,\r\n            \"discountAmount\": 50,\r\n            \"minOrderAmount\": 200,\r\n            \"description\": \"Order upto 400 get 20% off\",\r\n            \"expiry\": \"25-09-2024\",\r\n            \"isActive\": true\r\n        },\r\n        \"deliveryBoyCompensation\": 75\r\n    },\r\n//   \"paymentId\": \"order_O5aRa5wBsob47r\",\r\n\"paymentMode\":\"COD\",\r\n  \"phone\": \"846465181\",\r\n  \"description\": \"Make it spicy!\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2732,7 +3711,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/admin/order/get-all?populate=1",
+							"raw": "{{url}}/api/v1/admin/order/get-all?deliveryBoyId=6676d9cd0e985b996efebb90&populate=1&pageSize=50&page=1",
 							"host": [
 								"{{url}}"
 							],
@@ -2745,7 +3724,34 @@
 							],
 							"query": [
 								{
+									"key": "hotelId",
+									"value": "666a83ec1fd2c47f2807b46f",
+									"disabled": true
+								},
+								{
+									"key": "deliveryBoyId",
+									"value": "6676d9cd0e985b996efebb90"
+								},
+								{
+									"key": "startDate",
+									"value": "2024-06-01",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "2024-08-31",
+									"disabled": true
+								},
+								{
 									"key": "populate",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "50"
+								},
+								{
+									"key": "page",
 									"value": "1"
 								}
 							]
@@ -2760,7 +3766,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"orderId\":\"663367361e178b5512cc25dc\",\r\n    \"status\":\"2\",\r\n    \"deliveryBoyId\":\"660e62edc96f25395bfdefe3\"\r\n}",
+							"raw": "{\r\n    \"orderId\":\"{{orderId}}\",\r\n    \"status\":3,\r\n    \"paymentMode\":\"UPI\"\r\n    // \"deliveryBoyId\":\"6676d9cd0e985b996efebb90\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2789,7 +3795,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/order/get/order-by-id/663367361e178b5512cc25dc",
+							"raw": "{{url}}/api/v1/order/get/order-by-id/66b45cf3a05ef8b1f4ae44e3",
 							"host": [
 								"{{url}}"
 							],
@@ -2799,7 +3805,7 @@
 								"order",
 								"get",
 								"order-by-id",
-								"663367361e178b5512cc25dc"
+								"66b45cf3a05ef8b1f4ae44e3"
 							]
 						}
 					},
@@ -2848,20 +3854,83 @@
 						}
 					},
 					"response": []
-				}
-			]
-		},
-		{
-			"name": "Notification",
-			"item": [
+				},
 				{
-					"name": "notification send",
+					"name": "update order status if cod",
 					"request": {
-						"method": "POST",
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "orderId",
+									"value": "{{orderId}}",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "3",
+									"type": "text"
+								},
+								{
+									"key": "screenshot",
+									"type": "file",
+									"src": "Laundry app/services/curton.jpeg"
+								},
+								{
+									"key": "paymentMode",
+									"value": "UPI",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/order/update",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"order",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get invoice",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/order/get/invoice/66ab7753592aa069e28c7b5c",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"order",
+								"get",
+								"invoice",
+								"66ab7753592aa069e28c7b5c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "order settlement",
+					"request": {
+						"method": "PUT",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"senderId\":\"660a7e1fbf806f11e762fc08\",\r\n    \"receiverId\":\"660fc5a1fe559aeca5296ce1\",\r\n    \"message\":\"Here is ffer for ryou cheack out foodolic app\"\r\n}",
+							"raw": "{\r\n    \"orderIds\": [\r\n        \"66ab749113c1cc47bc4da3ee\",\r\n        \"66ab7753592aa069e28c7b5c\"\r\n    ],\r\n    \"compensationPaidToDeliveryBoy\": true,\r\n    \"compensationPaidToHotelPartner\": false\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2869,14 +3938,49 @@
 							}
 						},
 						"url": {
-							"raw": "{{url}}/api/v1/notification/send",
+							"raw": "{{url}}/api/v1/admin/order/settlement",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
 								"api",
 								"v1",
-								"notification",
+								"admin",
+								"order",
+								"settlement"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Message",
+			"item": [
+				{
+					"name": "message send",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"senderId\":\"666979f2983fa6cd5cf79d08\",\r\n    \"receiverId\":\"6677c354290578ee9350b322\",\r\n    \"orderId\":\"667fc160d29207d3dcae19ce\",\r\n    \"message\":\"Please wait sir your order in process \"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/message/send",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"message",
 								"send"
 							]
 						}
@@ -2884,12 +3988,12 @@
 					"response": []
 				},
 				{
-					"name": "notification get by id",
+					"name": "Message get by id",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/notification/get/663b1f89639c98625d04a22c",
+							"raw": "{{url}}/api/v1/notification/get/664b0420cceca4b052eac625",
 							"host": [
 								"{{url}}"
 							],
@@ -2898,29 +4002,35 @@
 								"v1",
 								"notification",
 								"get",
-								"663b1f89639c98625d04a22c"
+								"664b0420cceca4b052eac625"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "notification get all by user id",
+					"name": "message get all by user id",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/api/v1/notification/get/all/660fc5a1fe559aeca5296ce1",
+							"raw": "{{url}}/api/v1/message/get/all/6677c354290578ee9350b322?orderId=667fc160d29207d3dcae19ce",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
 								"api",
 								"v1",
-								"notification",
+								"message",
 								"get",
 								"all",
-								"660fc5a1fe559aeca5296ce1"
+								"6677c354290578ee9350b322"
+							],
+							"query": [
+								{
+									"key": "orderId",
+									"value": "667fc160d29207d3dcae19ce"
+								}
 							]
 						}
 					},
@@ -2983,18 +4093,229 @@
 								},
 								{
 									"key": "senderId",
-									"value": "660fc5a1fe559aeca5296ce1",
+									"value": "6677c354290578ee9350b322",
 									"type": "text"
 								},
 								{
 									"key": "receiverId",
-									"value": "660a7e1fbf806f11e762fc08",
+									"value": "666979f2983fa6cd5cf79d08",
+									"type": "text"
+								},
+								{
+									"key": "orderId",
+									"value": "667fc160d29207d3dcae19ce",
 									"type": "text"
 								}
 							]
 						},
 						"url": {
-							"raw": "{{url}}/api/v1/notification/multimedia-send",
+							"raw": "{{url}}/api/v1/message/multimedia-send",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"message",
+								"multimedia-send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get chat-list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/get/chat-list/666979f2983fa6cd5cf79d08",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"get",
+								"chat-list",
+								"666979f2983fa6cd5cf79d08"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "sakib",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bnner",
+			"item": [
+				{
+					"name": "admin banner add",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NjY5NzlmMjk4M2ZhNmNkNWNmNzlkMDgiLCJ1c2VyVHlwZSI6MSwiaWF0IjoxNzE4MzQ0MjkyLCJleHAiOjE3MTg2MDM0OTJ9.OSMJ8c19p-e_w4kz6dXxxgyxfJFAHfWznbnWWktyvDo",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "10% off",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "decription",
+									"value": "get exiting offer ",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "hotelId",
+									"value": "666a84151fd2c47f2807b471",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "dropeat/Test Data/Bnner/Rectangle 5.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/banner/add",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"banner",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "admin banner update ",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\":\"Get up to 10% off\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/banner/update/666bdc42ad4709e67c478882",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"banner",
+								"update",
+								"666bdc42ad4709e67c478882"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get banner ",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/banner/get/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"banner",
+								"get",
+								"1"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": null,
+									"disabled": true
+								},
+								{
+									"key": "pageSize",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "admin banner delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/banner/delete/666be132aa15db3c6a43cf6f",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"banner",
+								"delete",
+								"666be132aa15db3c6a43cf6f"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "notification",
+			"item": [
+				{
+					"name": "Get all notification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/notification/get/all/user/6683b48888f560bfe4c77b94",
 							"host": [
 								"{{url}}"
 							],
@@ -3002,13 +4323,481 @@
 								"api",
 								"v1",
 								"notification",
-								"multimedia-send"
+								"get",
+								"all",
+								"user",
+								"6683b48888f560bfe4c77b94"
 							]
 						}
 					},
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "video add",
+			"item": [
+				{
+					"name": "upload video",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "video",
+									"type": "file",
+									"src": [
+										"dropeat/Test Data/video adds/7565442-hd_1080_1920_25fps.mp4",
+										"dropeat/Test Data/video adds/8233938-uhd_2160_4096_25fps.mp4",
+										"dropeat/Test Data/video adds/1072815-hd_1920_1080_30fps.mp4",
+										"dropeat/Test Data/video adds/856787-hd_1920_1080_30fps.mp4",
+										"dropeat/Test Data/video adds/855289-hd_1920_1080_25fps.mp4"
+									]
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/video/upload",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"video",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete video",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/video/delete/66853fdf40173ce4b613409f",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"video",
+								"delete",
+								"66853fdf40173ce4b613409f"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "admin video get all",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/video/all",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"video",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "admin video get by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/video/get/66853fdf40173ce4b61340a0",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"video",
+								"get",
+								"66853fdf40173ce4b61340a0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user get all video",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/user/video/all",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"video",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user get video by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/user/video/get/66853fdf40173ce4b61340a0",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"video",
+								"get",
+								"66853fdf40173ce4b61340a0"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payment",
+			"item": [
+				{
+					"name": "Initiate payment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    // \"userId\":\"666befce1ae4735d66a2e6e8\",\r\n    \"amount\":100\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/payment/initiate",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"payment",
+								"initiate"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OTP",
+			"item": [
+				{
+					"name": "send-otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phoneNumber\": 9637957346,\r\n    \"otpType\": 1 // 0 = login 1= forgot password\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/send-otp",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"send-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify-otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phoneNumber\": 9637957346,\r\n    \"otp\": 1193\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/auth/verify-otp",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delivery Charges data",
+			"item": [
+				{
+					"name": "add delivery charges data",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"range1Price\": 40,\r\n    \"range1MinKm\": 1,\r\n    \"range1MaxKm\": 2,\r\n    \"range2Price\": 60,\r\n    \"range2MinKm\": 2,\r\n    \"range2MaxKm\": 4,\r\n    \"range3Price\": 80,\r\n    \"range3MinKm\": 4,\r\n    \"range3MaxKm\": 5\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/add/deliveryCharges/data",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"add",
+								"deliveryCharges",
+								"data"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get delivery charges data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/get/deliveryCharges/data",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"get",
+								"deliveryCharges",
+								"data"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update delivery charges data",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"range1Price\": 40,\r\n    \"range1MinKm\": 1,\r\n    \"range1MaxKm\": 2,\r\n    \"range2Price\": 60,\r\n    \"range2MinKm\": 2,\r\n    \"range2MaxKm\": 4,\r\n    \"range3Price\": 70,\r\n    \"range3MinKm\": 4,\r\n    \"range3MaxKm\": 5\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/update/deliveryCharges/data/66a09811fc461cb7a5617384",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"update",
+								"deliveryCharges",
+								"data",
+								"66a09811fc461cb7a5617384"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "pincode data",
+			"item": [
+				{
+					"name": "Add pin code",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"pinCode\":416002\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/add/pinCode",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"add",
+								"pinCode"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get pinCode",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/pinCode/get",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"pinCode",
+								"get"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "check delivery-available",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/admin/check/delivery-available/416002",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"check",
+								"delivery-available",
+								"416002"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "upload image",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": "curlietails/product/dro4.jpeg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/admin/upload/image",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"upload",
+								"image"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "health-check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/health-check",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"health-check"
+					]
+				}
+			},
+			"response": []
 		},
 		{
 			"name": "generate-access-token",
@@ -3038,6 +4827,148 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "get-current-user",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-access-token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc4MGZmMTM0YzU3ZDExYTZiZWFjYzMiLCJ1c2VyVHlwZSI6MiwiaWF0IjoxNzE5NTc0ODY4LCJleHAiOjE3MjIxNjY4Njh9.FziEK46ItnhZhmJW2bEdErTQJh_Dnv9o0I2B4vvWzd4",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/api/v1/auth/get-current-user",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"get-current-user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search hotel and category",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/user/search?q=Pune",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"user",
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "Pune"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update/data",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    // \"gstPercentage\": 18,\r\n    \"gstIsActive\": false\r\n    // \"platformFee\": 20\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/admin/update/data/66785354755cf19b149aa305",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"update",
+						"data",
+						"66785354755cf19b149aa305"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-hotel-and-dishes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/hotel/get-hotel-and-dishes",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"hotel",
+						"get-hotel-and-dishes"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "https://api.dropeat.in",
+			"type": "string"
+		},
+		{
+			"key": "url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"key": "orderId",
+			"value": ""
 		}
 	]
 }
