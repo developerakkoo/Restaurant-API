@@ -539,6 +539,8 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
         status,
         hotelId,
         deliveryBoyId,
+        sp = false,
+        ds = false,
     } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
     const skip = (Number(pageNumber) - 1) * Number(pageSize);
@@ -557,6 +559,12 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
         dbQuery = {
             assignedDeliveryBoy: new Types.ObjectId(deliveryBoyId),
         };
+    }
+    if (sp == 1) {
+        dbQuery.compensationPaidToHotelPartner = 1;
+    }
+    if (ds == 1) {
+        dbQuery.compensationPaidToDeliveryBoy = 1;
     }
 
     // Sort by date range
