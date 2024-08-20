@@ -808,6 +808,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                         hotelId: "$_id",
                         hotelName: "$hotelName",
                         image_url: "$image_url",
+                        isOnline:"$isOnline",
                         address: "$address",
                         hotelOwner: "$hotelOwner",
                         categories: "$categories",
@@ -845,6 +846,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                 $project: {
                     _id: 0,
                     hotelId: "$_id.hotelId",
+                    isOnline:"$_id.isOnline",
                     hotelName: "$_id.hotelName",
                     image_url: "$_id.image_url",
                     address: "$_id.address",
