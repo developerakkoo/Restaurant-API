@@ -539,7 +539,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
         status,
         hotelId,
         deliveryBoyId,
-        sp = false,
+        ps = false,
         ds = false,
     } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
@@ -560,7 +560,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
             assignedDeliveryBoy: new Types.ObjectId(deliveryBoyId),
         };
     }
-    if (sp == 1) {
+    if (ps == 1) {
         dbQuery.compensationPaidToHotelPartner = 1;
     }
     if (ds == 1) {
