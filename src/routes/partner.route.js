@@ -53,5 +53,6 @@ router.put(
 router.put("/update/:partnerId", partnerController.updatePartner);
 
 router.delete("/hotel/dish/delete", HotelController.deleteDish);
+router.delete("/remove/delete/:hotelId/:partnerId", partnerController.deletePartnerAndHotel);
 
 module.exports = { partnerRoutes: router };
