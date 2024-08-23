@@ -191,10 +191,7 @@ exports.deletePartnerAndHotel = asyncHandler(async (req, res) => {
     const { hotelId, partnerId } = req.params;
     const deletedHotel = await Hotel.findByIdAndDelete(hotelId);
     const deletedPartner = await Partner.findByIdAndDelete(partnerId);
-    // if (!deletedHotel.local_imagePath) {
-    //     throw new ApiError(404, responseMessage.userMessage.hotelNotFound);
-    // }
-    // deleteFile(deletedHotel.local_imagePath);
+   
     return res
         .status(200)
         .json(
