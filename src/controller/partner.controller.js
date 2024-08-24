@@ -186,20 +186,16 @@ exports.deleteHotel = asyncHandler(async (req, res) => {
         );
 });
 
-
 exports.deletePartnerAndHotel = asyncHandler(async (req, res) => {
     const { hotelId, partnerId } = req.params;
-    const deletedHotel = await Hotel.findByIdAndDelete(hotelId);
     const deletedPartner = await Partner.findByIdAndDelete(partnerId);
-   
+    const deletedHotel = await Hotel.deleteMany({ userId: partnerId });
+    const deletedDish = await hotelDishModel.deleteMany({ hotelId });
+
     return res
         .status(200)
         .json(
-            new ApiResponse(
-                200,
-                "ok",
-                "Partner & Hotel Deleted Successfully!",
-            ),
+            new ApiResponse(200, "ok", "Partner & Hotel Deleted Successfully!"),
         );
 });
 exports.uploadHotelImage = asyncHandler(async (req, res) => {
