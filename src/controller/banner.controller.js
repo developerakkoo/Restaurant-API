@@ -14,10 +14,6 @@ exports.addBanner = asyncHandler(async (req, res) => {
     if (process.env.NODE_ENV !== "production") {
         image_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
-    const savedBanner = await bannerModel.findById(hotelId);
-    if (savedBanner) {
-        deleteFile(savedBanner?.local_imagePath);
-    }
     const data = {
         type,
         image_url,
@@ -66,7 +62,7 @@ exports.updateBannerImage = asyncHandler(async (req, res) => {
     if (process.env.NODE_ENV !== "production") {
         document_url = `https://${req.hostname}:8000/upload/${filename}`;
     }
-    const savedDish = await Dish.findById(dishId);
+    const savedDish = await bannerModel.findById(bannerId);
     if (savedDish) {
         deleteFile(savedDish?.local_imagePath);
     }
