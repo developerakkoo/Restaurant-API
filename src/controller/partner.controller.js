@@ -187,10 +187,23 @@ exports.deleteHotel = asyncHandler(async (req, res) => {
 });
 
 exports.deletePartnerAndHotel = asyncHandler(async (req, res) => {
-    const { hotelId, partnerId } = req.params;
+    const { partnerId } = req.params;
+    // Delete the partner by ID
     const deletedPartner = await Partner.findByIdAndDelete(partnerId);
-    const deletedHotel = await Hotel.deleteMany({ userId: partnerId });
-    const deletedDish = await hotelDishModel.deleteMany({ hotelId });
+    // Find and delete all hotels associated with the partner
+    const hotels = await Hotel.find({ userId: partnerId });
+
+    if (hotels.length > 0) {
+        const hotelIds = hotels.map((hotel) => hotel._id);
+
+        // Delete all hotels associated with the partner
+        await Hotel.deleteMany({ userId: partnerId });
+
+        // Delete all dishes associated with the deleted hotels
+        await hotelDishModel.deleteMany({
+            hotelId: { $in: hotelIds },
+        });
+    }
 
     return res
         .status(200)
