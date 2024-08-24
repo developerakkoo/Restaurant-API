@@ -102,13 +102,17 @@ exports.deleteBanner = asyncHandler(async (req, res) => {
 });
 
 exports.getBanner = asyncHandler(async (req, res) => {
-    const { type } = req.params;
+    const { type } = req.query;
     const pageNumber = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
     const skip = (pageNumber - 1) * pageSize;
 
     const dataCount = await bannerModel.countDocuments();
-    const banner = await bannerModel.find({ type }).skip(skip).limit(pageSize);
+    let dbQuery = {};
+    if (type) {
+        dbQuery.type = type;
+    }
+    const banner = await bannerModel.find(dbQuery).skip(skip).limit(pageSize);
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,

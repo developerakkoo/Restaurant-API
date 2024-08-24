@@ -18,7 +18,7 @@ const { getMyChatList } = require("../controller/message.controller");
 
 router.post("/logout", authController.logoutUser);
 
-router.get("/banner/get/:type", bannerController.getBanner);
+router.get("/banner/get", bannerController.getBanner);
 
 router.get("/get/all-hotels", adminController.getAllHotel);
 
