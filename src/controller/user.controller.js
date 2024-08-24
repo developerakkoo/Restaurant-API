@@ -3,6 +3,7 @@ const Cart = require("../models/cart.model");
 const Hotel = require("../models/hotel.model");
 const Category = require("../models/category.model");
 const { responseMessage, cookieOptions } = require("../constant");
+const Order = require("../models/order.model");
 const UserTrack = require("../models/userTrack.model");
 const userAddress = require("../models/userAddress.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -278,6 +279,17 @@ exports.deleteAddress = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.addressDeleted,
             ),
         );
+});
+
+exports.deleteUserData = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const user = await User.findByIdAndDelete(userId);
+    const address = await userAddress.deleteMany({ userId });
+    const order = await Order.deleteMany({ userId });
+
+    res.status(200).json(
+        new ApiResponse(200, "ok", "User data deleted successfully"),
+    );
 });
 
 exports.getUserById = asyncHandler(async (req, res) => {

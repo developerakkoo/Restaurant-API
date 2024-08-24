@@ -8,6 +8,7 @@ const orderController = require("../controller/order.controller");
 const authController = require("../controller/auth.controller");
 const validateData = require("../validators/admin.validator");
 const messageController = require("../controller/message.controller");
+const { deleteUserData } = require("../controller/user.controller");
 const { dataValidationResult } = require("../validators/validationResult");
 const promoCodeController = require("../controller/promoCode.controller");
 const { upload, videoUpload } = require("../middleware/fileHandler.middleware");
@@ -29,6 +30,13 @@ router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 // router.use(adminPrivilegesRequired);
 
 router.get("/get/all-users", adminController.getAllUsers);
+
+router.delete("/user/delete/:userId", deleteUserData);
+
+router.delete(
+    "/deliveryBoy/delete/:deliveryBoyId",
+    deliveryBoyController.deleteDriverData,
+);
 
 router.post(
     "/send/firebaseNotification",

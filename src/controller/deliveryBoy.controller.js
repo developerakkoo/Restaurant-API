@@ -621,3 +621,18 @@ exports.updateDeliveryBoy = asyncHandler(async (req, res) => {
             ),
         );
 });
+
+exports.deleteDriverData = asyncHandler(async (req, res) => {
+    const { deliveryBoyId } = req.params;
+    await DeliverBoy.findByIdAndDelete(deliveryBoyId);
+    await DeliverBoyDocument.findByIdAndUpdate(deliveryBoyId);
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                null,
+                "Delivery Boy Data Deleted Successfully",
+            ),
+        );
+});
