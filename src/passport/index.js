@@ -21,6 +21,6 @@ exports.setupPassports = (passport) => {
     });
 
     // Initialize strategies
-    googleStrategy(passport);
-    facebookStrategy(passport);
+    // googleStrategy(passport);
+    // facebookStrategy(passport);
 };

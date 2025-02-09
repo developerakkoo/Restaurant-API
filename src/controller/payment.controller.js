@@ -6,8 +6,8 @@ const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { getIO } = require("../utils/socket");
 const { BASE_URL } = require("../constant");
 const razorpay = require("razorpay");
-const key = process.env.RAZORPAY_ID;
-const secret = process.env.RAZORPAY_SECRET;
+const key = process.env.KEY_ID;
+const secret = process.env.KEY_SECRET;
 
 var instance = new razorpay({
     key_id: key,
