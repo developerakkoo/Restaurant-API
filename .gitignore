@@ -116,9 +116,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-# firebase.json
+firebase.json
 # Addtional fiels 
 
-# .client.js
-# t.js
-# /src/utils/stonks-b66d4-be8791d7d5c7.json
+.client.js
+t.js
+/src/utils/stonks-b66d4-be8791d7d5c7.json

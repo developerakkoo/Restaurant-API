@@ -26,9 +26,11 @@ const {
     generateInvoiceTable,
     generateCustomerInformation,
 } = require("../utils/invoice");
+
+
 let instance = new razorpay({
-    key_id: process.env.KEY_ID,
-    key_secret: process.env.KEY_SECRET,
+    key_id: "rzp_test_oOGcEOCZh44TCA",
+    key_secret: "R0YT1ZGLQlnRQTzubiLJY0je",
 });
 
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
