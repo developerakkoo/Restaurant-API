@@ -29,8 +29,8 @@ const {
 
 
 let instance = new razorpay({
-    key_id: "rzp_test_oOGcEOCZh44TCA",
-    key_secret: "R0YT1ZGLQlnRQTzubiLJY0je",
+    key_id: process.env.KEY_ID,
+    key_secret: process.env.KEY_SECRET,
 });
 
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {

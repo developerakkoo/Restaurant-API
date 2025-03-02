@@ -23,6 +23,9 @@ connectDB()
             console.log(
                 `Server is running at port : ${PORT} in ${process.env.NODE_ENV} environment`,
             );
+
+            console.log(process.env.KEY_ID);
+            
             const io = require("./utils/socket").init(server);
             io.on("connection", async (socket) => {
                 console.log("user Connected");
