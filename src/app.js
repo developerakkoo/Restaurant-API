@@ -3,8 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const app = express();
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+
 const { BASE_URL, API_VERSION } = require("./constant");
 const morganMiddleware = require("./logger/morgan.logger");
 const { errorHandler } = require("./middleware/error.middlewares");
@@ -15,22 +14,24 @@ const { setupPassports } = require("./passport");
 const passport = require("passport");
 const path = require("path");
 
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 
 require("./cron job/firebaseNotification.cron");
 
-setupPassports(passport);
+// setupPassports(passport);
 
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: true,
-        saveUninitialized: true,
-    }),
-); // session secret
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(
+//     session({
+//         secret: process.env.SESSION_SECRET,
+//         resave: true,
+//         saveUninitialized: true,
+//     }),
+// ); // session secret
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 /**
  * Sets the response headers to allow cross-origin requests (CORS)
