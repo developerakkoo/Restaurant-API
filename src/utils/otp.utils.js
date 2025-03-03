@@ -1,5 +1,5 @@
 require("dotenv").config();
-const MSG91_AUTH_KEY = process.env.MSG91_API_KEY;
+const MSG91_AUTH_KEY = "422640AJnFQIJ2Fl6694f134P1";
 
 /**
  * Sends a mobile OTP using the MSG91 API.

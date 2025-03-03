@@ -25,6 +25,9 @@ connectDB()
             );
 
             console.log(process.env.KEY_ID);
+            console.log(process.env.KEY_SECRET);
+            console.log(process.env.SESSION_SECRET);
+
             
             const io = require("./utils/socket").init(server);
             io.on("connection", async (socket) => {

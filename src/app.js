@@ -21,17 +21,17 @@ app.use(cookieParser());
 
 require("./cron job/firebaseNotification.cron");
 
-// setupPassports(passport);
+setupPassports(passport);
 
-// app.use(
-//     session({
-//         secret: process.env.SESSION_SECRET,
-//         resave: true,
-//         saveUninitialized: true,
-//     }),
-// ); // session secret
-// app.use(passport.initialize());
-// app.use(passport.session());
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: true,
+        saveUninitialized: true,
+    }),
+); // session secret
+app.use(passport.initialize());
+app.use(passport.session());
 
 /**
  * Sets the response headers to allow cross-origin requests (CORS)
