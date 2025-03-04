@@ -138,7 +138,7 @@ exports.checkUserStatus = asyncHandler(async (req, res) => {
 exports.updateUserProfile = asyncHandler(async (req, res) => {
     const { name, email, phoneNumber, firebaseToken, isOnline } = req.body;
     const updatedUser = await User.findByIdAndUpdate(
-        req.user.userId,
+        req.params.userId,
         {
             $set: {
                 name: name,
