@@ -971,6 +971,15 @@ exports.uploadCategoryImage = asyncHandler(async (req, res) => {
         );
 });
 
+
+exports.getAllCategoryNormal = async(req,res) =>{
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
 exports.getAllCategory = asyncHandler(async (req, res) => {
     let dbQuery = {};
     const { search } = req.query;
@@ -985,8 +994,10 @@ exports.getAllCategory = asyncHandler(async (req, res) => {
         };
     }
     const dataCount = await Category.countDocuments();
-    const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
-
+   const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
+    // const category = await Category.find({});
+    console.log(category);
+    
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
