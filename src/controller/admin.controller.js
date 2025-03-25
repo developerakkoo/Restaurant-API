@@ -1751,7 +1751,7 @@ exports.addPinCode = asyncHandler(async (req, res) => {
 });
 
 exports.getAllPinCodes = asyncHandler(async (req, res) => {
-    const data = await PinCodeModel.find();
+    const data = await PinCodeModel.find({});
     if (data.length == 0) {
         return res
             .status(404)
@@ -1791,7 +1791,7 @@ exports.uploadImage = asyncHandler(async (req, res) => {
     const { filename } = req.file;
     let image_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        image_url = `https://${req.hostname}:8000/upload/${filename}`;
+        image_url = `https://${req.hostname}/upload/${filename}`;
     }
 
     return res

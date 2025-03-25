@@ -2,10 +2,10 @@ const { Schema, model } = require("mongoose");
 
 const pinCodeSchema = new Schema(
     {
-        pinCode: {
-            type: Number,
-            required: true,
-        },
+        pincode: { type: String, required: true },
+        address: { type: String, required: true },
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
     },
     { timestamps: true },
 );
