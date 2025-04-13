@@ -1735,23 +1735,54 @@ exports.getVideoById = asyncHandler(async (req, res) => {
 });
 
 /* Pin code data  */
-const PinCodeModel = require("../models/pincode.model");
 
 exports.addPinCode = asyncHandler(async (req, res) => {
-    const { pinCode } = req.body;
-    console.log("Pin code:", pinCode);
-    console.log("Body:", req.body);
+    try {
+        const pinCodeData = req.body;
 
-    const existingPinCode = await PinCodeModel.findOne({ pinCode });
-    if (existingPinCode) {
-        return res
-            .status(400)
-            .json(new ApiResponse(400, null, "Pin code already exists"));
+        // Validate required fields
+        const { pincode, lng, lat, address } = pinCodeData;
+        if (!pincode || !lat || !lng || !address) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        "All fields (pincode, lat, lng, address) are required",
+                    ),
+                );
+        }
+
+        // Check if the pin code already exists
+        const existingPinCode = await PinCodeModel.findOne({ pincode });
+        if (existingPinCode) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(400, null, "Pin code already exists"),
+                );
+        }
+
+        // Create a new pin code entry
+        const newPinCode = await PinCodeModel.create(pinCodeData);
+
+        res.status(201).json(
+            new ApiResponse(
+                201,
+                newPinCode,
+                "Pin code added successfully",
+            ),
+        );
+    } catch (error) {
+        res.status(500).json(
+            new ApiResponse(
+                500,
+                null,
+                "An error occurred while adding the pin code",
+            ),
+        );
     }
-    const data = await PinCodeModel.create(req.body);
-    res.status(200).json(
-        new ApiResponse(200, data, "Pin code added successfully"),
-    );
 });
 
 exports.getAllPinCodes = asyncHandler(async (req, res) => {
