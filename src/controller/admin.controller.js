@@ -12,6 +12,7 @@ const userAddress = require("../models/userAddress.model");
 const Hotel = require("../models/hotel.model");
 const HotelDish = require("../models/hotelDish.model");
 const Category = require("../models/category.model");
+const PinCodeModel = require("../models/pincode.model");
 const Partner = require("../models/partner.model");
 const User = require("../models/user.model");
 const { responseMessage, cookieOptions } = require("../constant");
@@ -1766,19 +1767,25 @@ exports.getAllPinCodes = asyncHandler(async (req, res) => {
 });
 
 exports.deletePinCode = asyncHandler(async (req, res) => {
-    const id = req.params.id; // Extract pinCode from request parameters
-    PinCodeModel.findByIdAndDelete(id)
-    .then((value) =>{
+    const { id } = req.params; // Extract ID from request parameters
+
+    try {
+        const pinCodeData = await PinCodeModel.findByIdAndDelete(id); // Find and delete the pin code by its ID
+
+        if (!pinCodeData) {
+            return res
+                .status(404)
+                .json(new ApiResponse(404, null, "Pin code not found")); // Return 404 if pin code does not exist
+        }
+
         res.status(200).json(
             new ApiResponse(200, pinCodeData, "Pin code deleted successfully"), // Return success response
-        );// Return 404 if pin code does not exist
-    }).catch((error) =>{
-        res.status(404).json(
-            new ApiResponse(404, null, "Pin code not found"), // Return 404 if pin code does not exist
         );
-    }) // Find and delete the pin code by its value
-
-   
+    } catch (error) {
+        res.status(500).json(
+            new ApiResponse(500, null, "An error occurred while deleting the pin code"), // Return error response
+        );
+    }
 });
 
 exports.checkPinCodeIdDeliverable = asyncHandler(async (req, res) => {
