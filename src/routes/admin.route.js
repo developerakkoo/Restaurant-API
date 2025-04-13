@@ -101,7 +101,7 @@ router.delete(
 router.get("/get/all-deliveryBoy", adminController.getAllDeliveryBoy);
 
 router.delete(
-    "/delete/delivery-boy/document",
+    "/delete/delivery-boy/:id",
     adminPrivilegesRequired,
     adminController.deletedDocument,
 );

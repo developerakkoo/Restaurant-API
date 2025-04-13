@@ -452,8 +452,8 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
 });
 
 exports.deletedDocument = asyncHandler(async (req, res) => {
-    const { documentId } = req.query;
-    const documentToDelete = await DeliverBoyDocument.findById(documentId);
+    const { id } = req.query;
+    const documentToDelete = await DeliverBoyDocument.findById(id);
     if (!documentToDelete) {
         return res
             .status(404)
