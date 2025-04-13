@@ -310,7 +310,7 @@ router.post("/add/pinCode", adminController.addPinCode);
 
 router.get("/pinCode/get", adminController.getAllPinCodes);
 
-router.delete("/delete/pinCode/:pinCode", adminController.deletePinCode);
+router.delete("/delete/pinCode/:id", adminController.deletePinCode);
 
 router.get(
     "/check/delivery-available/:pinCode",

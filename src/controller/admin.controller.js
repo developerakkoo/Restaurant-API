@@ -1766,8 +1766,8 @@ exports.getAllPinCodes = asyncHandler(async (req, res) => {
 });
 
 exports.deletePinCode = asyncHandler(async (req, res) => {
-    const { pinCode } = req.params; // Extract pinCode from request parameters
-    PinCodeModel.findByIdAndDelete(pinCode)
+    const id = req.params.id; // Extract pinCode from request parameters
+    PinCodeModel.findByIdAndDelete(id)
     .then((value) =>{
         res.status(200).json(
             new ApiResponse(200, pinCodeData, "Pin code deleted successfully"), // Return success response
