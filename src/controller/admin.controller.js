@@ -1766,15 +1766,15 @@ exports.getAllPinCodes = asyncHandler(async (req, res) => {
 });
 
 exports.deletePinCode = asyncHandler(async (req, res) => {
-    const { pinCode } = req.params;
-    const pinCodeData = await PinCodeModel.findByIdAndDelete(pinCode);
+    const { pinCode } = req.params; // Extract pinCode from request parameters
+    const pinCodeData = await PinCodeModel.findByIdAndDelete(pinCode); // Find and delete the pin code by its value
     if (!pinCodeData) {
         return res
             .status(404)
-            .json(new ApiResponse(404, null, "Pin code not found"));
+            .json(new ApiResponse(404, null, "Pin code not found")); // Return 404 if pin code does not exist
     }
     res.status(200).json(
-        new ApiResponse(200, pinCodeData, "Pin code deleted successfully"),
+        new ApiResponse(200, pinCodeData, "Pin code deleted successfully"), // Return success response
     );
 });
 
