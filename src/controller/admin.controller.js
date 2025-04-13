@@ -1738,13 +1738,16 @@ const PinCodeModel = require("../models/pincode.model");
 
 exports.addPinCode = asyncHandler(async (req, res) => {
     const { pinCode } = req.body;
+    console.log("Pin code:", pinCode);
+    console.log("Body:", req.body);
+
     const existingPinCode = await PinCodeModel.findOne({ pinCode });
     if (existingPinCode) {
         return res
             .status(400)
             .json(new ApiResponse(400, null, "Pin code already exists"));
     }
-    const data = await PinCodeModel.create({ pinCode });
+    const data = await PinCodeModel.create(req.body);
     res.status(200).json(
         new ApiResponse(200, data, "Pin code added successfully"),
     );
@@ -1800,6 +1803,7 @@ exports.uploadImage = asyncHandler(async (req, res) => {
 });
 
 const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
+const { log } = require("winston");
 exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
     const { userIds, notificationTitle, description } = req.body;
 
