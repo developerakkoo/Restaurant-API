@@ -4,7 +4,7 @@ const {ApiError} = require('../utils/ApiErrorHandler');
 
 const connectDB = async () =>{
     try {
-        const connectionInstance =  await mongoose.connect(`mongodb+srv://dropeat:8XJHQEW0wm0zhdh9@dropeat-db.ghguqnt.mongodb.net/dropeatTest`);
+        const connectionInstance =  await mongoose.connect(`mongodb+srv://dropeat:dGuFTbRYq9NTWzSf@dropeat-db.ghguqnt.mongodb.net/dropeatTest`);
         console.log(`MongoDB connected !! DB HOST:${connectionInstance.connection.host}`);
         console.log(connectionInstance.connection.db.databaseName);
         
