@@ -1821,7 +1821,9 @@ exports.deletePinCode = asyncHandler(async (req, res) => {
 
 exports.checkPinCodeIdDeliverable = asyncHandler(async (req, res) => {
     const { pinCode } = req.params;
-    const pinCodeData = await PinCodeModel.findOne({ pinCode });
+    const pinCodeData = await PinCodeModel.find({ pincode:pinCode });
+    console.log(pinCodeData);
+    (pinCodeData);
     if (!pinCodeData) {
         return res
             .status(404)

@@ -5,6 +5,7 @@ const {
     getAllCategory,
     getAllVideos,
     getVideoById,
+    checkPinCodeIdDeliverable
 } = require("../controller/admin.controller");
 const authController = require("../controller/auth.controller");
 const {
@@ -58,5 +59,12 @@ router.get("/video/all", getAllVideos);
 router.get("/video/get/:videoId", getVideoById);
 
 router.post("/check/status", userController.checkUserStatus);
+
+
+
+router.get(
+    "/check/delivery-available/:pinCode",
+    checkPinCodeIdDeliverable,
+);
 
 module.exports = { userRoutes: router };
