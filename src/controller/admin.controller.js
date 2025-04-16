@@ -1825,8 +1825,8 @@ exports.checkPinCodeIdDeliverable = asyncHandler(async (req, res) => {
     console.log(pinCodeData);
     if (pinCodeData.length === 0) {
         return res
-            .status(404)
-            .json(new ApiResponse(404, false, "Pin code not deliverable"));
+            .status(200)
+            .json(new ApiResponse(200, false, "Pin code not deliverable"));
     }
     res.status(200).json(new ApiResponse(200, true, "Pin code is deliverable"));
 });
