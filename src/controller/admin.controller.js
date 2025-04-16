@@ -1821,10 +1821,9 @@ exports.deletePinCode = asyncHandler(async (req, res) => {
 
 exports.checkPinCodeIdDeliverable = asyncHandler(async (req, res) => {
     const { pinCode } = req.params;
-    const pinCodeData = await PinCodeModel.find({ pincode:pinCode });
+    const pinCodeData = await PinCodeModel.find({ pincode: pinCode });
     console.log(pinCodeData);
-    (pinCodeData);
-    if (!pinCodeData) {
+    if (pinCodeData.length === 0) {
         return res
             .status(404)
             .json(new ApiResponse(404, false, "Pin code not deliverable"));
