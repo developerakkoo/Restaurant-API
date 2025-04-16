@@ -76,7 +76,7 @@ app.set("view engine", "ejs");
 // Serve uploaded files as static content
 app.use("/upload", express.static(path.join(__dirname, "upload")));
 /*Api rate limiter */
-app.use(apiRateLimiter);
+// app.use(apiRateLimiter);
 
 /* Importing Routers */
 const {
