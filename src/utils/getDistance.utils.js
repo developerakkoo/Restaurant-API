@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const getDistance = async (userLat, userLon, shopLat, shopLon) => {
-    const googleMapsApiKey = process.env.GOOGLE_MAP_API_KEY;
+    const googleMapsApiKey = "AIzaSyADFvEEjDAljOg3u9nBd1154GIZwFWnono";
     try {
         const response = await axios.get(
             `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${userLat},${userLon}&destinations=${shopLat},${shopLon}&key=${googleMapsApiKey}`,
