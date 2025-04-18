@@ -66,19 +66,42 @@ exports.loginUser = asyncHandler(async (req, res) => {
     // Extract user login details from the request body
     const { phoneNumber } = req.body;
 
-    // Find a user with the provided email in the database
+    // Find a user with the provided number in the database
     let user = await User.findOne({ phoneNumber });
 
     // If the user is not found, return a 404 response
     if (!user) {
         user = await User.create({ phoneNumber });
+        // Generate access and refresh tokens for the logged-in user
+ const { accessToken, refreshToken } = await generateTokens(user._id, 2);
+
+ // Retrieve the logged-in user details excluding password and refreshToken
+ const loggedInUser = await User.findById(user._id).select(
+     "-password -refreshToken",
+ );
+
+ // Send a successful login response with cookies containing access and refresh tokens
+ return res
+     .status(200)
+     .cookie("accessToken", accessToken, cookieOptions)
+     .cookie("refreshToken", refreshToken, cookieOptions)
+     .json(
+         {
+                status: 200,
+                data: loggedInUser,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                message: responseMessage.userMessage.loginSuccessful,
+                isNewUser: true
+         }
+     );
+
+    
     }
 
-    // Check if the provided password is correct
-    // const isPasswordValid = await user.isPasswordCorrect(password);
-
-    // If the user is blocked
-    if (user.status == 1) {
+   if(user){
+     // If the user is blocked
+     if (user.status == 1) {
         return res
             .status(200)
             .json(
@@ -88,32 +111,34 @@ exports.loginUser = asyncHandler(async (req, res) => {
                     "'Your account has been blocked. Please contact support for more information.'",
                 ),
             );
+    }else{
+ // Generate access and refresh tokens for the logged-in user
+ const { accessToken, refreshToken } = await generateTokens(user._id, 2);
+
+ // Retrieve the logged-in user details excluding password and refreshToken
+ const loggedInUser = await User.findById(user._id).select(
+     "-password -refreshToken",
+ );
+
+ // Send a successful login response with cookies containing access and refresh tokens
+ return res
+     .status(200)
+     .cookie("accessToken", accessToken, cookieOptions)
+     .cookie("refreshToken", refreshToken, cookieOptions)
+     .json(
+         {
+                status: 200,
+                data: loggedInUser,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                message: responseMessage.userMessage.loginSuccessful,
+                isNewUser: false
+         }
+     );
+
     }
 
-    // Generate access and refresh tokens for the logged-in user
-    const { accessToken, refreshToken } = await generateTokens(user._id, 2);
-
-    // Retrieve the logged-in user details excluding password and refreshToken
-    const loggedInUser = await User.findById(user._id).select(
-        "-password -refreshToken",
-    );
-
-    // Send a successful login response with cookies containing access and refresh tokens
-    return res
-        .status(200)
-        .cookie("accessToken", accessToken, cookieOptions)
-        .cookie("refreshToken", refreshToken, cookieOptions)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    userId: loggedInUser._id,
-                    accessToken,
-                    refreshToken,
-                },
-                responseMessage.userMessage.loginSuccessful,
-            ),
-        );
+}
 });
 
 exports.checkUserStatus = asyncHandler(async (req, res) => {

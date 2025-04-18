@@ -14,12 +14,12 @@ let server;
 connectDB()
     .then(() => {
         server = app.listen(PORT, () => {
-            /*Seeders to create dummy data*/
-            if (generateSeed === true) {
-                createUser(10);
-                createPartner(10);
-                createDeliveryBoy(10);
-            }
+            // /*Seeders to create dummy data*/
+            // if (generateSeed === true) {
+            //     createUser(10);
+            //     createPartner(10);
+            //     createDeliveryBoy(10);
+            // }
             console.log(
                 `Server is running at port : ${PORT} in ${process.env.NODE_ENV} environment`,
             );
