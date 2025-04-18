@@ -22,6 +22,7 @@ router.post("/logout", authController.logoutUser);
 router.get("/banner/get", bannerController.getBanner);
 
 router.get("/get/all-hotels", adminController.getAllHotel);
+router.get("/get/all-hotels-user", adminController.getHotelsForUser);
 
 router.get("/category/get/all", adminController.getAllCategory);
 

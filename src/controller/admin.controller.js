@@ -907,6 +907,28 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
     );
 });
 
+exports.getHotelsForUser = asyncHandler(async (req, res) => {
+    const hotels = await Hotel.find({}).populate('category');
+    if(hotels){
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                hotels,
+                responseMessage.userMessage.hotelFetchedSuccessfully,
+            ),
+        );
+    }else{
+        return res.status(404).json(
+            new ApiResponse(
+                404,
+                null,
+                responseMessage.userMessage.hotelNotFound,
+            ),
+        );
+    }
+
+});
+
 exports.addCategory = asyncHandler(async (req, res) => {
     const { categoryName } = req.body;
     const category = await Category.findOne({ categoryName });
