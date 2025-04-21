@@ -16,7 +16,7 @@ router.get(
 
 router.get("/get-top", HotelStarController.getTopHotels);
 
-router.get("/get-by/:categoryId/category", getHotelByCategory);
+router.get("/get-by/:categoryId/category", getAllHotel);
 
 router.delete(
     "/delete-star/userId",
