@@ -658,6 +658,27 @@ exports.updateHotelStatus = asyncHandler(async (req, res) => {
         );
 });
 
+exports.getHotelByCategory = asyncHandler(async (req, res) => {
+    const { categoryId } = req.params;
+    let hotels = await Hotel.find({category: categoryId});
+    if(hotels){
+        console.log(hotels);
+        res.status(200)
+        .json({
+            message:"Hotels Found",
+            data:hotels
+        })
+        
+    }
+    else{
+        res.status(200)
+        .json({
+            message:"No Hotels Found",
+            data:hotels,
+            length: hotels.length
+        })
+    }
+});
 exports.getAllHotel = asyncHandler(async (req, res) => {
     let dbQuery = {};
     const { categoryId } = req.params;
