@@ -65,7 +65,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
 exports.loginUser = asyncHandler(async (req, res) => {
     // Extract user login details from the request body
     const { phoneNumber } = req.body;
-    let IsNewUser = false;
+   
     // Find a user with the provided number in the database
     let user = await User.findOne({ phoneNumber });
 
@@ -93,7 +93,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 message: responseMessage.userMessage.loginSuccessful,
-                isNewUser: false
+                isNewUser: true
          }
      );
 
@@ -133,7 +133,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
                 accessToken: accessToken,
                 refreshToken: refreshToken,
                 message: responseMessage.userMessage.loginSuccessful,
-                isNewUser: true
+                isNewUser: false
          }
      );
 
