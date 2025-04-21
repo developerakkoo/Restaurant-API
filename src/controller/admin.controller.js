@@ -1421,17 +1421,6 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
 //     );
 // });
 
-exports.getData = asyncHandler(async (req, res) => {
-    const data = await Data.find({});
-    if (!data) {
-        return res
-            .status(404)
-            .json(new ApiResponse(404, null, "Data not found"));
-    }
-    res.status(200).json(
-        new ApiResponse(200, data, "Data fetched successfully"),
-    );
-});
 
 exports.updateData = asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -1478,7 +1467,7 @@ exports.createData = asyncHandler(async (req, res) => {
 });
 
 exports.getData = asyncHandler(async (req, res) => {
-    const data = await Data.find({});
+    const data = await Data.find();
     if (!data) {
         return res
             .status(404)
