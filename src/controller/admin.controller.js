@@ -1409,20 +1409,20 @@ exports.totalRevenueData = asyncHandler(async (req, res) => {
 });
 
 /***** Gst and platform fee data  *****/
-exports.createData = asyncHandler(async (req, res) => {
-    const { gstPercentage, platformFee } = req.body;
+// exports.createData = asyncHandler(async (req, res) => {
+//     const { gstPercentage, platformFee } = req.body;
 
-    const data = await Data.create({
-        gstPercentage,
-        platformFee,
-    });
-    res.status(200).json(
-        new ApiResponse(200, data, "Data created successfully"),
-    );
-});
+//     const data = await Data.create({
+//         gstPercentage,
+//         platformFee,
+//     });
+//     res.status(200).json(
+//         new ApiResponse(200, data, "Data created successfully"),
+//     );
+// });
 
 exports.getData = asyncHandler(async (req, res) => {
-    const data = await Data.find();
+    const data = await Data.find({});
     if (!data) {
         return res
             .status(404)
@@ -1478,7 +1478,7 @@ exports.createData = asyncHandler(async (req, res) => {
 });
 
 exports.getData = asyncHandler(async (req, res) => {
-    const data = await Data.find();
+    const data = await Data.find({});
     if (!data) {
         return res
             .status(404)
