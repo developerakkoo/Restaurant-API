@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const HotelStarController = require("../controller/hotel.controller");
-const { getAllHotel } = require("../controller/admin.controller");
+const { getAllHotel,getHotelByCategory } = require("../controller/admin.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
 
 router.get("/get/byId/:hotelId", HotelStarController.getHotelById);
