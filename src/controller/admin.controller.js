@@ -15,6 +15,7 @@ const Category = require("../models/category.model");
 const PinCodeModel = require("../models/pincode.model");
 const Partner = require("../models/partner.model");
 const User = require("../models/user.model");
+const UserAddress = require("../models/userAddress.model");
 const { responseMessage, cookieOptions } = require("../constant");
 const { deleteFile } = require("../utils/deleteFile");
 const { getIO } = require("../utils/socket");
@@ -660,23 +661,23 @@ exports.updateHotelStatus = asyncHandler(async (req, res) => {
 
 exports.getHotelByCategory = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
-    let hotels = await Hotel.find({category: categoryId});
-    if(hotels){
+    let hotels = await Hotel.find({ category: categoryId });
+    if (hotels) {
         console.log(hotels);
         res.status(200)
-        .json({
-            message:"Hotels Found",
-            data:hotels
-        })
-        
+            .json({
+                message: "Hotels Found",
+                data: hotels
+            })
+
     }
-    else{
+    else {
         res.status(200)
-        .json({
-            message:"No Hotels Found",
-            data:hotels,
-            length: hotels.length
-        })
+            .json({
+                message: "No Hotels Found",
+                data: hotels,
+                length: hotels.length
+            })
     }
 });
 exports.getAllHotel = asyncHandler(async (req, res) => {
@@ -830,7 +831,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                         hotelId: "$_id",
                         hotelName: "$hotelName",
                         image_url: "$image_url",
-                        isOnline:"$isOnline",
+                        isOnline: "$isOnline",
                         address: "$address",
                         hotelOwner: "$hotelOwner",
                         categories: "$categories",
@@ -868,7 +869,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                 $project: {
                     _id: 0,
                     hotelId: "$_id.hotelId",
-                    isOnline:"$_id.isOnline",
+                    isOnline: "$_id.isOnline",
                     hotelName: "$_id.hotelName",
                     image_url: "$_id.image_url",
                     address: "$_id.address",
@@ -930,7 +931,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
 
 exports.getHotelsForUser = asyncHandler(async (req, res) => {
     const hotels = await Hotel.find({}).populate('category');
-    if(hotels){
+    if (hotels) {
         return res.status(200).json(
             new ApiResponse(
                 200,
@@ -938,7 +939,7 @@ exports.getHotelsForUser = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.hotelFetchedSuccessfully,
             ),
         );
-    }else{
+    } else {
         return res.status(404).json(
             new ApiResponse(
                 404,
@@ -1016,11 +1017,11 @@ exports.uploadCategoryImage = asyncHandler(async (req, res) => {
 });
 
 
-exports.getAllCategoryNormal = async(req,res) =>{
+exports.getAllCategoryNormal = async (req, res) => {
     try {
-        
+
     } catch (error) {
-        
+
     }
 }
 
@@ -1038,10 +1039,10 @@ exports.getAllCategory = asyncHandler(async (req, res) => {
         };
     }
     const dataCount = await Category.countDocuments();
-   const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
+    const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
     // const category = await Category.find({});
     console.log(category);
-    
+
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
@@ -1137,43 +1138,44 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
 );
 
 exports.getDashboardStats = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth", startDate, endDate } = req.query;
+    const { sort, startDate, endDate } = req.query;
 
-    // Parse dates from query parameters using DD-MM-YYYY format or default to current date range
-    const start = startDate
-        ? moment(startDate, "DD-MM-YYYY")
-        : moment().startOf(sort);
-    const end = endDate ? moment(endDate, "DD-MM-YYYY") : moment().endOf(sort);
+    let DateFilterPipeline = [];
 
-    // Validate the parsed dates
-    if (!start.isValid() || !end.isValid()) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    "Invalid date format. Please use DD-MM-YYYY.",
-                ),
-            );
-    }
+    // Check if sort, startDate, or endDate are provided
+    if (sort || startDate || endDate) {
+        const start = startDate
+            ? moment(startDate, "DD-MM-YYYY")
+            : moment().startOf(sort || "day");
+        const end = endDate
+            ? moment(endDate, "DD-MM-YYYY")
+            : moment().endOf(sort || "day");
 
-    const DateFilterPipeline = [
-        {
-            $match: {
-                createdAt: {
-                    $gte: start.toDate(),
-                    $lte: end.toDate(),
+        // Validate the parsed dates
+        if (!start.isValid() || !end.isValid()) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        "Invalid date format. Please use DD-MM-YYYY.",
+                    ),
+                );
+        }
+
+        // Add date filter to the pipeline
+        DateFilterPipeline = [
+            {
+                $match: {
+                    createdAt: {
+                        $gte: start.toDate(),
+                        $lte: end.toDate(),
+                    },
                 },
             },
-        },
-        {
-            $group: {
-                _id: null,
-                data: { $sum: 1 }, // Count the number of documents
-            },
-        },
-    ];
+        ];
+    }
 
     const [
         totalOrders,
@@ -1185,25 +1187,25 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
         totalDeliveryBoys,
         totalRevenue,
     ] = await Promise.all([
-        Order.countDocuments(DateFilterPipeline[0].$match),
+        Order.countDocuments(DateFilterPipeline[0]?.$match || {}),
         Order.countDocuments({
-            ...DateFilterPipeline[0].$match,
+            ...(DateFilterPipeline[0]?.$match || {}),
             orderStatus: 3,
         }),
         Order.countDocuments({
-            ...DateFilterPipeline[0].$match,
+            ...(DateFilterPipeline[0]?.$match || {}),
             orderStatus: 5, // Corrected to match 'cancel order' status
         }),
-        User.countDocuments(DateFilterPipeline[0].$match),
+        User.countDocuments(DateFilterPipeline[0]?.$match || {}),
         User.countDocuments({
-            ...DateFilterPipeline[0].$match,
+            ...(DateFilterPipeline[0]?.$match || {}),
             isOnline: true,
         }),
-        Partner.countDocuments(DateFilterPipeline[0].$match),
-        DeliveryBoy.countDocuments(DateFilterPipeline[0].$match),
+        Partner.countDocuments(DateFilterPipeline[0]?.$match || {}),
+        DeliveryBoy.countDocuments(DateFilterPipeline[0]?.$match || {}),
         Order.aggregate([
             {
-                $match: DateFilterPipeline[0].$match,
+                $match: DateFilterPipeline[0]?.$match || {},
             },
             {
                 $group: {
@@ -1237,8 +1239,56 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     );
 });
 
+exports.getUserLocationClusters = asyncHandler(
+    async (req, res) => {
+
+        try {
+            const result = await UserAddress.aggregate([
+              {
+                $group: {
+                  _id: {
+                    lat: {
+                      $round: [
+                        { $arrayElemAt: ['$location.coordinates', 1] }, // latitude
+                        3,
+                      ],
+                    },
+                    lng: {
+                      $round: [
+                        { $arrayElemAt: ['$location.coordinates', 0] }, // longitude
+                        3,
+                      ],
+                    },
+                  },
+                  count: { $sum: 1 },
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  lat: '$_id.lat',
+                  lng: '$_id.lng',
+                  count: 1,
+                },
+              },
+            ]);
+        
+            return res.status(200).json({
+              success: true,
+              message: 'User address locations clustered successfully',
+              data: result,
+            });
+          } catch (error) {
+            console.error(error);
+            return res.status(500).json({
+              success: false,
+              message: 'Server error while fetching address clusters',
+            });
+          }
+    });
+
 exports.customerMapChartData = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth" } = req.query;
+    const { sort = "month" } = req.query;
     const startDate = moment().startOf(sort); // Today's date at 00:00:00
     const endDate = moment().endOf(sort);
     const pipeline = [
