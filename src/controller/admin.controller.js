@@ -1326,6 +1326,95 @@ exports.customerMapChartData = asyncHandler(async (req, res) => {
     );
 });
 
+
+exports.getOrderWithPopulatedFields = asyncHandler(async (req, res) => {
+  const pipeline = [
+    { $sort: { createdAt: -1 } },
+
+    // User
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+
+    // Hotel
+    {
+      $lookup: {
+        from: 'hotels',
+        localField: 'hotelId',
+        foreignField: '_id',
+        as: 'hotel',
+      },
+    },
+    { $unwind: { path: '$hotel', preserveNullAndEmptyArrays: true } },
+
+    // Address
+    {
+      $lookup: {
+        from: 'useraddresses',
+        localField: 'address',
+        foreignField: '_id',
+        as: 'userAddress',
+      },
+    },
+    { $unwind: { path: '$userAddress', preserveNullAndEmptyArrays: true } },
+
+    // Promo Code
+    {
+      $lookup: {
+        from: 'promocodes',
+        localField: 'promoCode',
+        foreignField: '_id',
+        as: 'promoCodeDetails',
+      },
+    },
+    { $unwind: { path: '$promoCodeDetails', preserveNullAndEmptyArrays: true } },
+
+    // Delivery Boy
+    {
+      $lookup: {
+        from: 'deliveryboys',
+        localField: 'assignedDeliveryBoy',
+        foreignField: '_id',
+        as: 'deliveryBoy',
+      },
+    },
+    { $unwind: { path: '$deliveryBoy', preserveNullAndEmptyArrays: true } },
+
+    // Products (dishes)
+    {
+      $lookup: {
+        from: 'hoteldishes',
+        localField: 'products.dishId',
+        foreignField: '_id',
+        as: 'productDetails',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'categoryId',
+              foreignField: '_id',
+              as: 'categoryDetails',
+            },
+          },
+          { $unwind: { path: '$categoryDetails', preserveNullAndEmptyArrays: true } },
+        ],
+      },
+    },
+  ];
+
+  const orders = await Order.aggregate(pipeline);
+  res.status(200).json({
+    success: true,
+    data: orders,
+  });
+});
+
 exports.orderChartData = asyncHandler(async (req, res) => {
     let { sort = "day", startDate, endDate } = req.query;
 

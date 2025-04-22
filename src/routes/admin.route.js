@@ -185,6 +185,7 @@ router.delete(
 
 /* Order Routes*/
 
+router.get('/get/populated-order',adminController.getOrderWithPopulatedFields);
 router.get("/order/get-all", orderController.getAllOrders);
 
 router.put(
