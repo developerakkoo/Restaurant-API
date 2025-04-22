@@ -1327,101 +1327,86 @@ exports.customerMapChartData = asyncHandler(async (req, res) => {
 });
 
 exports.orderChartData = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth", startDate, endDate } = req.query;
+    let { sort = "day", startDate, endDate } = req.query;
 
-    // Parse and validate dates
-    const start = startDate
-        ? moment(startDate, "DD-MM-YYYY")
-        : moment().startOf(sort);
-    const end = endDate ? moment(endDate, "DD-MM-YYYY") : moment().endOf(sort);
-
-    if (!start.isValid() || !end.isValid()) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    "Invalid date format. Please use DD-MM-YYYY.",
-                ),
-            );
+  // Default range if not provided
+  if (!startDate || !endDate) {
+    if (sort === "day") {
+      startDate = moment().startOf("month").format("YYYY-MM-DD");
+      endDate = moment().endOf("month").format("YYYY-MM-DD");
+    } else if (sort === "month") {
+      startDate = moment().startOf("year").format("YYYY-MM-DD");
+      endDate = moment().endOf("year").format("YYYY-MM-DD");
+    } else if (sort === "year") {
+      startDate = moment().subtract(5, "years").startOf("year").format("YYYY-MM-DD");
+      endDate = moment().endOf("year").format("YYYY-MM-DD");
     }
+  }
 
-    // Ensure endDate is not before startDate
-    if (end.isBefore(start)) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    "End date must be after start date.",
-                ),
-            );
+  const start = moment(startDate, "YYYY-MM-DD").startOf("day");
+  const end = moment(endDate, "YYYY-MM-DD").endOf("day");
+
+  if (!start.isValid() || !end.isValid()) {
+    return res.status(400).json(new ApiResponse(400, null, "Invalid date format. Use YYYY-MM-DD."));
+  }
+
+  if (end.isBefore(start)) {
+    return res.status(400).json(new ApiResponse(400, null, "End date must be after start date."));
+  }
+
+  // Dynamic group stage
+  const groupId = {
+    year: { $year: "$createdAt" }
+  };
+
+  if (sort === "month") {
+    groupId.month = { $month: "$createdAt" };
+  } else if (sort === "day") {
+    groupId.month = { $month: "$createdAt" };
+    groupId.day = { $dayOfMonth: "$createdAt" };
+  }
+
+  const pipeline = [
+    {
+      $match: {
+        createdAt: {
+          $gte: start.toDate(),
+          $lte: end.toDate()
+        }
+      }
+    },
+    {
+      $group: {
+        _id: groupId,
+        orderCount: { $sum: 1 }
+      }
+    },
+    {
+      $sort: {
+        "_id.year": 1,
+        ...(sort !== "year" && { "_id.month": 1 }),
+        ...(sort === "day" && { "_id.day": 1 })
+      }
     }
+  ];
 
-    // Define aggregation pipeline
-    const pipeline = [
-        {
-            $match: {
-                createdAt: {
-                    $gte: start.toDate(),
-                    $lte: end.toDate(),
-                },
-            },
-        },
-        {
-            $project: {
-                sortField: {
-                    [`$${sort}`]: "$createdAt",
-                },
-            },
-        },
-        {
-            $group: {
-                _id: "$sortField",
-                orderCount: {
-                    $sum: 1,
-                },
-            },
-        },
-        {
-            $project: {
-                _id: 0,
-                [sort]: "$_id",
-                orderCount: 1,
-            },
-        },
-    ];
+  const result = await Order.aggregate(pipeline);
 
-    // Execute aggregation pipeline
-    const result = await Order.aggregate(pipeline);
+  const labels = result.map((item) => {
+    if (sort === "day") {
+      return moment(`${item._id.year}-${item._id.month}-${item._id.day}`, "YYYY-M-D").format("DD MMM");
+    } else if (sort === "month") {
+      return moment(`${item._id.year}-${item._id.month}`, "YYYY-M").format("MMMM");
+    } else if (sort === "year") {
+      return `${item._id.year}`;
+    }
+  });
 
-    // Process results
-    const label = result.map((item) => {
-        if (item.dayOfMonth) {
-            return moment().date(item.dayOfMonth).format("dddd");
-        }
-        if (item.week) {
-            return item.week;
-        }
-        if (item.month) {
-            return moment().month(item.month).format("MMMM");
-        }
-        if (item.year) {
-            return item.year;
-        }
-    });
-    const data = result.map((item) => item.orderCount);
+  const data = result.map((item) => item.orderCount);
 
-    // Send response
-    res.status(200).json(
-        new ApiResponse(
-            200,
-            { label, data },
-            "Order chart data fetched successfully", // Replace with your actual message
-        ),
-    );
+  return res.status(200).json(
+    new ApiResponse(200, { labels, data }, "Order chart data fetched successfully")
+  );
 });
 
 exports.totalRevenueData = asyncHandler(async (req, res) => {
