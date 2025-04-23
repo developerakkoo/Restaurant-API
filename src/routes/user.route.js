@@ -29,7 +29,7 @@ router.put("/select-address", userController.selectAddresses);
 
 router.put("/update-address", userController.updateAddress);
 
-router.delete("/delete-address/:addressId", userController.deleteAddress);
+router.delete("/delete-address/:addressId/:userId", userController.deleteAddress);
 
 /* Promo code routes*/
 router.get("/promoCode/get/:promoCodeId", getPromoCode);
