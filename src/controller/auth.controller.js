@@ -28,9 +28,9 @@ const MSG91_FORGOTPASS_OTP_TEMPLATE_ID =
 
 exports.logoutUser = asyncHandler(async (req, res) => {
     // Update the user document to unset the refreshToken field
-    if (req.user.userType === 1) {
+    if (req.params.userType === 1) {
         await Admin.findByIdAndUpdate(
-            req.user.userId,
+            req.params.userId,
             {
                 $unset: {
                     refreshToken: 1, // this removes the field from the document
@@ -42,9 +42,9 @@ exports.logoutUser = asyncHandler(async (req, res) => {
         );
     }
 
-    if (req.user.userType === 2) {
+    if (req.params.userType === 2) {
         await User.findByIdAndUpdate(
-            req.user.userId,
+            req.params.userId,
             {
                 $unset: {
                     refreshToken: 1, // this removes the field from the document
@@ -55,9 +55,9 @@ exports.logoutUser = asyncHandler(async (req, res) => {
             },
         );
     }
-    if (req.user.userType === 3) {
+    if (req.params.userType === 3) {
         await DeliverBoy.findByIdAndUpdate(
-            req.user.userId,
+            req.params.userId,
             {
                 $unset: {
                     refreshToken: 1, // this removes the field from the document
@@ -69,9 +69,9 @@ exports.logoutUser = asyncHandler(async (req, res) => {
         );
     }
 
-    if (req.user.userType === 4) {
+    if (req.params.userType === 4) {
         await Partner.findByIdAndUpdate(
-            req.user.userId,
+            req.params.userId,
             {
                 $unset: {
                     refreshToken: 1, // this removes the field from the document

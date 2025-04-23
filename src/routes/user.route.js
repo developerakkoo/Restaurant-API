@@ -13,7 +13,7 @@ const {
     getAllPromoCodes,
 } = require("../controller/promoCode.controller");
 
-router.post("/logout", authController.logoutUser);
+router.post("/logout/:userId/:userType", authController.logoutUser);
 
 router.get("/get/user/:userId", userController.getUserById);
 
