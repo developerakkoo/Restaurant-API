@@ -245,6 +245,38 @@ exports.getAllAddressesByUserId = asyncHandler(async (req, res) => {
         );
 });
 
+
+exports.getCoordinatesForCalculations = asyncHandler(async (req,res) =>
+{
+    try {
+        const { userId, hotelId } = req.params;
+    
+        console.log(req.params);
+        
+        // Fetch hotel location
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+          return res.status(404).json({ message: "Hotel not found" });
+        }
+    
+        // Fetch user's selected address
+        const userAddress = await userAddress.findOne({ userId, selected: true });
+        if (!userAddress) {
+          return res.status(404).json({ message: "User address not found" });
+        }
+    
+        res.status(200).json({
+          success: true,
+          data: {
+            hotelCoordinates: hotel.location.coordinates, // [lat, lng]
+            userCoordinates: userAddress.location.coordinates, // [lat, lng]
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching coordinates:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+      }
+})
 exports.getAddressesById = asyncHandler(async (req, res) => {
     const { addressId } = req.params;
     const userAddresses = await userAddress.findById(addressId);
