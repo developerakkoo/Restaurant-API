@@ -288,7 +288,7 @@ exports.updateAddress = asyncHandler(async (req, res) => {
 
 exports.deleteAddress = asyncHandler(async (req, res) => {
     const { addressId } = req.params;
-    const savedAddress = await userAddress.findById(addressId);
+    const savedAddress = await userAddress.find({address: addressId});
     if (!savedAddress) {
         throw new ApiError(404, responseMessage.userMessage.addressNotFound);
     }
