@@ -287,12 +287,12 @@ exports.updateAddress = asyncHandler(async (req, res) => {
 });
 
 exports.deleteAddress = asyncHandler(async (req, res) => {
-    const { addressId } = req.params;
-    const savedAddress = await userAddress.find({address: addressId});
+    const { addressId,userId } = req.params;
+    const savedAddress = await userAddress.findById(addressId);
     if (!savedAddress) {
         throw new ApiError(404, responseMessage.userMessage.addressNotFound);
     }
-    if (savedAddress.userId.toString() != req.user.userId.toString()) {
+    if (savedAddress.userId.toString() !=  userId) {
         throw new ApiError(400, responseMessage.userMessage.addressNotDeleted);
     }
     await userAddress.deleteOne({ _id: addressId });
