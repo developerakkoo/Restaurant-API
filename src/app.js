@@ -47,6 +47,7 @@ app.use(function (req, res, next) {
     );
     res.setHeader("Access-Control-Allow-Headers", "*");
     res.setHeader("Access-Control-Allow-Credentials", true);
+    //res.setHeader("Cross-Origin-Resource-Policy", 'cross-origin');
     next();
 });
 
@@ -74,7 +75,12 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
 // Serve uploaded files as static content
-app.use("/upload", express.static(path.join(__dirname, "upload")));
+app.use("/upload", express.static(path.join(__dirname, "upload"), {
+    setHeaders: function(res,path,stat){
+        res.set("Access-Control-Allow-Origin","*")
+        res.set("Cross-Origin-Resource-Policy","cross-origin")
+    },
+}));
 /*Api rate limiter */
 // app.use(apiRateLimiter);
 
