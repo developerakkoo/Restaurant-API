@@ -260,8 +260,8 @@ exports.getCoordinatesForCalculations = asyncHandler(async (req,res) =>
         }
     
         // Fetch user's selected address
-        const userAddress = await userAddress.findOne({ userId, selected: true });
-        if (!userAddress) {
+        const user = await userAddress.findOne({ userId, selected: true });
+        if (!user) {
           return res.status(404).json({ message: "User address not found" });
         }
     
@@ -269,7 +269,7 @@ exports.getCoordinatesForCalculations = asyncHandler(async (req,res) =>
           success: true,
           data: {
             hotelCoordinates: hotel.location.coordinates, // [lat, lng]
-            userCoordinates: userAddress.location.coordinates, // [lat, lng]
+            userCoordinates: user.location.coordinates, // [lat, lng]
           },
         });
       } catch (error) {
