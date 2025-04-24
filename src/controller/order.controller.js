@@ -224,6 +224,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         priceDetails,
         paymentId,
         paymentMode,
+        hotelId,products
     } = req.body;
 
     // Generate UUIDv4
@@ -234,26 +235,26 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     const orderIdPrefix = uppercaseUuid.substring(0, 6);
 
     // Find the user's cart
-    const cart = await Cart.findOne({ userId });
-    if (!cart || cart.products.length === 0) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    responseMessage.userMessage.emptyCart,
-                ),
-            );
-    }
+    // const cart = await Cart.findOne({ userId });
+    // if (!cart || cart.products.length === 0) {
+    //     return res
+    //         .status(400)
+    //         .json(
+    //             new ApiResponse(
+    //                 400,
+    //                 null,
+    //                 responseMessage.userMessage.emptyCart,
+    //             ),
+    //         );
+    // }
 
-    let hotelId = cart.hotelId.toString();
+    // let hotelId = cart.hotelId.toString();
     const orderId = `${orderIdPrefix}-${hotelId.substring(0, 3).toUpperCase()}`;
     const order = await Order.create({
         orderId,
         userId,
-        hotelId: cart.hotelId,
-        products: cart.products,
+        hotelId: hotelId,
+        products: products,
         priceDetails,
         address: addressId,
         promoCode: priceDetails.promoCodeId,
@@ -269,17 +270,17 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             },
         ],
     });
-    const hotel = await hotelModel.findOne({ _id: cart.hotelId });
+    const hotel = await hotelModel.findOne({ _id: hotelId });
     sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
 
     // Clear the cart
-    await cart.updateOne({
-        $set: {
-            products: [],
-            totalPrice: 0,
-            hotelId: null,
-        },
-    });
+    // await cart.updateOne({
+    //     $set: {
+    //         products: [],
+    //         totalPrice: 0,
+    //         hotelId: null,
+    //     },
+    // });
 
     return res
         .status(200)
