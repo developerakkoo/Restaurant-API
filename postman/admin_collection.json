@@ -1,0 +1,394 @@
+{
+    "info": {
+        "name": "Restaurant API - Admin Routes",
+        "description": "Collection of admin routes for the Restaurant API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/logout",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "logout"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Banner Management",
+            "item": [
+                {
+                    "name": "Get Banners",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/banner/get",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "banner", "get"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Banner",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/admin/banner/add",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "banner", "add"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Category Management",
+            "item": [
+                {
+                    "name": "Get All Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/category/get/all",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "category", "get", "all"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Category",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Category Name\",\n    \"description\": \"Category Description\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/admin/category/add",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "category", "add"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Hotel Management",
+            "item": [
+                {
+                    "name": "Get All Hotels",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/get/all-hotels",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "get", "all-hotels"]
+                        }
+                    }
+                },
+                {
+                    "name": "Register Hotel",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Hotel Name\",\n    \"address\": \"Hotel Address\",\n    \"phone\": \"1234567890\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/admin/hotel/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "hotel", "register"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Delivery Boy Management",
+            "item": [
+                {
+                    "name": "Get All Delivery Boys",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/get/all-deliveryBoy",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "get", "all-deliveryBoy"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Delivery Boy",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/delete/delivery-boy/:id",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "delete", "delivery-boy", ":id"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Order Management",
+            "item": [
+                {
+                    "name": "Get All Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/order/get-all",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "order", "get-all"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Order",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "screenshot",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/admin/order/update",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "order", "update"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Rating Management",
+            "item": [
+                {
+                    "name": "Get Hotel Ratings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/ratings/hotel/:hotelId",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "ratings", "hotel", ":hotelId"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Delivery Boy Ratings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/ratings/delivery-boy/:deliveryBoyId",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "ratings", "delivery-boy", ":deliveryBoyId"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Reported Ratings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/ratings/reported",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "ratings", "reported"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Rating Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/ratings/statistics",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "ratings", "statistics"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Rating Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/admin/ratings/status/:ratingId",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "ratings", "status", ":ratingId"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Rating",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/admin/ratings/:ratingId",
+                            "host": ["{{base_url}}"],
+                            "path": ["admin", "ratings", ":ratingId"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "your_jwt_token_here",
+            "type": "string"
+        }
+    ]
+} 

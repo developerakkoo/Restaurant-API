@@ -9,12 +9,18 @@ module.exports = {
                     "http://localhost:8200",
                     "http://localhost:8080",
                     "http://localhost:8101",
+                    "https://your-domain.com",
+                    "wss://localhost:3000",
                     "0.0.0.0",
-                    "*",
+                    "*"
                 ],
                 methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
                 credentials: true,
             },
+            transports: ['websocket', 'polling'],
+            allowEIO3: true,
+            pingTimeout: 60000,
+            pingInterval: 25000,
         });
 
         return io;

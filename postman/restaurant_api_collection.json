@@ -1,0 +1,503 @@
+{
+    "info": {
+        "name": "Restaurant API - Complete Collection",
+        "description": "Complete collection of all Restaurant API routes",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "login"]
+                        }
+                    }
+                },
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"User Name\",\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\",\n    \"phone\": \"1234567890\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "register"]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/logout",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "logout"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "User Management",
+            "item": [
+                {
+                    "name": "Get User Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/profile",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "profile"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Name\",\n    \"phone\": \"9876543210\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/user/profile",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "profile"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Address",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"address\": \"123 Street\",\n    \"city\": \"City\",\n    \"state\": \"State\",\n    \"pincode\": \"123456\",\n    \"type\": \"home\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/user/address",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "address"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Cart Management",
+            "item": [
+                {
+                    "name": "Get Cart",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/cart",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "cart"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add to Cart",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"dishId\": \"dish_id\",\n    \"quantity\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/user/cart",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "cart"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Cart",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"dishId\": \"dish_id\",\n    \"quantity\": 3\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/user/cart",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "cart"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Order Management",
+            "item": [
+                {
+                    "name": "Place Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"addressId\": \"address_id\",\n    \"paymentMode\": \"UPI\",\n    \"description\": \"Special instructions\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/order/place-order",
+                            "host": ["{{base_url}}"],
+                            "path": ["order", "place-order"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Order History",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/order/history",
+                            "host": ["{{base_url}}"],
+                            "path": ["order", "history"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Order Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/order/:orderId",
+                            "host": ["{{base_url}}"],
+                            "path": ["order", ":orderId"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Rating & Reviews",
+            "item": [
+                {
+                    "name": "Submit Rating",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"orderId\": \"order_id\",\n    \"foodRating\": 5,\n    \"deliveryRating\": 4,\n    \"restaurantRating\": 5,\n    \"review\": \"Great food and service!\",\n    \"isAnonymous\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/ratings/submit",
+                            "host": ["{{base_url}}"],
+                            "path": ["ratings", "submit"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Hotel Ratings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/ratings/hotel/:hotelId",
+                            "host": ["{{base_url}}"],
+                            "path": ["ratings", "hotel", ":hotelId"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Routes",
+            "item": [
+                {
+                    "name": "Hotel Management",
+                    "item": [
+                        {
+                            "name": "Get All Hotels",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/get/all-hotels",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "get", "all-hotels"]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Add Hotel",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Hotel Name\",\n    \"address\": \"Hotel Address\",\n    \"phone\": \"1234567890\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/hotel/register",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "hotel", "register"]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Delivery Boy Management",
+                    "item": [
+                        {
+                            "name": "Get All Delivery Boys",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/get/all-deliveryBoy",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "get", "all-deliveryBoy"]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Add Delivery Boy",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Delivery Boy Name\",\n    \"phone\": \"1234567890\",\n    \"address\": \"Delivery Boy Address\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/delivery-boy/register",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "delivery-boy", "register"]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Order Management",
+                    "item": [
+                        {
+                            "name": "Get All Orders",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/order/get-all",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "order", "get-all"]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Update Order Status",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"delivered\",\n    \"deliveryBoyId\": \"delivery_boy_id\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/order/update",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "order", "update"]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Rating Management",
+                    "item": [
+                        {
+                            "name": "Get Reported Ratings",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/admin/ratings/reported",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "ratings", "reported"]
+                                }
+                            }
+                        },
+                        {
+                            "name": "Update Rating Status",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"status\": \"active\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/admin/ratings/status/:ratingId",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["admin", "ratings", "status", ":ratingId"]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "your_jwt_token_here",
+            "type": "string"
+        }
+    ]
+} 

@@ -31,32 +31,76 @@ connectDB()
             
             const io = require("./utils/socket").init(server);
             io.on("connection", async (socket) => {
-                console.log("user Connected");
-                // console.log(socket.Headers);
-                // console.log('====================================');
-                // let { userId } = await jwt.verify(
-                //     socket.handshake.auth.token,
-                //     process.env.JWT_ACCESS_SECRET_KEY,
-                // );
-                // console.log("User connected", userId);
+                console.log("User Connected");
+                
+                try {
+                    // Verify the JWT token from the socket handshake
+                    const { userId, userType } = await jwt.verify(
+                        socket.handshake.auth.token,
+                        process.env.JWT_ACCESS_SECRET_KEY
+                    );
 
-                // await User.findByIdAndUpdate(
-                //     userId,
-                //     { $set: { isOnline: true } },
-                //     { new: true },
-                // ); //update user status to online
-                // socket.broadcast.emit("onlineUsers", { user: userId });
-                socket.on("disconnect", async () => {
-                    // const userId = socket.handshake.auth.token;
-                    // await User.findByIdAndUpdate(userId, {
-                    //     $set: { isOnline: false },
-                    // }); //update user status to offline
-                    // socket.broadcast.emit("offlineUsers", { user: userId });
-                    console.log('User Disconnected');
-                });
+                    // Update user status to online based on userType
+                    let userModel;
+                    switch (userType) {
+                        case 1: // Admin
+                            userModel = require("./models/admin.model");
+                            break;
+                        case 2: // User
+                            userModel = require("./models/user.model");
+                            break;
+                        case 3: // Delivery Boy
+                            userModel = require("./models/deliveryBoy.model");
+                            break;
+                        case 4: // Partner
+                            userModel = require("./models/partner.model");
+                            break;
+                    }
+
+                    if (userModel) {
+                        await userModel.findByIdAndUpdate(
+                            userId,
+                            { $set: { isOnline: true } },
+                            { new: true }
+                        );
+                        
+                        // Broadcast online status to all connected clients
+                        socket.broadcast.emit("userStatusChanged", {
+                            userId,
+                            userType,
+                            isOnline: true
+                        });
+                    }
+
+                    // Handle disconnection
+                    socket.on("disconnect", async () => {
+                        try {
+                            if (userModel) {
+                                await userModel.findByIdAndUpdate(
+                                    userId,
+                                    { $set: { isOnline: false } }
+                                );
+                                
+                                // Broadcast offline status
+                                socket.broadcast.emit("userStatusChanged", {
+                                    userId,
+                                    userType,
+                                    isOnline: false
+                                });
+                            }
+                        } catch (error) {
+                            console.error("Error updating offline status:", error);
+                        }
+                        console.log("User Disconnected");
+                    });
+
+                } catch (error) {
+                    console.error("Socket authentication error:", error);
+                    socket.disconnect();
+                }
             });
         });
     })
     .catch((err) => {
-        console.log("MONGODB contention error", err);
+        console.log("MONGODB connection error", err);
     });
