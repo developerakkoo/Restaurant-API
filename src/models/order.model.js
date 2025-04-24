@@ -1,11 +1,44 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+// Function to generate a unique OTP with retry logic
+const generateUniqueOTP = async (maxRetries = 3) => {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            // Check if OTP already exists
+            const existingOrder = await mongoose.model("Order").findOne({ otp });
+            if (!existingOrder) {
+                return otp;
+            }
+            retries++;
+        } catch (error) {
+            console.error("Error generating OTP:", error);
+            retries++;
+        }
+    }
+    throw new Error("Failed to generate unique OTP after maximum retries");
+};
+
 const orderSchema = new Schema(
     {
         orderId: {
             type: String,
             required: true,
+        },
+        otp: {
+            type: String,
+            required: true,
+            unique: true,
+            default: async function() {
+                try {
+                    return await generateUniqueOTP();
+                } catch (error) {
+                    console.error("Error in OTP generation:", error);
+                    throw error;
+                }
+            }
         },
         userId: {
             type: Schema.Types.ObjectId,

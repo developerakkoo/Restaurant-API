@@ -16,6 +16,7 @@ const {
     adminPrivilegesRequired,
 } = require("../middleware/userAccess.middleware");
 const { getMyChatList } = require("../controller/message.controller");
+const ratingController = require("../controller/rating.controller");
 
 router.post("/logout", authController.logoutUser);
 
@@ -330,5 +331,13 @@ router.post(
     `/send/order/pickup/request`,
     orderController.sendOrderToAllDeliveryBoy,
 );
+
+/* Rating Management Routes */
+router.get("/ratings/hotel/:hotelId", adminPrivilegesRequired, ratingController.getHotelRatings);
+router.get("/ratings/delivery-boy/:deliveryBoyId", adminPrivilegesRequired, ratingController.getDeliveryBoyRatings);
+router.get("/ratings/reported", adminPrivilegesRequired, ratingController.getReportedRatings);
+router.get("/ratings/statistics", adminPrivilegesRequired, ratingController.getRatingStatistics);
+router.put("/ratings/status/:ratingId", adminPrivilegesRequired, ratingController.updateRatingStatus);
+router.delete("/ratings/:ratingId", adminPrivilegesRequired, ratingController.deleteRating);
 
 module.exports = { adminRoutes: router };

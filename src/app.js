@@ -104,6 +104,7 @@ const { notificationRoutes } = require("./routes/notification.route");
 const { ApiResponse } = require("./utils/ApiResponseHandler");
 const { paymentRoutes } = require("./routes/payment.route");
 const { setupPassport } = require("./passport");
+const { ratingRoutes } = require("./routes/rating.route");
 
 /*Api Logger */
 app.use(morganMiddleware);
@@ -130,6 +131,7 @@ app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
 app.use(`${BASE_URL}/message`, messageRoutes);
 app.use(`${BASE_URL}/notification`, notificationRoutes);
+app.use(`${BASE_URL}/ratings`, ratingRoutes);
 
 app.use(errorHandler);
 
