@@ -21,8 +21,7 @@ router.post("/logout", authController.logoutUser);
 
 router.get("/banner/get", bannerController.getBanner);
 
-router.get("/get/all-hotels", adminController.getAllHotel);
-router.get("/get/all-hotels-user", adminController.getHotelsForUser);
+
 
 router.get("/category/get/all", adminController.getAllCategory);
 
@@ -49,6 +48,7 @@ router.get("/get/dashboard-data", adminController.getDashboardStats);
 
 router.get("/get/customerMapChartData", adminController.customerMapChartData);
 
+router.get("/get/user-location-cluster", adminController.getUserLocationClusters);
 router.get("/get/orderChartData", adminController.orderChartData);
 
 router.get("/get/revenueChartData", adminController.totalRevenueData);
@@ -60,7 +60,8 @@ router.get("/get/all-partners", adminController.getAllPartner);
 router.get("/get/partner/byId/:partnerId", PartnerController.getPartnerById);
 
 /* Hotel */
-
+router.get("/get/all-hotels", adminController.getAllHotel);
+router.get("/get/all-hotels-user", adminController.getHotelsForUser);
 router.post("/hotel/register", PartnerController.addHotel);
 
 router.post(
@@ -184,6 +185,7 @@ router.delete(
 
 /* Order Routes*/
 
+router.get('/get/populated-order',adminController.getOrderWithPopulatedFields);
 router.get("/order/get-all", orderController.getAllOrders);
 
 router.put(

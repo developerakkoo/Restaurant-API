@@ -245,6 +245,38 @@ exports.getAllAddressesByUserId = asyncHandler(async (req, res) => {
         );
 });
 
+
+exports.getCoordinatesForCalculations = asyncHandler(async (req,res) =>
+{
+    try {
+        const { userId, hotelId } = req.params;
+    
+        console.log(req.params);
+        
+        // Fetch hotel location
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+          return res.status(404).json({ message: "Hotel not found" });
+        }
+    
+        // Fetch user's selected address
+        const user = await userAddress.findOne({ userId, selected: true });
+        if (!user) {
+          return res.status(404).json({ message: "User address not found" });
+        }
+    
+        res.status(200).json({
+          success: true,
+          data: {
+            hotelCoordinates: hotel.location.coordinates, // [lat, lng]
+            userCoordinates: user.location.coordinates, // [lat, lng]
+          },
+        });
+      } catch (error) {
+        console.error("Error fetching coordinates:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+      }
+})
 exports.getAddressesById = asyncHandler(async (req, res) => {
     const { addressId } = req.params;
     const userAddresses = await userAddress.findById(addressId);
@@ -287,12 +319,12 @@ exports.updateAddress = asyncHandler(async (req, res) => {
 });
 
 exports.deleteAddress = asyncHandler(async (req, res) => {
-    const { addressId } = req.params;
+    const { addressId,userId } = req.params;
     const savedAddress = await userAddress.findById(addressId);
     if (!savedAddress) {
         throw new ApiError(404, responseMessage.userMessage.addressNotFound);
     }
-    if (savedAddress.userId.toString() != req.user.userId.toString()) {
+    if (savedAddress.userId.toString() !=  userId) {
         throw new ApiError(400, responseMessage.userMessage.addressNotDeleted);
     }
     await userAddress.deleteOne({ _id: addressId });

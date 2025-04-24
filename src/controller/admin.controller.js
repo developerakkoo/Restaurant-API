@@ -15,6 +15,7 @@ const Category = require("../models/category.model");
 const PinCodeModel = require("../models/pincode.model");
 const Partner = require("../models/partner.model");
 const User = require("../models/user.model");
+const UserAddress = require("../models/userAddress.model");
 const { responseMessage, cookieOptions } = require("../constant");
 const { deleteFile } = require("../utils/deleteFile");
 const { getIO } = require("../utils/socket");
@@ -660,23 +661,23 @@ exports.updateHotelStatus = asyncHandler(async (req, res) => {
 
 exports.getHotelByCategory = asyncHandler(async (req, res) => {
     const { categoryId } = req.params;
-    let hotels = await Hotel.find({category: categoryId});
-    if(hotels){
+    let hotels = await Hotel.find({ category: categoryId });
+    if (hotels) {
         console.log(hotels);
         res.status(200)
-        .json({
-            message:"Hotels Found",
-            data:hotels
-        })
-        
+            .json({
+                message: "Hotels Found",
+                data: hotels
+            })
+
     }
-    else{
+    else {
         res.status(200)
-        .json({
-            message:"No Hotels Found",
-            data:hotels,
-            length: hotels.length
-        })
+            .json({
+                message: "No Hotels Found",
+                data: hotels,
+                length: hotels.length
+            })
     }
 });
 exports.getAllHotel = asyncHandler(async (req, res) => {
@@ -830,7 +831,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                         hotelId: "$_id",
                         hotelName: "$hotelName",
                         image_url: "$image_url",
-                        isOnline:"$isOnline",
+                        isOnline: "$isOnline",
                         address: "$address",
                         hotelOwner: "$hotelOwner",
                         categories: "$categories",
@@ -868,7 +869,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
                 $project: {
                     _id: 0,
                     hotelId: "$_id.hotelId",
-                    isOnline:"$_id.isOnline",
+                    isOnline: "$_id.isOnline",
                     hotelName: "$_id.hotelName",
                     image_url: "$_id.image_url",
                     address: "$_id.address",
@@ -930,7 +931,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
 
 exports.getHotelsForUser = asyncHandler(async (req, res) => {
     const hotels = await Hotel.find({}).populate('category');
-    if(hotels){
+    if (hotels) {
         return res.status(200).json(
             new ApiResponse(
                 200,
@@ -938,7 +939,7 @@ exports.getHotelsForUser = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.hotelFetchedSuccessfully,
             ),
         );
-    }else{
+    } else {
         return res.status(404).json(
             new ApiResponse(
                 404,
@@ -1016,11 +1017,11 @@ exports.uploadCategoryImage = asyncHandler(async (req, res) => {
 });
 
 
-exports.getAllCategoryNormal = async(req,res) =>{
+exports.getAllCategoryNormal = async (req, res) => {
     try {
-        
+
     } catch (error) {
-        
+
     }
 }
 
@@ -1038,10 +1039,10 @@ exports.getAllCategory = asyncHandler(async (req, res) => {
         };
     }
     const dataCount = await Category.countDocuments();
-   const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
+    const category = await Category.find(dbQuery).skip(skip).limit(pageSize);
     // const category = await Category.find({});
     console.log(category);
-    
+
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
@@ -1137,43 +1138,44 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
 );
 
 exports.getDashboardStats = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth", startDate, endDate } = req.query;
+    const { sort, startDate, endDate } = req.query;
 
-    // Parse dates from query parameters using DD-MM-YYYY format or default to current date range
-    const start = startDate
-        ? moment(startDate, "DD-MM-YYYY")
-        : moment().startOf(sort);
-    const end = endDate ? moment(endDate, "DD-MM-YYYY") : moment().endOf(sort);
+    let DateFilterPipeline = [];
 
-    // Validate the parsed dates
-    if (!start.isValid() || !end.isValid()) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    "Invalid date format. Please use DD-MM-YYYY.",
-                ),
-            );
-    }
+    // Check if sort, startDate, or endDate are provided
+    if (sort || startDate || endDate) {
+        const start = startDate
+            ? moment(startDate, "DD-MM-YYYY")
+            : moment().startOf(sort || "day");
+        const end = endDate
+            ? moment(endDate, "DD-MM-YYYY")
+            : moment().endOf(sort || "day");
 
-    const DateFilterPipeline = [
-        {
-            $match: {
-                createdAt: {
-                    $gte: start.toDate(),
-                    $lte: end.toDate(),
+        // Validate the parsed dates
+        if (!start.isValid() || !end.isValid()) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        "Invalid date format. Please use DD-MM-YYYY.",
+                    ),
+                );
+        }
+
+        // Add date filter to the pipeline
+        DateFilterPipeline = [
+            {
+                $match: {
+                    createdAt: {
+                        $gte: start.toDate(),
+                        $lte: end.toDate(),
+                    },
                 },
             },
-        },
-        {
-            $group: {
-                _id: null,
-                data: { $sum: 1 }, // Count the number of documents
-            },
-        },
-    ];
+        ];
+    }
 
     const [
         totalOrders,
@@ -1185,25 +1187,25 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
         totalDeliveryBoys,
         totalRevenue,
     ] = await Promise.all([
-        Order.countDocuments(DateFilterPipeline[0].$match),
+        Order.countDocuments(DateFilterPipeline[0]?.$match || {}),
         Order.countDocuments({
-            ...DateFilterPipeline[0].$match,
+            ...(DateFilterPipeline[0]?.$match || {}),
             orderStatus: 3,
         }),
         Order.countDocuments({
-            ...DateFilterPipeline[0].$match,
+            ...(DateFilterPipeline[0]?.$match || {}),
             orderStatus: 5, // Corrected to match 'cancel order' status
         }),
-        User.countDocuments(DateFilterPipeline[0].$match),
+        User.countDocuments(DateFilterPipeline[0]?.$match || {}),
         User.countDocuments({
-            ...DateFilterPipeline[0].$match,
+            ...(DateFilterPipeline[0]?.$match || {}),
             isOnline: true,
         }),
-        Partner.countDocuments(DateFilterPipeline[0].$match),
-        DeliveryBoy.countDocuments(DateFilterPipeline[0].$match),
+        Partner.countDocuments(DateFilterPipeline[0]?.$match || {}),
+        DeliveryBoy.countDocuments(DateFilterPipeline[0]?.$match || {}),
         Order.aggregate([
             {
-                $match: DateFilterPipeline[0].$match,
+                $match: DateFilterPipeline[0]?.$match || {},
             },
             {
                 $group: {
@@ -1237,8 +1239,56 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     );
 });
 
+exports.getUserLocationClusters = asyncHandler(
+    async (req, res) => {
+
+        try {
+            const result = await UserAddress.aggregate([
+              {
+                $group: {
+                  _id: {
+                    lat: {
+                      $round: [
+                        { $arrayElemAt: ['$location.coordinates', 1] }, // latitude
+                        3,
+                      ],
+                    },
+                    lng: {
+                      $round: [
+                        { $arrayElemAt: ['$location.coordinates', 0] }, // longitude
+                        3,
+                      ],
+                    },
+                  },
+                  count: { $sum: 1 },
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  lat: '$_id.lat',
+                  lng: '$_id.lng',
+                  count: 1,
+                },
+              },
+            ]);
+        
+            return res.status(200).json({
+              success: true,
+              message: 'User address locations clustered successfully',
+              data: result,
+            });
+          } catch (error) {
+            console.error(error);
+            return res.status(500).json({
+              success: false,
+              message: 'Server error while fetching address clusters',
+            });
+          }
+    });
+
 exports.customerMapChartData = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth" } = req.query;
+    const { sort = "month" } = req.query;
     const startDate = moment().startOf(sort); // Today's date at 00:00:00
     const endDate = moment().endOf(sort);
     const pipeline = [
@@ -1276,102 +1326,176 @@ exports.customerMapChartData = asyncHandler(async (req, res) => {
     );
 });
 
+
+exports.getOrderWithPopulatedFields = asyncHandler(async (req, res) => {
+  const pipeline = [
+    { $sort: { createdAt: -1 } },
+
+    // User
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+
+    // Hotel
+    {
+      $lookup: {
+        from: 'hotels',
+        localField: 'hotelId',
+        foreignField: '_id',
+        as: 'hotel',
+      },
+    },
+    { $unwind: { path: '$hotel', preserveNullAndEmptyArrays: true } },
+
+    // Address
+    {
+      $lookup: {
+        from: 'useraddresses',
+        localField: 'address',
+        foreignField: '_id',
+        as: 'userAddress',
+      },
+    },
+    { $unwind: { path: '$userAddress', preserveNullAndEmptyArrays: true } },
+
+    // Promo Code
+    {
+      $lookup: {
+        from: 'promocodes',
+        localField: 'promoCode',
+        foreignField: '_id',
+        as: 'promoCodeDetails',
+      },
+    },
+    { $unwind: { path: '$promoCodeDetails', preserveNullAndEmptyArrays: true } },
+
+    // Delivery Boy
+    {
+      $lookup: {
+        from: 'deliveryboys',
+        localField: 'assignedDeliveryBoy',
+        foreignField: '_id',
+        as: 'deliveryBoy',
+      },
+    },
+    { $unwind: { path: '$deliveryBoy', preserveNullAndEmptyArrays: true } },
+
+    // Products (dishes)
+    {
+      $lookup: {
+        from: 'hoteldishes',
+        localField: 'products.dishId',
+        foreignField: '_id',
+        as: 'productDetails',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'categoryId',
+              foreignField: '_id',
+              as: 'categoryDetails',
+            },
+          },
+          { $unwind: { path: '$categoryDetails', preserveNullAndEmptyArrays: true } },
+        ],
+      },
+    },
+  ];
+
+  const orders = await Order.aggregate(pipeline);
+  res.status(200).json({
+    success: true,
+    data: orders,
+  });
+});
+
 exports.orderChartData = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth", startDate, endDate } = req.query;
+    let { sort = "day", startDate, endDate } = req.query;
 
-    // Parse and validate dates
-    const start = startDate
-        ? moment(startDate, "DD-MM-YYYY")
-        : moment().startOf(sort);
-    const end = endDate ? moment(endDate, "DD-MM-YYYY") : moment().endOf(sort);
-
-    if (!start.isValid() || !end.isValid()) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    "Invalid date format. Please use DD-MM-YYYY.",
-                ),
-            );
+  // Default range if not provided
+  if (!startDate || !endDate) {
+    if (sort === "day") {
+      startDate = moment().startOf("month").format("YYYY-MM-DD");
+      endDate = moment().endOf("month").format("YYYY-MM-DD");
+    } else if (sort === "month") {
+      startDate = moment().startOf("year").format("YYYY-MM-DD");
+      endDate = moment().endOf("year").format("YYYY-MM-DD");
+    } else if (sort === "year") {
+      startDate = moment().subtract(5, "years").startOf("year").format("YYYY-MM-DD");
+      endDate = moment().endOf("year").format("YYYY-MM-DD");
     }
+  }
 
-    // Ensure endDate is not before startDate
-    if (end.isBefore(start)) {
-        return res
-            .status(400)
-            .json(
-                new ApiResponse(
-                    400,
-                    null,
-                    "End date must be after start date.",
-                ),
-            );
+  const start = moment(startDate, "YYYY-MM-DD").startOf("day");
+  const end = moment(endDate, "YYYY-MM-DD").endOf("day");
+
+  if (!start.isValid() || !end.isValid()) {
+    return res.status(400).json(new ApiResponse(400, null, "Invalid date format. Use YYYY-MM-DD."));
+  }
+
+  if (end.isBefore(start)) {
+    return res.status(400).json(new ApiResponse(400, null, "End date must be after start date."));
+  }
+
+  // Dynamic group stage
+  const groupId = {
+    year: { $year: "$createdAt" }
+  };
+
+  if (sort === "month") {
+    groupId.month = { $month: "$createdAt" };
+  } else if (sort === "day") {
+    groupId.month = { $month: "$createdAt" };
+    groupId.day = { $dayOfMonth: "$createdAt" };
+  }
+
+  const pipeline = [
+    {
+      $match: {
+        createdAt: {
+          $gte: start.toDate(),
+          $lte: end.toDate()
+        }
+      }
+    },
+    {
+      $group: {
+        _id: groupId,
+        orderCount: { $sum: 1 }
+      }
+    },
+    {
+      $sort: {
+        "_id.year": 1,
+        ...(sort !== "year" && { "_id.month": 1 }),
+        ...(sort === "day" && { "_id.day": 1 })
+      }
     }
+  ];
 
-    // Define aggregation pipeline
-    const pipeline = [
-        {
-            $match: {
-                createdAt: {
-                    $gte: start.toDate(),
-                    $lte: end.toDate(),
-                },
-            },
-        },
-        {
-            $project: {
-                sortField: {
-                    [`$${sort}`]: "$createdAt",
-                },
-            },
-        },
-        {
-            $group: {
-                _id: "$sortField",
-                orderCount: {
-                    $sum: 1,
-                },
-            },
-        },
-        {
-            $project: {
-                _id: 0,
-                [sort]: "$_id",
-                orderCount: 1,
-            },
-        },
-    ];
+  const result = await Order.aggregate(pipeline);
 
-    // Execute aggregation pipeline
-    const result = await Order.aggregate(pipeline);
+  const labels = result.map((item) => {
+    if (sort === "day") {
+      return moment(`${item._id.year}-${item._id.month}-${item._id.day}`, "YYYY-M-D").format("DD MMM");
+    } else if (sort === "month") {
+      return moment(`${item._id.year}-${item._id.month}`, "YYYY-M").format("MMMM");
+    } else if (sort === "year") {
+      return `${item._id.year}`;
+    }
+  });
 
-    // Process results
-    const label = result.map((item) => {
-        if (item.dayOfMonth) {
-            return moment().date(item.dayOfMonth).format("dddd");
-        }
-        if (item.week) {
-            return item.week;
-        }
-        if (item.month) {
-            return moment().month(item.month).format("MMMM");
-        }
-        if (item.year) {
-            return item.year;
-        }
-    });
-    const data = result.map((item) => item.orderCount);
+  const data = result.map((item) => item.orderCount);
 
-    // Send response
-    res.status(200).json(
-        new ApiResponse(
-            200,
-            { label, data },
-            "Order chart data fetched successfully", // Replace with your actual message
-        ),
-    );
+  return res.status(200).json(
+    new ApiResponse(200, { labels, data }, "Order chart data fetched successfully")
+  );
 });
 
 exports.totalRevenueData = asyncHandler(async (req, res) => {

@@ -38,5 +38,7 @@ const userAddressSchema = new Schema(
     },
     { timestamps: true },
 );
+userAddressSchema.index({ location: '2dsphere' });
+
 
 module.exports = mongoose.model("UserAddress", userAddressSchema);

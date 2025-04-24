@@ -13,10 +13,12 @@ const {
     getAllPromoCodes,
 } = require("../controller/promoCode.controller");
 
-router.post("/logout", authController.logoutUser);
+router.post("/logout/:userId/:userType", authController.logoutUser);
 
 router.get("/get/user/:userId", userController.getUserById);
 
+
+router.get('/coordinates/:userId/:hotelId',userController.getCoordinatesForCalculations);
 router.put("/update/:userId", userController.updateUserProfile);
 
 router.post("/add-address", userController.addAddresses);
@@ -29,7 +31,7 @@ router.put("/select-address", userController.selectAddresses);
 
 router.put("/update-address", userController.updateAddress);
 
-router.delete("/delete-address/:addressId", userController.deleteAddress);
+router.delete("/delete-address/:addressId/:userId", userController.deleteAddress);
 
 /* Promo code routes*/
 router.get("/promoCode/get/:promoCodeId", getPromoCode);
