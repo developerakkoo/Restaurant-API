@@ -313,7 +313,7 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
         };
     }
 
-    const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
+    const order = await Order.findByIdAndUpdate(orderId, update, { new: false });
 
     if (!order) {
         return res
@@ -392,11 +392,11 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     const savedOrder = await Order.findById(orderId);
     let url;
 
-    if (paymentMode === "UPI") {
-        if (!req.file) throw new ApiError(400, "Payment photo is required");
-        const { filename } = req.file;
-        url = `https://${req.hostname}/upload/${filename}`;
-    }
+    // if (paymentMode === "UPI") {
+    //     if (!req.file) throw new ApiError(400, "Payment photo is required");
+    //     const { filename } = req.file;
+    //     url = `https://${req.hostname}/upload/${filename}`;
+    // }
 
     // Check if the order is already assigned and trying to assign again
     if (

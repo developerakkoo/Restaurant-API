@@ -636,3 +636,42 @@ exports.deleteDriverData = asyncHandler(async (req, res) => {
             ),
         );
 });
+
+exports.updateDeliveredOrders = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const deliveryBoyId = req.params.userid;
+
+    // Find the delivery boy
+    const deliveryBoy = await DeliverBoy.findById(deliveryBoyId);
+
+    if (!deliveryBoy) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Delivery Boy Not Found"));
+    }
+
+    // Check if order exists
+    const order = await Order.findById(orderId);
+    if (!order) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Order Not Found"));
+    }
+
+    // Add order to delivered orders array if not already present
+    if (!deliveryBoy.deliveredOrders.includes(orderId)) {
+        deliveryBoy.deliveredOrders.push(orderId);
+        await deliveryBoy.save();
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                deliveryBoy,
+                "Delivered Orders Updated Successfully"
+            ),
+        );
+});
+
