@@ -13,6 +13,7 @@ exports.submitRating = asyncHandler(async (req, res) => {
         foodRating,
         deliveryRating,
         restaurantRating,
+        dishIds,
         review,
         images,
         isAnonymous,
@@ -34,6 +35,7 @@ exports.submitRating = asyncHandler(async (req, res) => {
     const rating = await Rating.create({
         orderId,
         userId,
+        dishIds,
         hotelId: order.hotelId,
         deliveryBoyId: order.assignedDeliveryBoy,
         foodRating,
