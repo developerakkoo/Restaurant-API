@@ -9,6 +9,7 @@ const { sendNotification } = require("./notification.controller");
 exports.submitRating = asyncHandler(async (req, res) => {
     const {
         orderId,
+        userId,
         foodRating,
         deliveryRating,
         restaurantRating,
@@ -16,8 +17,6 @@ exports.submitRating = asyncHandler(async (req, res) => {
         images,
         isAnonymous,
     } = req.body;
-
-    const userId = req.user._id;
 
     // Check if order exists and belongs to the user
     const order = await Order.findOne({ _id: orderId, userId });
