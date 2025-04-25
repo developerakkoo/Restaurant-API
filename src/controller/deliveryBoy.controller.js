@@ -664,6 +664,12 @@ exports.updateDeliveredOrders = asyncHandler(async (req, res) => {
         await deliveryBoy.save();
     }
 
+    let io = getIO();
+    io.emit("order- delivered", {
+        order,
+        deliveryBoyId,
+    });
+
     return res
         .status(200)
         .json(
