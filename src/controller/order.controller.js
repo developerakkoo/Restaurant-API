@@ -33,6 +33,14 @@ let instance = new razorpay({
     key_secret: process.env.KEY_SECRET,
 });
 
+/**
+ * Generates a random 6-digit OTP
+ * @returns {string} A 6-digit OTP
+ */
+const generateOTP = () => {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     const data = await dataModel.find();
     if (!data || data.length === 0) {
@@ -224,7 +232,8 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         priceDetails,
         paymentId,
         paymentMode,
-        hotelId,products
+        hotelId,
+        products
     } = req.body;
 
     // Generate UUIDv4
@@ -234,24 +243,13 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     // Extract first 6 characters
     const orderIdPrefix = uppercaseUuid.substring(0, 6);
 
-    // Find the user's cart
-    // const cart = await Cart.findOne({ userId });
-    // if (!cart || cart.products.length === 0) {
-    //     return res
-    //         .status(400)
-    //         .json(
-    //             new ApiResponse(
-    //                 400,
-    //                 null,
-    //                 responseMessage.userMessage.emptyCart,
-    //             ),
-    //         );
-    // }
+    // Generate OTP for order verification
+    const otp = generateOTP();
 
-    // let hotelId = cart.hotelId.toString();
     const orderId = `${orderIdPrefix}-${hotelId.substring(0, 3).toUpperCase()}`;
     const order = await Order.create({
         orderId,
+        otp, // Add OTP to order
         userId,
         hotelId: hotelId,
         products: products,
@@ -270,17 +268,9 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             },
         ],
     });
+
     const hotel = await hotelModel.findOne({ _id: hotelId });
     sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
-
-    // Clear the cart
-    // await cart.updateOne({
-    //     $set: {
-    //         products: [],
-    //         totalPrice: 0,
-    //         hotelId: null,
-    //     },
-    // });
 
     return res
         .status(200)
