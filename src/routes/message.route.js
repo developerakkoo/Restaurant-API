@@ -1,34 +1,16 @@
-const router = require("express").Router();
-const messageController = require("../controller/message.controller");
-const { upload } = require("../middleware/fileHandler.middleware");
+// routes/chat.routes.js
+const express = require('express');
+const chatController = require('../controller/message.controller');
+const { asyncHandler } = require('../utils/asyncHandler');
 
-router.get("/get/chat-list/:userId",messageController.getMyChatList)
+const router = express.Router();
 
-router.post(
-    "/send",
-    messageController.checkChatExist,
-    messageController.sendMessage,
-);
 
-router.post(
-    "/multimedia-send",
-    upload.single("image"),
-    messageController.checkChatExist,
-    messageController.sendMultimediaMessage,
-);
 
-router.get("/get/:messageId", messageController.getMessageById);
+// Chat routes
+router.get('/history/:userId', asyncHandler(chatController.getChatHistory));
+router.get('/active', asyncHandler(chatController.getActiveChats));
+router.put('/read/:userId', asyncHandler(chatController.markAsRead));
+router.post('/send', asyncHandler(chatController.sendMessage));
 
-router.get(
-    "/get/all/:userId",
-    messageController.getAllMessageByUserId,
-);
-
-router.put("/markAsRead/:messageId", messageController.markAsRead);
-
-router.delete(
-    "/delete/:messageId",
-    messageController.deleteMessageById,
-);
-
-module.exports = { messageRoutes: router };
+module.exports = router;

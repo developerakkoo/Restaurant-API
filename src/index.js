@@ -9,6 +9,7 @@ const {
     createDeliveryBoy,
 } = require("./seeders/index");
 const PORT = process.env.PORT || 8000;
+const chatController = require("./controller/message.controller");
 const { generateSeed } = require("./constant");
 let server;
 connectDB()
@@ -34,60 +35,62 @@ connectDB()
                 console.log("User Connected");
                 
                 try {
-                    // Verify the JWT token from the socket handshake
-                    const { userId, userType } = await jwt.verify(
-                        socket.handshake.auth.token,
-                        process.env.JWT_ACCESS_SECRET_KEY
-                    );
+                    // // Verify the JWT token from the socket handshake
+                    // const { userId, userType } = await jwt.verify(
+                    //     socket.handshake.auth.token,
+                    //     process.env.JWT_ACCESS_SECRET_KEY
+                    // );
 
-                    // Update user status to online based on userType
-                    let userModel;
-                    switch (userType) {
-                        case 1: // Admin
-                            userModel = require("./models/admin.model");
-                            break;
-                        case 2: // User
-                            userModel = require("./models/user.model");
-                            break;
-                        case 3: // Delivery Boy
-                            userModel = require("./models/deliveryBoy.model");
-                            break;
-                        case 4: // Partner
-                            userModel = require("./models/partner.model");
-                            break;
-                    }
+                    // Setup chat handlers
+                    chatController.setupChatHandlers(socket);
+                    // // Update user status to online based on userType
+                    // let userModel;
+                    // switch (userType) {
+                    //     case 1: // Admin
+                    //         userModel = require("./models/admin.model");
+                    //         break;
+                    //     case 2: // User
+                    //         userModel = require("./models/user.model");
+                    //         break;
+                    //     case 3: // Delivery Boy
+                    //         userModel = require("./models/deliveryBoy.model");
+                    //         break;
+                    //     case 4: // Partner
+                    //         userModel = require("./models/partner.model");
+                    //         break;
+                    // }
 
-                    if (userModel) {
-                        await userModel.findByIdAndUpdate(
-                            userId,
-                            { $set: { isOnline: true } },
-                            { new: true }
-                        );
+                    // if (userModel) {
+                    //     await userModel.findByIdAndUpdate(
+                    //         userId,
+                    //         { $set: { isOnline: true } },
+                    //         { new: true }
+                    //     );
                         
-                        // Broadcast online status to all connected clients
-                        socket.broadcast.emit("userStatusChanged", {
-                            userId,
-                            userType,
-                            isOnline: true
-                        });
-                    }
+                    //     // Broadcast online status to all connected clients
+                    //     socket.broadcast.emit("userStatusChanged", {
+                    //         userId,
+                    //         userType,
+                    //         isOnline: true
+                    //     });
+                    // }
 
                     // Handle disconnection
                     socket.on("disconnect", async () => {
                         try {
-                            if (userModel) {
-                                await userModel.findByIdAndUpdate(
-                                    userId,
-                                    { $set: { isOnline: false } }
-                                );
+                            // if (userModel) {
+                            //     await userModel.findByIdAndUpdate(
+                            //         userId,
+                            //         { $set: { isOnline: false } }
+                            //     );
                                 
-                                // Broadcast offline status
-                                socket.broadcast.emit("userStatusChanged", {
-                                    userId,
-                                    userType,
-                                    isOnline: false
-                                });
-                            }
+                            //     // Broadcast offline status
+                            //     socket.broadcast.emit("userStatusChanged", {
+                            //         userId,
+                            //         userType,
+                            //         isOnline: false
+                            //     });
+                            // }
                         } catch (error) {
                             console.error("Error updating offline status:", error);
                         }

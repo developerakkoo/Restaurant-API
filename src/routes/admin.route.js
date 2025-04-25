@@ -62,6 +62,8 @@ router.get("/get/partner/byId/:partnerId", PartnerController.getPartnerById);
 
 /* Hotel */
 router.get("/get/all-hotels", adminController.getAllHotel);
+
+// Route to get All hotels On User app
 router.get("/get/all-hotels-user", adminController.getHotelsForUser);
 router.post("/hotel/register", PartnerController.addHotel);
 
@@ -284,30 +286,30 @@ router.put(
 );
 
 /*chat routes*/
-router.get("/get/chat-list/:userId", getMyChatList);
+// router.get("/get/chat-list/:userId", getMyChatList);
 
-router.post(
-    "/send",
-    messageController.checkChatExist,
-    messageController.sendMessage,
-);
+// router.post(
+//     "/send",
+//     messageController.checkChatExist,
+//     messageController.sendMessage,
+// );
 
-router.post(
-    "/multimedia-send",
-    upload.single("image"),
-    messageController.checkChatExist,
-    messageController.sendMultimediaMessage,
-);
+// router.post(
+//     "/multimedia-send",
+//     upload.single("image"),
+//     messageController.checkChatExist,
+//     messageController.sendMultimediaMessage,
+// );
 
-router.get("/get/:messageId", messageController.getMessageById);
+// router.get("/get/:messageId", messageController.getMessageById);
 
-router.get("/get/chat/:chatId", messageController.getMessageByChatId);
+// router.get("/get/chat/:chatId", messageController.getMessageByChatId);
 
-router.get("/get/all/:userId", messageController.getAllMessageByUserId);
+// router.get("/get/all/:userId", messageController.getAllMessageByUserId);
 
-router.put("/markAsRead/:messageId", messageController.markAsRead);
+// router.put("/markAsRead/:messageId", messageController.markAsRead);
 
-router.delete("/delete/:messageId", messageController.deleteMessageById);
+// router.delete("/delete/:messageId", messageController.deleteMessageById);
 
 /* Pin code routes */
 router.post("/add/pinCode", adminController.addPinCode);

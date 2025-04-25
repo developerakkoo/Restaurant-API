@@ -1,42 +1,13 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+// models/chatMessage.js
+const mongoose = require('mongoose');
 
-const messageSchema = new Schema(
-    {
-        chatId: {
-            type: Schema.Types.ObjectId,
-            ref: "Chat",
-            required: true,
-        },
-        orderId: {
-            type: Schema.Types.ObjectId,
-        },
-        senderId: {
-            type: Schema.Types.ObjectId,
-            required: true,
-        },
-        receiverId: {
-            type: Schema.Types.ObjectId,
-            required: true,
-        },
-        message: {
-            type: String,
-            default: "",
-        },
-        isImage: {
-            type: Boolean,
-            default: false,
-        },
-        image_url: {
-            type: String,
-        },
-        local_filePath: { type: String },
-        read: {
-            type: Boolean,
-            default: false,
-        },
-    },
-    { timestamps: true },
-);
+const chatMessageSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  adminId: { type: String },
+  text: { type: String, required: true },
+  isUser: { type: Boolean, default: true },
+  time: { type: Date, default: Date.now },
+  isRead: { type: Boolean, default: false }
+});
 
-module.exports = mongoose.model("Message", messageSchema);
+module.exports = mongoose.model('ChatMessage', chatMessageSchema);

@@ -1,214 +1,181 @@
-const Message = require("../models/message.model");
-const { asyncHandler } = require("../utils/asyncHandler");
+// controllers/chat.controller.js
+const ChatMessage = require("../models/message.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { ApiError } = require("../utils/ApiErrorHandler");
-const { responseMessage } = require("../constant");
-const { deleteFile } = require("../utils/deleteFile");
-const chatModel = require("../models/chat.model");
-const { sendNotification } = require("./notification.controller");
+const { asyncHandler } = require("../utils/asyncHandler");
+const { getIO } = require("../utils/socket");
+const User = require("../models/user.model");
+const Admin = require("../models/admin.model");
 
-exports.getMyChatList = asyncHandler(async (req, res) => {
+/**
+ * @function getChatHistory
+ * @async
+ * @param {import("express").Request} req - Express request object
+ * @param {import("express").Response} res - Express response object
+ * @throws {ApiError} Throws an ApiError if chat history cannot be retrieved
+ * @description Retrieves chat history for a specific user
+ */
+exports.getChatHistory = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const { username } = req.query;
+    const messages = await ChatMessage.find({ userId })
+        .sort({ time: 1 })
+        .limit(50);
 
-    // Find chat lists involving the user
-    let chatListQuery = chatModel.find({ members: userId });
-
-    // If a username is provided, filter by username
-    if (username) {
-        chatListQuery = chatListQuery.populate({
-            path: "members",
-            match: { name: { $regex: username, $options: "i" } }, // case-insensitive search
-            select: "name profile_image isOnline",
-        });
-    } else {
-        chatListQuery = chatListQuery.populate({
-            path: "members",
-            select: "name profile_image isOnline",
-        });
-    }
-
-    const chatList = await chatListQuery.exec();
-    const dataPromises = chatList.map(async (chat) => {
-        const lastMessage = await Message.findOne({ chatId: chat._id })
-            .sort({ createdAt: -1 })
-            .exec();
-
-        return {
-            _id: chat._id,
-            members: chat.members,
-            lastMessage: lastMessage || {}, // Ensure lastMessage is not null
-        };
-    });
-
-    const data = await Promise.all(dataPromises);
-
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(200, data, responseMessage.GET_CHAT_LIST_SUCCESS),
-        );
-});
-
-exports.sendMessage = asyncHandler(async (req, res) => {
-    console.log("hree>>>>>>>>>>>>>> text");
-    const { chatId, senderId, receiverId, message, orderId } = req.body;
-    const newMessage = await Message.create({
-        senderId,
-        orderId,
-        receiverId,
-        message,
-        chatId,
-    });
-    sendNotification(receiverId, "New Message", newMessage);
-    return res
-        .status(201)
-        .json(new ApiResponse(201, newMessage, responseMessage.Message_SENT));
-});
-
-exports.sendMultimediaMessage = asyncHandler(async (req, res) => {
-    // console.log("hree>>>>>>>>>>>>>> media");
-    const { chatId, senderId, receiverId, orderId } = req.body;
-    const { filename } = req.file;
-    const local_filePath = `upload/${filename}`;
-    let image_url = `https://${req.hostname}/upload/${filename}`;
-    if (process.env.NODE_ENV !== "production") {
-        image_url = `https://${req.hostname}:8000/upload/${filename}`;
-    }
-
-    const data = {
-        chatId,
-        orderId,
-        senderId,
-        receiverId,
-        isImage: true,
-        image_url,
-        local_filePath,
-    };
-    // console.log(data);
-    const newMessage = await Message.create(data);
-    sendNotification(receiverId, "New Message", newMessage);
-
-    return res
-        .status(201)
-        .json(new ApiResponse(201, newMessage, responseMessage.Message_SENT));
-});
-
-exports.checkChatExist = asyncHandler(async (req, res, next) => {
-    const { senderId, receiverId } = req.body;
-
-    // Check if a chat exists with both senderId and receiverId in any order and exactly two members
-    let chat = await chatModel.findOne({
-        $and: [
-            { members: { $all: [senderId, receiverId] } },
-            { members: { $size: 2 } },
-        ],
-    });
-
-    
-    if (!chat) {
-        chat = await chatModel.create({ members: [senderId, receiverId] });
-        // return this.sendMessage(req, res);
-    }
-
-    // If no chat exists, create a new one
-    req.body.chatId = chat._id;
-    next();
-});
-
-exports.getMessageById = asyncHandler(async (req, res) => {
-    const { MessageId } = req.params;
-    const Message = await Message.findById(MessageId);
-    if (!Message) {
-        throw new ApiError(404, responseMessage.Message_NOT_FOUND);
-    }
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                Message,
-                responseMessage.Message_FETCHED_SUCCESSFULLY,
-            ),
-        );
-});
-
-exports.getAllMessageByUserId = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-    const { orderId } = req.query;
-    // Build the query to find messages based on orderId and userId
-    const query = {
-        $or: [{ senderId: userId }, { receiverId: userId }],
-    };
-    if (orderId) {
-        query.orderId = orderId; // Add orderId filter if provided
-    }
-    const Messages = await Message.find(query).sort({ createdAt: 1 });
-    if (!Messages) {
-        throw new ApiError(404, responseMessage.Message_NOT_FOUND);
-    }
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                Messages,
-                responseMessage.Message_FETCHED_SUCCESSFULLY,
-            ),
-        );
-});
-
-exports.markAsRead = asyncHandler(async (req, res) => {
-    const { MessageId } = req.params;
-    const Message = await Message.findById(MessageId);
-    if (!Message) {
-        throw new ApiError(404, responseMessage.Message_NOT_FOUND);
-    }
-    const updatedMessage = await Message.findByIdAndUpdate(
-        MessageId,
-        { $set: { read: true } },
-        { new: true },
-    );
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                updatedMessage,
-                responseMessage.Message_MARKED_AS_READ_SUCCESSFULLY,
-            ),
-        );
-});
-
-exports.deleteMessageById = asyncHandler(async (req, res) => {
-    const { MessageId } = req.params;
-    const Message = await Message.findById(MessageId);
-    if (!Message) {
-        throw new ApiError(404, responseMessage.Message_NOT_FOUND);
-    }
-    if (Message.isImage === true) {
-        deleteFile(Message.local_filePath);
-    }
-    await Message.deleteOne();
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                null,
-                responseMessage.Message_DELETED_SUCCESSFULLY,
-            ),
-        );
-});
-
-exports.getMessageByChatId = asyncHandler(async (req, res) => {
-    const { chatId } = req.params;
-
-    const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
     if (!messages) {
-        throw new ApiError(404, "MESSAGE_NOT_FOUND");
+        throw new ApiError(404, "No chat history found");
     }
-    return res
-        .status(200)
-        .json(new ApiResponse(200, messages, "MESSAGE_FETCHED_SUCCESSFULLY"));
+
+    return res.status(200).json(
+        new ApiResponse(200, messages, "Chat history retrieved successfully")
+    );
 });
+
+/**
+ * @function getActiveChats
+ * @async
+ * @param {import("express").Request} req - Express request object
+ * @param {import("express").Response} res - Express response object
+ * @throws {ApiError} Throws an ApiError if active chats cannot be retrieved
+ * @description Retrieves all active chats for admin
+ */
+exports.getActiveChats = asyncHandler(async (req, res) => {
+    const activeChats = await ChatMessage.aggregate([
+        { $match: { isRead: false } },
+        { $group: { _id: '$userId', lastMessage: { $last: '$$ROOT' } } }
+    ]);
+
+    if (!activeChats) {
+        throw new ApiError(404, "No active chats found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, activeChats, "Active chats retrieved successfully")
+    );
+});
+
+/**
+ * @function markAsRead
+ * @async
+ * @param {import("express").Request} req - Express request object
+ * @param {import("express").Response} res - Express response object
+ * @throws {ApiError} Throws an ApiError if messages cannot be marked as read
+ * @description Marks all messages for a user as read
+ */
+exports.markAsRead = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const result = await ChatMessage.updateMany(
+        { userId, isRead: false },
+        { $set: { isRead: true } }
+    );
+
+    if (!result) {
+        throw new ApiError(404, "No messages found to mark as read");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, result, "Messages marked as read successfully")
+    );
+});
+
+/**
+ * @function sendMessage
+ * @async
+ * @param {import("express").Request} req - Express request object
+ * @param {import("express").Response} res - Express response object
+ * @throws {ApiError} Throws an ApiError if message cannot be sent
+ * @description Sends a new message in the chat
+ */
+exports.sendMessage = asyncHandler(async (req, res) => {
+    const { userId, text, isUser, adminId } = req.body;
+
+    const message = await ChatMessage.create({
+        userId,
+        adminId,
+        text,
+        isUser,
+        time: new Date(),
+        isRead: !isUser
+    });
+
+    if (!message) {
+        throw new ApiError(500, "Failed to send message");
+    }
+
+    // Emit message through socket
+    const io = getIO();
+    if (isUser) {
+        io.to('admins').emit('newMessage', message);
+    }
+    io.to(`user_${userId}`).emit('adminMessage', message);
+
+    return res.status(201).json(
+        new ApiResponse(201, message, "Message sent successfully")
+    );
+});
+
+/**
+ * @function setupChatHandlers
+ * @description Sets up chat-specific socket event handlers
+ */
+exports.setupChatHandlers = (socket) => {
+    // User joins support chat
+    socket.on('joinSupport', async (data) => {
+        const { userId } = data;
+        socket.join(`user_${userId}`);
+        
+        // Get chat history
+        const messages = await ChatMessage.find({ userId })
+            .sort({ time: 1 })
+            .limit(50);
+        
+        socket.emit('chatHistory', messages);
+    });
+
+    // Admin joins user chat
+    socket.on('adminJoinChat', async (data) => {
+        const { userId, adminId } = data;
+        socket.join(`user_${userId}`);
+        
+        // Mark messages as read
+        await ChatMessage.updateMany(
+            { userId, isRead: false },
+            { $set: { isRead: true, adminId } }
+        );
+    });
+
+    // Handle new messages
+    socket.on('userMessage', async (data) => {
+        const { text, userId } = data;
+        
+        // Save message to database
+        const message = await ChatMessage.create({
+            userId,
+            text,
+            isUser: true,
+            time: new Date()
+        });
+
+        // Emit to admin
+        socket.to('admins').emit('newMessage', message);
+        // Emit to specific user
+        socket.to(`user_${userId}`).emit('adminMessage', message);
+    });
+
+    // Handle admin messages
+    socket.on('adminMessage', async (data) => {
+        const { text, userId, adminId } = data;
+        
+        // Save message to database
+        const message = await ChatMessage.create({
+            userId,
+            adminId,
+            text,
+            isUser: false,
+            time: new Date(),
+            isRead: true
+        });
+
+        // Emit to user
+        socket.to(`user_${userId}`).emit('adminMessage', message);
+    });
+};
