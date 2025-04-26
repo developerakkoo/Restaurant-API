@@ -727,134 +727,23 @@ exports.getDishById = asyncHandler(async (req, res) => {
                     starData: { $push: "$dishStars" },
                 },
             },
-            {
-                $lookup: {
-                    from: "ratings",
-                    localField: "_id",
-                    foreignField: "dishId",
-                    as: "ratings",
-                    pipeline: [
-                        {
-                            $match: { 
-                                status: "active",
-                                dishId: { $exists: true }
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: "users",
-                                localField: "userId",
-                                foreignField: "_id",
-                                as: "user",
-                                pipeline: [
-                                    {
-                                        $project: {
-                                            name: 1,
-                                            profile_image: 1
-                                        }
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            $unwind: "$user"
-                        }
-                    ]
-                }
-            },
-            {
-                $addFields: {
-                    ratingStats: {
-                        $reduce: {
-                            input: "$ratings",
-                            initialValue: {
-                                totalRatings: 0,
-                                avgRating: 0,
-                                ratingDistribution: {
-                                    "1": 0, "2": 0, "3": 0, "4": 0, "5": 0
-                                }
-                            },
-                            in: {
-                                totalRatings: { $add: ["$$value.totalRatings", 1] },
-                                avgRating: {
-                                    $divide: [
-                                        { $add: ["$$value.avgRating", "$$this.foodRating"] },
-                                        { $add: ["$$value.totalRatings", 1] }
-                                    ]
-                                },
-                                ratingDistribution: {
-                                    "1": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 1] },
-                                            { $add: ["$$value.ratingDistribution.1", 1] },
-                                            "$$value.ratingDistribution.1"
-                                        ]
-                                    },
-                                    "2": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 2] },
-                                            { $add: ["$$value.ratingDistribution.2", 1] },
-                                            "$$value.ratingDistribution.2"
-                                        ]
-                                    },
-                                    "3": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 3] },
-                                            { $add: ["$$value.ratingDistribution.3", 1] },
-                                            "$$value.ratingDistribution.3"
-                                        ]
-                                    },
-                                    "4": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 4] },
-                                            { $add: ["$$value.ratingDistribution.4", 1] },
-                                            "$$value.ratingDistribution.4"
-                                        ]
-                                    },
-                                    "5": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 5] },
-                                            { $add: ["$$value.ratingDistribution.5", 1] },
-                                            "$$value.ratingDistribution.5"
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+            // Project the final result with star counts
             {
                 $project: {
-                    _id: 1,
-                    name: 1,
-                    image_url: 1,
-                    dishType: 1,
-                    userPrice: 1,
-                    spicLevel: 1,
-                    stock: 1,
-                    status: 1,
-                    categoryDetails: 1,
-                    hotelDetails: 1,
-                    ratings: {
-                        $map: {
-                            input: { $slice: ["$ratings", 3] },
-                            as: "rating",
-                            in: {
-                                rating: "$$rating.foodRating",
-                                review: "$$rating.review",
-                                user: "$$rating.user",
-                                createdAt: "$$rating.createdAt"
-                            }
-                        }
+                    _id: "$_id",
+                    dishDetails: 1,
+                    // Include the array of star data
+                    ratingData: "$starData",
+                    starCounts: {
+                        totalCount: "$totalCount",
+                        "1starCount": "$1starCount",
+                        "2starCount": "$2starCount",
+                        "3starCount": "$3starCount",
+                        "4starCount": "$4starCount",
+                        "5starCount": "$5starCount",
                     },
-                    ratingStats: {
-                        totalRatings: "$ratingStats.totalRatings",
-                        avgRating: { $round: ["$ratingStats.avgRating", 1] },
-                        ratingDistribution: "$ratingStats.ratingDistribution"
-                    }
-                }
-            }
+                },
+            },
         );
     }
     const dishAggregate = await Dish.aggregate(pipeline);
@@ -1016,7 +905,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                                 image_url: 1,
                                 address: 1,
                                 userId: 1,
-                                isOnline: 1
+                                isOnline:1
                             },
                         },
                         {
@@ -1055,133 +944,128 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
             },
             {
                 $lookup: {
-                    from: "ratings",
-                    localField: "_id",
+                    as: "dishStars",
+                    from: "dishstars",
                     foreignField: "dishId",
-                    as: "ratings",
+                    localField: "_id",
                     pipeline: [
                         {
-                            $match: { 
-                                status: "active",
-                                dishId: { $exists: true }
-                            }
-                        },
-                        {
                             $lookup: {
-                                from: "users",
-                                localField: "userId",
-                                foreignField: "_id",
                                 as: "user",
+                                from: "users",
+                                foreignField: "_id",
+                                localField: "userId",
                                 pipeline: [
                                     {
                                         $project: {
                                             name: 1,
-                                            profile_image: 1
-                                        }
-                                    }
-                                ]
-                            }
+                                            profile_image: {
+                                                $ifNull: ["$profile_image", ""],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
                         },
                         {
-                            $unwind: "$user"
-                        }
-                    ]
-                }
+                            $unwind: {
+                                path: "$user",
+                                preserveNullAndEmptyArrays: true,
+                            },
+                        },
+                    ],
+                },
             },
             {
-                $addFields: {
-                    ratingStats: {
-                        $reduce: {
-                            input: "$ratings",
-                            initialValue: {
-                                totalRatings: 0,
-                                avgRating: 0,
-                                ratingDistribution: {
-                                    "1": 0, "2": 0, "3": 0, "4": 0, "5": 0
-                                }
-                            },
-                            in: {
-                                totalRatings: { $add: ["$$value.totalRatings", 1] },
-                                avgRating: {
-                                    $divide: [
-                                        { $add: ["$$value.avgRating", "$$this.foodRating"] },
-                                        { $add: ["$$value.totalRatings", 1] }
-                                    ]
-                                },
-                                ratingDistribution: {
-                                    "1": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 1] },
-                                            { $add: ["$$value.ratingDistribution.1", 1] },
-                                            "$$value.ratingDistribution.1"
-                                        ]
-                                    },
-                                    "2": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 2] },
-                                            { $add: ["$$value.ratingDistribution.2", 1] },
-                                            "$$value.ratingDistribution.2"
-                                        ]
-                                    },
-                                    "3": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 3] },
-                                            { $add: ["$$value.ratingDistribution.3", 1] },
-                                            "$$value.ratingDistribution.3"
-                                        ]
-                                    },
-                                    "4": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 4] },
-                                            { $add: ["$$value.ratingDistribution.4", 1] },
-                                            "$$value.ratingDistribution.4"
-                                        ]
-                                    },
-                                    "5": {
-                                        $cond: [
-                                            { $eq: ["$$this.foodRating", 5] },
-                                            { $add: ["$$value.ratingDistribution.5", 1] },
-                                            "$$value.ratingDistribution.5"
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                $unwind: {
+                    path: "$dishStars",
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        _id: "$_id",
+                        dishName: "$name",
+                        image_url: "$image_url",
+                        dishType: "$dishType",
+                        partnerPrice: "$partnerPrice",
+                        userPrice: "$userPrice",
+                        spicLevel: "$spicLevel",
+                        stock: "$stock",
+                        status: "$status",
+                        hotelDetails: "$hotelDetails",
+                        categoryDetails: "$categoryDetails",
+                    },
+                    totalCount: { $sum: 1 },
+                    "1starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$dishStars.star", 1] }, 1, 0],
+                        },
+                    },
+                    "2starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$dishStars.star", 2] }, 1, 0],
+                        },
+                    },
+                    "3starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$dishStars.star", 3] }, 1, 0],
+                        },
+                    },
+                    "4starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$dishStars.star", 4] }, 1, 0],
+                        },
+                    },
+                    "5starCount": {
+                        $sum: {
+                            $cond: [{ $eq: ["$dishStars.star", 5] }, 1, 0],
+                        },
+                    },
+                    starData: { $push: "$dishStars" },
+                },
             },
             {
                 $project: {
-                    _id: 1,
-                    name: 1,
-                    image_url: 1,
-                    dishType: 1,
-                    userPrice: 1,
-                    spicLevel: 1,
-                    stock: 1,
-                    status: 1,
-                    categoryDetails: 1,
-                    hotelDetails: 1,
-                    ratings: {
+                    _id: "$_id",
+                    dishDetails: 1,
+                    ratingData: {
                         $map: {
-                            input: { $slice: ["$ratings", 3] },
-                            as: "rating",
+                            input: "$starData",
+                            as: "star",
                             in: {
-                                rating: "$$rating.foodRating",
-                                review: "$$rating.review",
-                                user: "$$rating.user",
-                                createdAt: "$$rating.createdAt"
-                            }
-                        }
+                                _id: "$$star._id",
+                                dishId: "$$star.dishId",
+                                userId: "$$star.userId",
+                                description: "$$star.description",
+                                star: "$$star.star",
+                                createdAt: "$$star.createdAt",
+                                updatedAt: "$$star.updatedAt",
+                                user: {
+                                    _id: "$$star.user._id",
+                                    name: "$$star.user.name",
+                                    profile_image: {
+                                        $ifNull: [
+                                            "$$star.user.profile_image",
+                                            "",
+                                        ],
+                                    },
+                                },
+                            },
+                        },
                     },
-                    ratingStats: {
-                        totalRatings: "$ratingStats.totalRatings",
-                        avgRating: { $round: ["$ratingStats.avgRating", 1] },
-                        ratingDistribution: "$ratingStats.ratingDistribution"
-                    }
-                }
-            }
-        );
+                    starCounts: {
+                        totalCount: "$totalCount",
+                        "1starCount": "$1starCount",
+                        "2starCount": "$2starCount",
+                        "3starCount": "$3starCount",
+                        "4starCount": "$4starCount",
+                        "5starCount": "$5starCount",
+                    },
+                },
+            },
+        )
     }
 
     const dishAggregate = await Dish.aggregate(pipeline);
