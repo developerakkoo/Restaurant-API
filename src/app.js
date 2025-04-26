@@ -108,6 +108,7 @@ const { ratingRoutes } = require("./routes/rating.route");
 const statusRoutes = require("./routes/status.route");
 const chatRoute = require("./routes/message.route");
 const { hotelOfferRoutes } = require("./routes/hotelOffer.route");
+const deliverySettingsRoutes = require("./routes/delivery-settings.route");
 /*Api Logger */
 app.use(morganMiddleware);
 
@@ -135,7 +136,7 @@ app.use(`${BASE_URL}/notification`, notificationRoutes);
 app.use(`${BASE_URL}/ratings`, ratingRoutes);
 app.use(`${BASE_URL}/status`, statusRoutes);
 app.use(`${BASE_URL}/offer`, hotelOfferRoutes);
-
+app.use(`${BASE_URL}/delivery-settings`, deliverySettingsRoutes);
 // Setup chat routes
 app.use('/api/chat',chatRoute );
 app.use(errorHandler);
