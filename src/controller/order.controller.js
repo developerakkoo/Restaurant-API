@@ -50,7 +50,7 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
         return res.status(404).json(new ApiResponse(404, null, "Order not found"));
     }
 
-    order.orderStatus = 5; // Cancelled status
+    order.orderStatus = 7; // Cancelled status
     await order.save();
 
     return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
