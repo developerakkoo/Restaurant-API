@@ -41,8 +41,22 @@ const generateOTP = () => {
     return Math.floor(1000 + Math.random() * 9000).toString();
 };
 
+
+
+exports.cancelOrder = asyncHandler(async (req, res) => {
+    const { orderId } = req.body;
+    const order = await Order.findById(orderId);
+    if (!order) {
+        return res.status(404).json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    order.orderStatus = 5; // Cancelled status
+    await order.save();
+
+    return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
+});
+
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
-    const data = await dataModel.find();
     if (!data || data.length === 0) {
         return res
             .status(500)
