@@ -18,6 +18,11 @@ const ratingSchema = new Schema(
             ref: "HotelDish",
             required: true,
         }],
+        hotelId: {
+            type: Schema.Types.ObjectId,
+            ref: "Hotel",
+            required: true,
+        },
         deliveryBoyId: {
             type: Schema.Types.ObjectId,
             ref: "deliveryBoy",
@@ -63,6 +68,7 @@ const ratingSchema = new Schema(
 // Indexes for faster queries
 ratingSchema.index({ orderId: 1 });
 ratingSchema.index({ dishId: 1 });
+ratingSchema.index({ hotelId: 1 });
 ratingSchema.index({ deliveryBoyId: 1 });
 ratingSchema.index({ userId: 1 });
 

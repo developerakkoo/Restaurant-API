@@ -10,6 +10,7 @@ const Category = require("../models/category.model");
 const { deleteFile } = require("../utils/deleteFile");
 const { Types } = require("mongoose");
 const moment = require("moment");
+const Rating = require("../models/rating.model");
 
 exports.getHotelById = asyncHandler(async (req, res) => {
     const { hotelId } = req.params;
@@ -341,7 +342,7 @@ exports.uploadDishImage = asyncHandler(async (req, res) => {
     const local_filePath = `upload/${filename}`;
     let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        document_url = `https://${req.hostname}:8000/upload/${filename}`;
+        document_url = `https://${req.hostname}/upload/${filename}`;
     }
     const savedDish = await Dish.findById(dishId);
     if (savedDish) {
@@ -1062,7 +1063,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                     },
                 },
             },
-        );
+        )
     }
 
     const dishAggregate = await Dish.aggregate(pipeline);
@@ -1673,5 +1674,68 @@ exports.getHotelsNearby = asyncHandler(async (req, res) => {
             },
             "Hotels fetched successfully",
         ),
+    );
+});
+
+/**
+ * Get all hotels with their ratings
+ * @route GET /api/hotel/with-ratings
+ * @access Public
+ */
+exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+
+    // Get all hotels with pagination
+    const hotels = await Hotel.find({ }) // Only get approved hotels
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
+            .populate("userId", "category");
+
+    // Get ratings for each hotel
+    const hotelsWithRatings = await Promise.all(
+        hotels.map(async (hotel) => {
+            // Get average ratings for the hotel
+            const ratings = await Rating.aggregate([
+                { $match: { hotelId: hotel._id, status: "active" } },
+                {
+                    $group: {
+                        _id: null,
+                        avgFoodRating: { $avg: "$foodRating" },
+                        avgRestaurantRating: { $avg: "$restaurantRating" },
+                        totalRatings: { $sum: 1 },
+                    },
+                },
+            ]);
+
+            // Get the latest reviews
+            const latestReviews = await Rating.find({ hotelId: hotel._id, status: "active" })
+                .sort({ createdAt: -1 })
+                .limit(3)
+                .populate("userId", "name profile_image");
+
+            return {
+                ...hotel.toObject(),
+                ratings: ratings[0] || {
+                    avgFoodRating: 0,
+                    avgRestaurantRating: 0,
+                    totalRatings: 0,
+                },
+                latestReviews,
+            };
+        })
+    );
+
+    // Get total count of hotels
+    const totalHotels = await Hotel.countDocuments({ hotelStatus: 1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            hotels: hotelsWithRatings,
+            pagination: {
+                total: totalHotels,
+                page: parseInt(page),
+                pages: Math.ceil(totalHotels / limit),
+            },
+        }, "Hotels retrieved successfully with ratings")
     );
 });

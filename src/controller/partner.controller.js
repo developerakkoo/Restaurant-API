@@ -218,7 +218,7 @@ exports.uploadHotelImage = asyncHandler(async (req, res) => {
     const local_filePath = `upload/${filename}`;
     let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        document_url = `https://${req.hostname}:8000/upload/${filename}`;
+        document_url = `https://${req.hostname}/upload/${filename}`;
     }
     const savedHotel = await Hotel.findById(hotelId);
     if (savedHotel) {
