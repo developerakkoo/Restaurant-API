@@ -905,6 +905,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                                 image_url: 1,
                                 address: 1,
                                 userId: 1,
+                                isOnline:1
                             },
                         },
                         {
@@ -1749,6 +1750,45 @@ exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
                 endDate: activeOffers[0].endDate
             } : null;
 
+            // Get dish ratings
+            const dishRatings = await Rating.aggregate([
+                { $match: { hotelId: hotel._id, status: "active" } },
+                {
+                    $lookup: {
+                        from: "hoteldishes",
+                        localField: "dishId",
+                        foreignField: "_id",
+                        as: "dishDetails"
+                    }
+                },
+                { $unwind: "$dishDetails" },
+                {
+                    $group: {
+                        _id: "$dishId",
+                        dishName: { $first: "$dishDetails.name" },
+                        avgRating: { $avg: "$foodRating" },
+                        totalRatings: { $sum: 1 },
+                        reviews: {
+                            $push: {
+                                rating: "$foodRating",
+                                review: "$review",
+                                userId: "$userId",
+                                createdAt: "$createdAt"
+                            }
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        dishName: 1,
+                        avgRating: { $round: ["$avgRating", 1] },
+                        totalRatings: 1,
+                        reviews: { $slice: ["$reviews", 3] } // Get only 3 latest reviews
+                    }
+                }
+            ]);
+
             return {
                 ...hotel.toObject(),
                 coordinates: hotel.location?.coordinates ? {
@@ -1762,7 +1802,8 @@ exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
                 },
                 latestReviews,
                 avgPrice: avgPrice[0]?.avgPrice ? Math.round(avgPrice[0].avgPrice) : 0,
-                bestOffer // Include the best offer in the response
+                bestOffer,
+                dishRatings // Include dish ratings in the response
             };
         })
     );
