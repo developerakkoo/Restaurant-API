@@ -11,6 +11,7 @@ const { deleteFile } = require("../utils/deleteFile");
 const { Types } = require("mongoose");
 const moment = require("moment");
 const Rating = require("../models/rating.model");
+const HotelOffer = require("../models/hotelOffer.model");
 
 exports.getHotelById = asyncHandler(async (req, res) => {
     const { hotelId } = req.params;
@@ -1684,6 +1685,7 @@ exports.getHotelsNearby = asyncHandler(async (req, res) => {
  */
 exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
+    const currentDate = new Date();
 
     // Get all hotels with pagination
     const hotels = await Hotel.find({ }) // Only get approved hotels
@@ -1718,6 +1720,35 @@ exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
                 .limit(3)
                 .populate("userId", "name profile_image");
 
+            // Calculate average price of dishes
+            const avgPrice = await Dish.aggregate([
+                { $match: { hotelId: hotel._id, status: 2 } }, // Only approved dishes
+                {
+                    $group: {
+                        _id: null,
+                        avgPrice: { $avg: "$userPrice" }
+                    }
+                }
+            ]);
+
+            // Get active offers for the hotel
+            const activeOffers = await HotelOffer.find({
+                hotelId: hotel._id,
+                isActive: true,
+                startDate: { $lte: currentDate },
+                endDate: { $gte: currentDate },
+            }).sort({ offerValue: -1 }); // Sort by offer value to get the best offer first
+
+            // Get the best offer
+            const bestOffer = activeOffers.length > 0 ? {
+                type: activeOffers[0].offerType,
+                value: activeOffers[0].offerValue,
+                minOrderAmount: activeOffers[0].minOrderAmount,
+                maxDiscount: activeOffers[0].maxDiscount,
+                description: activeOffers[0].description,
+                endDate: activeOffers[0].endDate
+            } : null;
+
             return {
                 ...hotel.toObject(),
                 coordinates: hotel.location?.coordinates ? {
@@ -1730,6 +1761,8 @@ exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
                     totalRatings: 0,
                 },
                 latestReviews,
+                avgPrice: avgPrice[0]?.avgPrice ? Math.round(avgPrice[0].avgPrice) : 0,
+                bestOffer // Include the best offer in the response
             };
         })
     );
