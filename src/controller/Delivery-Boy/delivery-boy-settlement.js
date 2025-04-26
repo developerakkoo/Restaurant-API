@@ -44,7 +44,18 @@ exports.getSettlements = async (req, res) => {
       if (endDate) filter.settlementDate.$lte = new Date(endDate);
     }
 
-    const settlements = await DriverSettlement.find(filter).sort({ settlementDate: -1 });
+    const settlements = await DriverSettlement.find(filter)
+      .populate({
+        path: 'ordersSettled',
+       
+      })
+      .populate({
+        path: 'driverId',
+        select: 'firstName lastName phoneNumber profile_image',
+        model: 'deliveryBoy'
+      })
+      .sort({ settlementDate: -1 });
+
     res.json(settlements);
   } catch (error) {
     console.error(error);
