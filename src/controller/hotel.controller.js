@@ -1689,7 +1689,12 @@ exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
     const hotels = await Hotel.find({ }) // Only get approved hotels
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
-            .populate("userId", "category");
+        .populate({
+            path: "category",
+            select: "name image_url _id",
+            limit: 3 // Limit to 3 categories
+        })
+        .populate("userId", "name profile_image");
 
     // Get ratings for each hotel
     const hotelsWithRatings = await Promise.all(
@@ -1715,6 +1720,10 @@ exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
 
             return {
                 ...hotel.toObject(),
+                coordinates: hotel.location?.coordinates ? {
+                    latitude: hotel.location.coordinates[1],
+                    longitude: hotel.location.coordinates[0]
+                } : null,
                 ratings: ratings[0] || {
                     avgFoodRating: 0,
                     avgRestaurantRating: 0,

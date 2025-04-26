@@ -930,6 +930,7 @@ exports.getAllHotel = asyncHandler(async (req, res) => {
 });
 
 exports.getHotelsForUser = asyncHandler(async (req, res) => {
+    
     const hotels = await Hotel.find({}).populate('category');
     if (hotels) {
         return res.status(200).json(
