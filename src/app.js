@@ -109,6 +109,9 @@ const statusRoutes = require("./routes/status.route");
 const chatRoute = require("./routes/message.route");
 const { hotelOfferRoutes } = require("./routes/hotelOffer.route");
 const deliverySettingsRoutes = require("./routes/delivery-settings.route");
+const deliveryEarningsRoutes = require("./routes/delivery-earnings.route");
+const deliverySettlementRoutes = require("./routes/delivery-settlement.route");
+const analyticsRoutes = require("./routes/Analytics/analytics.route");
 /*Api Logger */
 app.use(morganMiddleware);
 
@@ -137,6 +140,9 @@ app.use(`${BASE_URL}/ratings`, ratingRoutes);
 app.use(`${BASE_URL}/status`, statusRoutes);
 app.use(`${BASE_URL}/offer`, hotelOfferRoutes);
 app.use(`${BASE_URL}/delivery-settings`, deliverySettingsRoutes);
+app.use(`${BASE_URL}/delivery-earnings`, deliveryEarningsRoutes);
+app.use(`${BASE_URL}/delivery-settlement`, deliverySettlementRoutes);
+app.use(`${BASE_URL}/analytics`, analyticsRoutes);  
 // Setup chat routes
 app.use('/api/chat',chatRoute );
 app.use(errorHandler);
