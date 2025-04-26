@@ -35,7 +35,7 @@ exports.submitRating = asyncHandler(async (req, res) => {
     const rating = await Rating.create({
         orderId,
         userId,
-        dishIds,
+        dishId: dishIds, // Matching the model schema field name 'dishId' which expects an array
         hotelId: order.hotelId,
         deliveryBoyId: order.assignedDeliveryBoy,
         foodRating,

@@ -32,18 +32,21 @@ const ratingSchema = new Schema(
             required: true,
             min: 1,
             max: 5,
+            default: 3
         },
         deliveryRating: {
             type: Number,
             required: true,
             min: 1,
             max: 5,
+            default: 3
         },
         restaurantRating: {
             type: Number,
             required: true,
             min: 1,
             max: 5,
+            default: 3
         },
         review: {
             type: String,
