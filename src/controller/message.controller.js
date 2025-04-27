@@ -17,7 +17,7 @@ const Admin = require("../models/admin.model");
  */
 exports.getChatHistory = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const messages = await ChatMessage.find({ userId })
+    const messages = await ChatMessage.find({ userId,orderId:req.query.orderId })
         .sort({ time: 1 })
         .limit(50);
 
@@ -41,7 +41,20 @@ exports.getChatHistory = asyncHandler(async (req, res) => {
 exports.getActiveChats = asyncHandler(async (req, res) => {
     const activeChats = await ChatMessage.aggregate([
         { $match: { isRead: false } },
-        { $group: { _id: '$userId', lastMessage: { $last: '$$ROOT' } } }
+        { $group: { _id: '$userId', lastMessage: { $last: '$$ROOT' } } },
+        {
+            $lookup: {
+                from: 'users',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'user'
+            }
+        },
+        {
+            $addFields: {
+                user: { $arrayElemAt: ['$user', 0] }
+            }
+        }
     ]);
 
     if (!activeChats) {
@@ -86,7 +99,7 @@ exports.markAsRead = asyncHandler(async (req, res) => {
  * @description Sends a new message in the chat
  */
 exports.sendMessage = asyncHandler(async (req, res) => {
-    const { userId, text, isUser, adminId } = req.body;
+    const { userId, text, isUser, adminId,orderId } = req.body;
 
     const message = await ChatMessage.create({
         userId,
@@ -94,7 +107,8 @@ exports.sendMessage = asyncHandler(async (req, res) => {
         text,
         isUser,
         time: new Date(),
-        isRead: !isUser
+        isRead: !isUser,
+        orderId
     });
 
     if (!message) {
