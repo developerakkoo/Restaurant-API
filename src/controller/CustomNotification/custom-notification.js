@@ -54,3 +54,25 @@ exports.getNotifications = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+// Mark Notification as Read
+exports.markAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const notification = await CustomNotification.findByIdAndUpdate(
+      id,
+      { isRead: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+
+    res.json({ success: true, data: notification });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

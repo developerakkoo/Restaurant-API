@@ -26,6 +26,7 @@ const {
     generateInvoiceTable,
     generateCustomerInformation,
 } = require("../utils/invoice");
+const { createSettlement } = require("./Partner-Settlement/partner-settlement");
 
 
 let instance = new razorpay({
@@ -283,8 +284,6 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         ],
     });
 
-    const hotel = await hotelModel.findOne({ _id: hotelId });
-    sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
 
     return res
         .status(200)

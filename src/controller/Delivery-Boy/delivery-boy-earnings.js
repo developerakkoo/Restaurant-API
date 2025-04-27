@@ -1,5 +1,8 @@
 const DriverEarning = require('../../models/Delivery-Boy/driverEarnings');
 const DriverSettings = require('../../models/Delivery-Boy/driverSettings');
+const Order = require('../../models/order.model');
+const PartnerSettlement = require('../../models/Partner-Settlements/partner-settlement');
+const { createSettlement } = require('../Partner-Settlement/partner-settlement');
 
 exports.createEarning = async (req, res) => {
   try {
@@ -10,8 +13,16 @@ exports.createEarning = async (req, res) => {
     }
 
     const totalDeliveries = await DriverEarning.countDocuments({ driverId });
-
-    let bonus = 0;
+    const order = await Order.findById(orderId);
+      const settlement = await PartnerSettlement.findOne({ orderId });
+      if(settlement){
+        return res.status(400).json({ message: 'Settlement already exists' });
+      }
+      else{
+        await createSettlement(order); 
+      }
+    
+      let bonus = 0;
     if (totalDeliveries + 1 === 16) {
       bonus = settings.bonus16thDelivery;
     } else if (totalDeliveries + 1 === 21) {

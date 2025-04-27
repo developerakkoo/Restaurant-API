@@ -113,6 +113,7 @@ const deliveryEarningsRoutes = require("./routes/delivery-earnings.route");
 const deliverySettlementRoutes = require("./routes/delivery-settlement.route");
 const analyticsRoutes = require("./routes/Analytics/analytics.route");
 const customNotificationRoutes = require("./routes/Custom-Notifications/custom-notification");
+const partnerSettlementRoutes = require("./routes/Partner-Settlement/partner-settlement");
 /*Api Logger */
 app.use(morganMiddleware);
 
@@ -145,6 +146,7 @@ app.use(`${BASE_URL}/delivery-earnings`, deliveryEarningsRoutes);
 app.use(`${BASE_URL}/delivery-settlement`, deliverySettlementRoutes);
 app.use(`${BASE_URL}/analytics`, analyticsRoutes);  
 app.use(`${BASE_URL}/custom-notifications`, customNotificationRoutes);
+app.use(`${BASE_URL}/partner-settlement`, partnerSettlementRoutes);
 // Setup chat routes
 app.use('/api/chat',chatRoute );
 app.use(errorHandler);

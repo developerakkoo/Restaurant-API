@@ -5,6 +5,9 @@ const notificationController = require('../../controller/CustomNotification/cust
 // Create a notification
 router.post('/notifications', notificationController.createNotification);
 
+// Mark Notification as Read
+router.put('/notifications/read/:id', notificationController.markAsRead);
+
 // Delete a notification
 router.delete('/notifications/:id', notificationController.deleteNotification);
 
