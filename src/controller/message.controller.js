@@ -39,30 +39,31 @@ exports.getChatHistory = asyncHandler(async (req, res) => {
  * @description Retrieves all active chats for admin
  */
 exports.getActiveChats = asyncHandler(async (req, res) => {
-    const activeChats = await ChatMessage.aggregate([
-        { $match: { isRead: false } },
-        { $group: { _id: '$userId', lastMessage: { $last: '$$ROOT' } } },
-        {
-            $lookup: {
-                from: 'users',
-                localField: '_id',
-                foreignField: '_id',
-                as: 'user'
-            }
-        },
-        {
-            $addFields: {
-                user: { $arrayElemAt: ['$user', 0] }
-            }
-        }
-    ]);
+    const activeChats = await ChatMessage.find({ isRead: false })
+        .sort({ time: -1 })
+        .populate('userId', 'name email phoneNumber')
+        .exec();
 
     if (!activeChats) {
         throw new ApiError(404, "No active chats found");
     }
 
+    // Group by userId and get the last message for each user
+    const groupedChats = activeChats.reduce((acc, message) => {
+        if (!acc[message.userId._id]) {
+            acc[message.userId._id] = {
+                _id: message.userId._id,
+                user: message.userId,
+                lastMessage: message
+            };
+        }
+        return acc;
+    }, {});
+
+    const result = Object.values(groupedChats);
+
     return res.status(200).json(
-        new ApiResponse(200, activeChats, "Active chats retrieved successfully")
+        new ApiResponse(200, result, "Active chats retrieved successfully")
     );
 });
 
