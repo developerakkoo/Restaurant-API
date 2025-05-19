@@ -536,29 +536,83 @@ exports.updateOrder = asyncHandler(async (req, res) => {
 
 
 exports.getHotelOrdersByStatus = asyncHandler(async (req, res) => {
-
     const { status } = req.query;
     const { hotelId } = req.params;
-    let dbQuery = {
-        hotelId: hotelId,
+
+    let matchQuery = {
+        hotelId: new Types.ObjectId(hotelId),
     };
 
     if (status) {
-        dbQuery.orderStatus = status;
+        matchQuery.orderStatus = Number(status);
     }
 
-    const orders = await Order.find(dbQuery);   
-    const dataCount = await Order.countDocuments(dbQuery);
-    if(!orders || orders.length === 0) {
+    const aggregationPipeline = [
+        { $match: matchQuery },
+
+        // Lookup all dishes that may appear in the products array
+        {
+            $lookup: {
+                from: "hoteldishes",
+                localField: "products.dishId",
+                foreignField: "_id",
+                as: "dishDetails"
+            }
+        },
+
+        // Merge dishInfo into each product
+        {
+            $addFields: {
+                products: {
+                    $map: {
+                        input: "$products",
+                        as: "product",
+                        in: {
+                            $mergeObjects: [
+                                "$$product",
+                                {
+                                    dishInfo: {
+                                        $arrayElemAt: [
+                                            {
+                                                $filter: {
+                                                    input: "$dishDetails",
+                                                    as: "d",
+                                                    cond: { $eq: ["$$d._id", "$$product.dishId"] }
+                                                }
+                                            },
+                                            0
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+
+        // Optionally remove the temporary dishDetails array
+        {
+            $project: {
+                dishDetails: 0
+            }
+        }
+    ];
+
+    const orders = await Order.aggregate(aggregationPipeline);
+    const dataCount = await Order.countDocuments(matchQuery);
+
+    if (!orders || orders.length === 0) {
         return res.status(200).json({
             message: "No orders found",
             content: [],
         });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
         message: "Orders fetched successfully",
         content: orders,
+        count: dataCount
     });
 });
 
