@@ -107,6 +107,13 @@ const { setupPassport } = require("./passport");
 const { ratingRoutes } = require("./routes/rating.route");
 const statusRoutes = require("./routes/status.route");
 const chatRoute = require("./routes/message.route");
+const { hotelOfferRoutes } = require("./routes/hotelOffer.route");
+const deliverySettingsRoutes = require("./routes/delivery-settings.route");
+const deliveryEarningsRoutes = require("./routes/delivery-earnings.route");
+const deliverySettlementRoutes = require("./routes/delivery-settlement.route");
+const analyticsRoutes = require("./routes/Analytics/analytics.route");
+const customNotificationRoutes = require("./routes/Custom-Notifications/custom-notification");
+const partnerSettlementRoutes = require("./routes/Partner-Settlement/partner-settlement");
 /*Api Logger */
 app.use(morganMiddleware);
 
@@ -129,13 +136,20 @@ app.use(`${BASE_URL}/user/cart`, cartRoutes);
 app.use(`${BASE_URL}/hotel`, hotelStarRoutes);
 app.use(`${BASE_URL}/partner`, partnerRoutes);
 app.use(`${BASE_URL}/user/favorite`, favoriteRoutes);
+app.use(`${BASE_URL}/chat`, chatRoute);
 app.use(`${BASE_URL}/deliver-boy`, deliverBoyRoutes);
 app.use(`${BASE_URL}/notification`, notificationRoutes);
 app.use(`${BASE_URL}/ratings`, ratingRoutes);
 app.use(`${BASE_URL}/status`, statusRoutes);
-
+app.use(`${BASE_URL}/offer`, hotelOfferRoutes);
+app.use(`${BASE_URL}/delivery-settings`, deliverySettingsRoutes);
+app.use(`${BASE_URL}/delivery-earnings`, deliveryEarningsRoutes);
+app.use(`${BASE_URL}/delivery-settlement`, deliverySettlementRoutes);
+app.use(`${BASE_URL}/analytics`, analyticsRoutes);  
+app.use(`${BASE_URL}/custom-notifications`, customNotificationRoutes);
+app.use(`${BASE_URL}/partner-settlement`, partnerSettlementRoutes);
 // Setup chat routes
-app.use('/api/chat',chatRoute );
+app.use(`${BASE_URL}/chat`,chatRoute );
 app.use(errorHandler);
 
 module.exports = { app };

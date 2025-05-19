@@ -65,4 +65,7 @@ router.get("/nearby", HotelStarController.getHotelsNearby);
 
 router.get("/get-hotel-and-dishes", HotelStarController.getHotelsAndDishes);
 
+// Add new route for getting all hotels with ratings
+router.get("/with-ratings", HotelStarController.getAllHotelsWithRatings);
+
 module.exports = { hotelStarRoutes: router };

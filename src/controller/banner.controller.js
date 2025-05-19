@@ -12,7 +12,7 @@ exports.addBanner = asyncHandler(async (req, res) => {
     const local_filePath = `upload/${filename}`;
     let image_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        image_url = `https://${req.hostname}:8000/upload/${filename}`;
+        image_url = `https://${req.hostname}/upload/${filename}`;
     }
     const data = {
         type,
@@ -60,7 +60,7 @@ exports.updateBannerImage = asyncHandler(async (req, res) => {
     const local_filePath = `upload/${filename}`;
     let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        document_url = `https://${req.hostname}:8000/upload/${filename}`;
+        document_url = `https://${req.hostname}/upload/${filename}`;
     }
     const savedDish = await bannerModel.findById(bannerId);
     if (savedDish) {

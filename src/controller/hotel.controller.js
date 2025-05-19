@@ -10,6 +10,8 @@ const Category = require("../models/category.model");
 const { deleteFile } = require("../utils/deleteFile");
 const { Types } = require("mongoose");
 const moment = require("moment");
+const Rating = require("../models/rating.model");
+const HotelOffer = require("../models/hotelOffer.model");
 
 exports.getHotelById = asyncHandler(async (req, res) => {
     const { hotelId } = req.params;
@@ -341,7 +343,7 @@ exports.uploadDishImage = asyncHandler(async (req, res) => {
     const local_filePath = `upload/${filename}`;
     let document_url = `https://${req.hostname}/upload/${filename}`;
     if (process.env.NODE_ENV !== "production") {
-        document_url = `https://${req.hostname}:8000/upload/${filename}`;
+        document_url = `https://${req.hostname}/upload/${filename}`;
     }
     const savedDish = await Dish.findById(dishId);
     if (savedDish) {
@@ -903,6 +905,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                                 image_url: 1,
                                 address: 1,
                                 userId: 1,
+                                isOnline:1
                             },
                         },
                         {
@@ -1062,7 +1065,7 @@ exports.getAllDishes = asyncHandler(async (req, res) => {
                     },
                 },
             },
-        );
+        )
     }
 
     const dishAggregate = await Dish.aggregate(pipeline);
@@ -1673,5 +1676,149 @@ exports.getHotelsNearby = asyncHandler(async (req, res) => {
             },
             "Hotels fetched successfully",
         ),
+    );
+});
+
+/**
+ * Get all hotels with their ratings
+ * @route GET /api/hotel/with-ratings
+ * @access Public
+ */
+exports.getAllHotelsWithRatings = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+    const currentDate = new Date();
+
+    // Get all hotels with pagination
+    const hotels = await Hotel.find({ }) // Only get approved hotels
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
+        .populate({
+            path: "category",
+            select: "name image_url _id",
+            limit: 3 // Limit to 3 categories
+        })
+        .populate("userId", "name profile_image");
+
+    // Get ratings for each hotel
+    const hotelsWithRatings = await Promise.all(
+        hotels.map(async (hotel) => {
+            // Get average ratings for the hotel
+            const ratings = await Rating.aggregate([
+                { $match: { hotelId: hotel._id, status: "active" } },
+                {
+                    $group: {
+                        _id: null,
+                        avgFoodRating: { $avg: "$foodRating" },
+                        avgRestaurantRating: { $avg: "$restaurantRating" },
+                        totalRatings: { $sum: 1 },
+                    },
+                },
+            ]);
+
+            // Get the latest reviews
+            const latestReviews = await Rating.find({ hotelId: hotel._id, status: "active" })
+                .sort({ createdAt: -1 })
+                .limit(3)
+                .populate("userId", "name profile_image");
+
+            // Calculate average price of dishes
+            const avgPrice = await Dish.aggregate([
+                { $match: { hotelId: hotel._id, status: 2 } }, // Only approved dishes
+                {
+                    $group: {
+                        _id: null,
+                        avgPrice: { $avg: "$userPrice" }
+                    }
+                }
+            ]);
+
+            // Get active offers for the hotel
+            const activeOffers = await HotelOffer.find({
+                hotelId: hotel._id,
+                isActive: true,
+                startDate: { $lte: currentDate },
+                endDate: { $gte: currentDate },
+            }).sort({ offerValue: -1 }); // Sort by offer value to get the best offer first
+
+            // Get the best offer
+            const bestOffer = activeOffers.length > 0 ? {
+                type: activeOffers[0].offerType,
+                value: activeOffers[0].offerValue,
+                minOrderAmount: activeOffers[0].minOrderAmount,
+                maxDiscount: activeOffers[0].maxDiscount,
+                description: activeOffers[0].description,
+                endDate: activeOffers[0].endDate
+            } : null;
+
+            // Get dish ratings
+            const dishRatings = await Rating.aggregate([
+                { $match: { hotelId: hotel._id, status: "active" } },
+                {
+                    $lookup: {
+                        from: "hoteldishes",
+                        localField: "dishId",
+                        foreignField: "_id",
+                        as: "dishDetails"
+                    }
+                },
+                { $unwind: "$dishDetails" },
+                {
+                    $group: {
+                        _id: "$dishId",
+                        dishName: { $first: "$dishDetails.name" },
+                        avgRating: { $avg: "$foodRating" },
+                        totalRatings: { $sum: 1 },
+                        reviews: {
+                            $push: {
+                                rating: "$foodRating",
+                                review: "$review",
+                                userId: "$userId",
+                                createdAt: "$createdAt"
+                            }
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        dishName: 1,
+                        avgRating: { $round: ["$avgRating", 1] },
+                        totalRatings: 1,
+                        reviews: { $slice: ["$reviews", 3] } // Get only 3 latest reviews
+                    }
+                }
+            ]);
+
+            return {
+                ...hotel.toObject(),
+                coordinates: hotel.location?.coordinates ? {
+                    latitude: hotel.location.coordinates[1],
+                    longitude: hotel.location.coordinates[0]
+                } : null,
+                ratings: ratings[0] || {
+                    avgFoodRating: 0,
+                    avgRestaurantRating: 0,
+                    totalRatings: 0,
+                },
+                latestReviews,
+                avgPrice: avgPrice[0]?.avgPrice ? Math.round(avgPrice[0].avgPrice) : 0,
+                bestOffer,
+                dishRatings // Include dish ratings in the response
+            };
+        })
+    );
+
+    // Get total count of hotels
+    const totalHotels = await Hotel.countDocuments({ hotelStatus: 1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            hotels: hotelsWithRatings,
+            pagination: {
+                total: totalHotels,
+                page: parseInt(page),
+                pages: Math.ceil(totalHotels / limit),
+            },
+        }, "Hotels retrieved successfully with ratings")
     );
 });

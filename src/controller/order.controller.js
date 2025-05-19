@@ -26,6 +26,7 @@ const {
     generateInvoiceTable,
     generateCustomerInformation,
 } = require("../utils/invoice");
+const { createSettlement } = require("./Partner-Settlement/partner-settlement");
 
 
 let instance = new razorpay({
@@ -33,8 +34,30 @@ let instance = new razorpay({
     key_secret: process.env.KEY_SECRET,
 });
 
+/**
+ * Generates a random 6-digit OTP
+ * @returns {string} A 6-digit OTP
+ */
+const generateOTP = () => {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
+
+
+exports.cancelOrder = asyncHandler(async (req, res) => {
+    const { orderId } = req.body;
+    const order = await Order.findById(orderId);
+    if (!order) {
+        return res.status(404).json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    order.orderStatus = 7; // Cancelled status
+    await order.save();
+
+    return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
+});
+
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
-    const data = await dataModel.find();
     if (!data || data.length === 0) {
         return res
             .status(500)
@@ -224,7 +247,8 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         priceDetails,
         paymentId,
         paymentMode,
-        hotelId,products
+        hotelId,
+        products
     } = req.body;
 
     // Generate UUIDv4
@@ -234,24 +258,13 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     // Extract first 6 characters
     const orderIdPrefix = uppercaseUuid.substring(0, 6);
 
-    // Find the user's cart
-    // const cart = await Cart.findOne({ userId });
-    // if (!cart || cart.products.length === 0) {
-    //     return res
-    //         .status(400)
-    //         .json(
-    //             new ApiResponse(
-    //                 400,
-    //                 null,
-    //                 responseMessage.userMessage.emptyCart,
-    //             ),
-    //         );
-    // }
+    // Generate OTP for order verification
+    const otp = generateOTP();
 
-    // let hotelId = cart.hotelId.toString();
     const orderId = `${orderIdPrefix}-${hotelId.substring(0, 3).toUpperCase()}`;
     const order = await Order.create({
         orderId,
+        otp, // Add OTP to order
         userId,
         hotelId: hotelId,
         products: products,
@@ -270,17 +283,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             },
         ],
     });
-    const hotel = await hotelModel.findOne({ _id: hotelId });
-    sendNotification(hotel.userId, "New Order", order); // send notification to hotel owner
 
-    // Clear the cart
-    // await cart.updateOne({
-    //     $set: {
-    //         products: [],
-    //         totalPrice: 0,
-    //         hotelId: null,
-    //     },
-    // });
 
     return res
         .status(200)
@@ -323,7 +326,7 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
         };
     }
 
-    const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
+    const order = await Order.findByIdAndUpdate(orderId, update, { new: false });
 
     if (!order) {
         return res
@@ -402,11 +405,11 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     const savedOrder = await Order.findById(orderId);
     let url;
 
-    if (paymentMode === "UPI") {
-        if (!req.file) throw new ApiError(400, "Payment photo is required");
-        const { filename } = req.file;
-        url = `https://${req.hostname}/upload/${filename}`;
-    }
+    // if (paymentMode === "UPI") {
+    //     if (!req.file) throw new ApiError(400, "Payment photo is required");
+    //     const { filename } = req.file;
+    //     url = `https://${req.hostname}/upload/${filename}`;
+    // }
 
     // Check if the order is already assigned and trying to assign again
     if (

@@ -29,4 +29,5 @@ router.post("/apply/promoCode", applyPromoCode);
 
 router.get("/get/invoice/:orderId", orderController.generateInvoice);
 
+router.post("/cancel/order", orderController.cancelOrder);
 module.exports = { orderRoutes: router };

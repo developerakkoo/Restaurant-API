@@ -65,6 +65,10 @@ const deliveryBoySchema = new Schema(
         isOnline: {
             type: Boolean,
         },
+        deliveredOrders: [{
+            type: Schema.Types.ObjectId,
+            ref: "Order"
+        }],
         status: {
             type: Number,
             required: true,

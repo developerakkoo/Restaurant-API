@@ -9,15 +9,15 @@ const { sendNotification } = require("./notification.controller");
 exports.submitRating = asyncHandler(async (req, res) => {
     const {
         orderId,
+        userId,
         foodRating,
         deliveryRating,
         restaurantRating,
+        dishIds,
         review,
         images,
         isAnonymous,
     } = req.body;
-
-    const userId = req.user._id;
 
     // Check if order exists and belongs to the user
     const order = await Order.findOne({ _id: orderId, userId });
@@ -35,6 +35,7 @@ exports.submitRating = asyncHandler(async (req, res) => {
     const rating = await Rating.create({
         orderId,
         userId,
+        dishId: dishIds, // Matching the model schema field name 'dishId' which expects an array
         hotelId: order.hotelId,
         deliveryBoyId: order.assignedDeliveryBoy,
         foodRating,

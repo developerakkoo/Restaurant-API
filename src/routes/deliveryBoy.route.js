@@ -18,6 +18,7 @@ router.get("/get/document-by-id", deliveryBoyController.getDocumentById);
 
 router.put("/accept/order-pickup-request", updateOrder);
 
+router.put("/update-delivered-orders/:orderId/:userid", deliveryBoyController.updateDeliveredOrders);
 router.put("/update", deliveryBoyController.updateDeliveryBoy);
 
 /* Leave Request */

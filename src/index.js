@@ -42,7 +42,7 @@ connectDB()
                     // );
 
                     // Setup chat handlers
-                    chatController.setupChatHandlers(socket);
+                    // chatController.setupChatHandlers(socket);
                     // // Update user status to online based on userType
                     // let userModel;
                     // switch (userType) {
