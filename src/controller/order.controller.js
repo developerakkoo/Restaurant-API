@@ -531,6 +531,36 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         );
 });
 
+
+exports.getHotelOrdersByStatus = asyncHandler(async (req, res) => {
+
+    const { status } = req.query;
+    const { hotelId } = req.params;
+    let dbQuery = {
+        hotelId: hotelId,
+    };
+
+    if (status) {
+        dbQuery.orderStatus = status;
+    }
+
+    const orders = await Order.find(dbQuery);   
+    const dataCount = await Order.countDocuments(dbQuery);
+    if(!orders || orders.length === 0) {
+        return res.status(200).json({
+            message: "No orders found",
+            content: [],
+        });
+    }
+
+    res.status(200).json({
+        message: "Orders fetched successfully",
+        content: orders,
+    });
+});
+
+
+
 exports.getAllOrders = asyncHandler(async (req, res) => {
     let dbQuery = {};
     const {

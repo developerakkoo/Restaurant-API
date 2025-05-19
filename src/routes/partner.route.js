@@ -3,7 +3,7 @@ const partnerController = require("../controller/partner.controller");
 const HotelController = require("../controller/hotel.controller");
 const authController = require("../controller/auth.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
-const { getAllOrders } = require("../controller/order.controller");
+const { getAllOrders ,getHotelOrdersByStatus} = require("../controller/order.controller");
 
 router.post("/logout", authController.logoutUser);
 
@@ -28,6 +28,8 @@ router.get("/get/dashboard/:partnerId", partnerController.getPartnerDashboard);
 router.get("/get/earnings/:partnerId", partnerController.getEarnings);
 
 router.get("/get/orders", getAllOrders);
+
+router.get("/get/orders-by-status/:hotelId",getHotelOrdersByStatus);
 
 router.get("/get/byId/:partnerId", partnerController.getPartnerById);
 
