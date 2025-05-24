@@ -39,7 +39,7 @@ exports.getChatHistoryAdmin = asyncHandler(async (req, res) => {
     if (!messages) {
         throw new ApiError(404, "No chat history found");
     }
-
+    getIO().to(`user_${userId}`).emit('chatHistory', messages);
     return res.status(200).json(
         new ApiResponse(200, messages, "Chat history retrieved successfully")
     );
@@ -135,7 +135,8 @@ exports.sendMessage = asyncHandler(async (req, res) => {
     if (isUser) {
         io.to('admins').emit('newMessage', message);
     }
-    io.to(`user_${userId}`).emit('adminMessage', message);
+    getIO().to(`user_${userId}`).emit('chatHistory', messages);
+
 
     return res.status(201).json(
         new ApiResponse(201, message, "Message sent successfully")
