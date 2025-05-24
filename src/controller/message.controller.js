@@ -30,6 +30,20 @@ exports.getChatHistory = asyncHandler(async (req, res) => {
     );
 });
 
+exports.getChatHistoryAdmin = asyncHandler(async (req, res) => {
+    const { userId , adminId} = req.params;
+    const messages = await ChatMessage.find({ userId, adminId })
+        .sort({ time: 1 })
+        .limit(50);
+
+    if (!messages) {
+        throw new ApiError(404, "No chat history found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, messages, "Chat history retrieved successfully")
+    );
+});
 /**
  * @function getActiveChats
  * @async

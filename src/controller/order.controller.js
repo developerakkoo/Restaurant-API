@@ -284,7 +284,9 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         ],
     });
 
+    //Send Notifications To User About Order is Placed
 
+    
     return res
         .status(200)
         .json(
