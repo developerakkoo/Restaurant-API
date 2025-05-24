@@ -307,6 +307,7 @@ exports.addDish = asyncHandler(async (req, res) => {
         spicLevel,
         timeToPrepare,
         stock,
+        status,
     } = req.body;
 
     const hotel = await Hotel.findById(hotelId);
@@ -326,6 +327,7 @@ exports.addDish = asyncHandler(async (req, res) => {
         spicLevel,
         timeToPrepare,
         stock,
+        status
     });
     res.status(201).json(
         new ApiResponse(
