@@ -1,11 +1,11 @@
 const CustomNotification = require('../../models/Notifications/notifications');
-const { IO } = require('../../utils/socket');
+const IO = require('../../utils/socket');
 // Create Notification
 exports.createNotification = async (req, res) => {
   try {
     const { title, message, type, userId, deliveryBoyId, hotelId } = req.body;
 
-    const notification = new Notification({
+    const notification = new CustomNotification({
       title,
       message,
       type,
@@ -27,7 +27,7 @@ exports.createNotification = async (req, res) => {
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    await Notification.findByIdAndDelete(id);
+    await CustomNotification.findByIdAndDelete(id);
     res.json({ success: true, message: 'Notification deleted' });
   } catch (error) {
     console.error(error);
@@ -45,7 +45,7 @@ exports.getNotifications = async (req, res) => {
     if (deliveryBoyId) query.deliveryBoyId = deliveryBoyId;
     if (hotelId) query.hotelId = hotelId;
 
-    const notifications = await Notification.find(query)
+    const notifications = await CustomNotification.find(query)
       .sort({ createdAt: -1 });
     IO.getIO().emit('notification', { action: 'get', data: notifications });
     res.json({ success: true, data: notifications });

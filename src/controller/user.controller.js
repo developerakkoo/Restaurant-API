@@ -4,6 +4,8 @@ const Hotel = require("../models/hotel.model");
 const Category = require("../models/category.model");
 const { responseMessage, cookieOptions } = require("../constant");
 const Order = require("../models/order.model");
+const Favorite = require('../models/favorite.model');
+const Rating = require('../models/rating.model');
 const UserTrack = require("../models/userTrack.model");
 const userAddress = require("../models/userAddress.model");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -13,6 +15,7 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
 const moment = require("moment");
+
 
 /**
  *  @function registerUser
@@ -545,3 +548,48 @@ exports.hotelAndCategorySearch = asyncHandler(async (req, res) => {
         ),
     );
 });
+
+
+exports.getUserProfileStats = asyncHandler(async (req, res) => {
+    const userId = req.params.id;
+  
+    const [orderCount, favHotels, ratingStats] = await Promise.all([
+      // Total orders
+      Order.countDocuments({ userId }),
+  
+      // Unique favorite hotels
+      Favorite.aggregate([
+        { $match: { userId, hotelId: { $exists: true } } },
+        { $group: { _id: "$hotelId" } },
+        { $count: "total" }
+      ]),
+  
+      // Average ratings by user
+      Rating.aggregate([
+        { $match: { userId, status: "active" } },
+        {
+          $group: {
+            _id: null,
+            avgFoodRating: { $avg: "$foodRating" },
+            avgDeliveryRating: { $avg: "$deliveryRating" },
+            avgRestaurantRating: { $avg: "$restaurantRating" },
+          },
+        },
+      ]),
+    ]);
+  
+    const stats = {
+      totalOrders: orderCount,
+      favoriteHotels: favHotels[0]?.total || 0,
+      averageRatings: {
+        food: ratingStats[0]?.avgFoodRating?.toFixed(2) || "0.00",
+        delivery: ratingStats[0]?.avgDeliveryRating?.toFixed(2) || "0.00",
+        restaurant: ratingStats[0]?.avgRestaurantRating?.toFixed(2) || "0.00",
+      }
+    };
+  
+    return res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  });

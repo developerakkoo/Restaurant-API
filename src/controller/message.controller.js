@@ -133,9 +133,9 @@ exports.sendMessage = asyncHandler(async (req, res) => {
     // Emit message through socket
     const io = getIO();
     if (isUser) {
-        io.to('admins').emit('newMessage', message);
+        io.emit('chatHistory', message);
     }
-    getIO().to(`user_${userId}`).emit('chatHistory', messages);
+    getIO().emit('chatHistory', message);
 
 
     return res.status(201).json(

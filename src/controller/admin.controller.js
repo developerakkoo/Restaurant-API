@@ -157,11 +157,15 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
     }
 
     // Sort by status
-    if (status === "false" || status == 0) {
-        dbQuery.isOnline = false;
-    } else {
-        dbQuery.isOnline = true;
+  // Only apply isOnline filter if status is explicitly set (not "", null, or undefined)
+  if (status !== undefined && status !== "" && status !== null) {
+    if (status === "false" || status === "0" || status === 0 || status === false) {
+      dbQuery.isOnline = false;
+    } else if (status === "true" || status === "1" || status === 1 || status === true) {
+      dbQuery.isOnline = true;
     }
+  }
+  
 
     // Sort by status
     if (isBlocked == 1) {

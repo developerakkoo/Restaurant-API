@@ -17,6 +17,7 @@ router.post("/logout/:userId/:userType", authController.logoutUser);
 
 router.get("/get/user/:userId", userController.getUserById);
 
+router.get("/get/profile-stats/:id", userController.getUserProfileStats);
 
 router.get('/coordinates/:userId/:hotelId',userController.getCoordinatesForCalculations);
 router.put("/update/:userId", userController.updateUserProfile);
