@@ -81,6 +81,14 @@ app.use("/upload", express.static(path.join(__dirname, "upload"), {
         res.set("Cross-Origin-Resource-Policy","cross-origin")
     },
 }));
+
+app.use('/invoices', express.static(path.join(__dirname, './invoices'), {
+    setHeaders: (res) => {
+      res.set('Access-Control-Allow-Origin', '*');
+    }
+  }));
+  
+
 /*Api rate limiter */
 // app.use(apiRateLimiter);
 
@@ -114,6 +122,8 @@ const deliverySettlementRoutes = require("./routes/delivery-settlement.route");
 const analyticsRoutes = require("./routes/Analytics/analytics.route");
 const customNotificationRoutes = require("./routes/Custom-Notifications/custom-notification");
 const partnerSettlementRoutes = require("./routes/Partner-Settlement/partner-settlement");
+
+const invoiceRoutes = require("./routes/invoice.route");
 /*Api Logger */
 app.use(morganMiddleware);
 
@@ -148,6 +158,7 @@ app.use(`${BASE_URL}/delivery-settlement`, deliverySettlementRoutes);
 app.use(`${BASE_URL}/analytics`, analyticsRoutes);  
 app.use(`${BASE_URL}/custom-notifications`, customNotificationRoutes);
 app.use(`${BASE_URL}/partner-settlement`, partnerSettlementRoutes);
+app.use(`${BASE_URL}/invoice`, invoiceRoutes);
 // Setup chat routes
 app.use(`${BASE_URL}/chat`,chatRoute );
 app.use(errorHandler);
