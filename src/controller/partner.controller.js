@@ -94,6 +94,7 @@ exports.loginPartner = asyncHandler(async (req, res) => {
         userId: loggedInUser._id,
     });
 
+    const hotelId = await hotelModel.findOne({ userId: loggedInUser._id });
     // Send a successful login response with cookies containing access and refresh tokens
     return res
         .status(200)
@@ -104,6 +105,7 @@ exports.loginPartner = asyncHandler(async (req, res) => {
                 200,
                 {
                     userId: loggedInUser._id,
+                    hotelId: hotelId._id,
                     hotelCount: hotels,
                     accessToken,
                     refreshToken,
