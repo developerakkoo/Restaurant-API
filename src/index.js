@@ -40,7 +40,7 @@ connectDB()
                   
                     socket.on("joinChatRoom", async (data) => {
                         console.log("Joining chat room:", data);
-                        const roomId = `user_${data.userId}`;
+                        const roomId = `${data.userId}`;
                         socket.join(roomId);
                         console.log(`${data.isAdmin ? 'Admin' : 'User'} joined room: ${roomId}`);
                        
@@ -49,7 +49,7 @@ connectDB()
 
                     // Send Message to Chat
                     socket.on('sendMessage',async (data) => {
-                        const roomId = `user_${data.userId}`;
+                        const roomId = `${data.userId}`;
                         const message = {
                             userId: data.userId,
                             adminId: data.adminId,
