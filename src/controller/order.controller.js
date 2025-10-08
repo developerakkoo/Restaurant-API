@@ -533,6 +533,10 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         url = `https://${req.hostname}/upload/${filename}`;
     }
 
+    console.log("req.file");
+    console.log(req.file);
+    console.log(req.body);
+
     // Check if the order is already assigned and trying to assign again
     if (
         savedOrder.orderStatus === 2 &&
