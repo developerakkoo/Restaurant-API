@@ -15,15 +15,28 @@ const storage = multer.diskStorage({
 exports.upload = multer({
     storage: storage,
     limits: {
-        fileSize: 50 * 1024 * 1024 // Allows files up to 50MB
+        fileSize: 100 * 1024 * 1024 // Allows files up to 100MB
     },
     fileFilter: function (req, file, cb) {
-        // Validate file types
-        const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+        // Allow all image types and common file formats
+        const allowedTypes = [
+            "image/jpeg", 
+            "image/png", 
+            "image/jpg", 
+            "image/gif",
+            "image/webp",
+            "image/svg+xml",
+            "image/bmp",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ];
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error("Only JPEG, PNG, and JPG images are allowed."));
+            cb(new Error("File type not supported. Allowed: images (JPEG, PNG, JPG, GIF, WebP, SVG, BMP), PDF, Word, Excel."));
         }
     },
 });
@@ -31,7 +44,7 @@ exports.upload = multer({
 exports.videoUpload = multer({
     storage: storage,
     limits: {
-        fileSize: 50 * 1024 * 1024, // Limit file size to 10MB
+        fileSize: 100 * 1024 * 1024, // Allows files up to 100MB
     },
     fileFilter: function (req, file, cb) {
         // Validate file types
@@ -40,12 +53,14 @@ exports.videoUpload = multer({
             "video/webm",
             "video/ogg",
             "video/x-matroska", // for .mkv files
+            "video/quicktime", // for .mov files
+            "video/x-msvideo", // for .avi files
         ];
 
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error("Only mp4, webm, and mkv videos are allowed."));
+            cb(new Error("Video type not supported. Allowed: MP4, WebM, OGG, MKV, MOV, AVI."));
         }
     },
 });
