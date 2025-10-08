@@ -16,7 +16,15 @@ const path = require("path");
 
 app.use(express.urlencoded({ limit:'50mb', extended: true }));
 app.use(express.json({limit:'50mb'}));
-app.use(cors());
+
+// CORS configuration - Allow all origins
+app.use(cors({
+    origin: '*', // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'x-refresh-token']
+}));
+
 app.use(cookieParser());
 
 require("./cron job/firebaseNotification.cron");

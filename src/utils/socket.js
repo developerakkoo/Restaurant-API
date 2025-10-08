@@ -4,12 +4,10 @@ module.exports = {
     init: (httpServer) => {
         io = require("socket.io")(httpServer, {
             cors: {
-                origins: [
-                   
-                    "*"
-                ],
+                origin: "*", // Allow all origins
                 methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-                credentials: false,
+                credentials: true,
+                allowedHeaders: ["*"]
             },
             transports: ['websocket', 'polling'],
             allowEIO3: true,
