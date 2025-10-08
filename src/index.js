@@ -38,6 +38,16 @@ connectDB()
                 
                 try {
                   
+
+                    // Yes, this is correct. The code listens for a "partnerJoin" event, logs the data, 
+                    // creates a room name using the userId, joins the socket to that room, and logs the action.
+                    socket.on("partnerJoin", async (data) => {
+                        console.log("Joining partner room:", data["userId"]);
+                        const roomId = `${data["userId"]}`;
+                        socket.join(`partner_${data["userId"]}`);
+                        console.log(`Partner joined room: partner_${roomId}`);
+                    });
+
                     socket.on("joinChatRoom", async (data) => {
                         console.log("Joining chat room:", data);
                         const roomId = `${data.userId}`;

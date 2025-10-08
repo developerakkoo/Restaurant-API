@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const orderController = require("../controller/order.controller");
 const { applyPromoCode } = require("../controller/promoCode.controller");
+const { upload } = require("../middleware/fileHandler.middleware");
 
 router.post("/initiate/payment", orderController.initiatePayment);
 
@@ -14,7 +15,7 @@ router.get("/get/order-by-id/:id", orderController.getOrderById);
 
 router.get("/get-order/:orderId", orderController.getOrderByOrderId);
 
-router.put("/update/order-status", orderController.updateOrder);
+router.put("/update/order-status", upload.single("paymentScreenshot"), orderController.updateOrder);
 
 router.get(
     "/get/all-order/deliveryBoyId/:deliveryBoyId",
@@ -30,4 +31,7 @@ router.post("/apply/promoCode", applyPromoCode);
 router.get("/get/invoice/:orderId", orderController.generateInvoice);
 
 router.post("/cancel/order", orderController.cancelOrder);
+
+router.post("/reject-by-delivery-boy", orderController.rejectOrderByDeliveryBoy);
+
 module.exports = { orderRoutes: router };

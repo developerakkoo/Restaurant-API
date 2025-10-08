@@ -57,6 +57,71 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
 });
 
+exports.rejectOrderByDeliveryBoy = asyncHandler(async (req, res) => {
+    const { orderId, deliveryBoyId, reason } = req.body;
+    
+    // Find the order
+    const order = await Order.findById(orderId);
+    if (!order) {
+        return res.status(404).json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    // Check if the order is assigned to this delivery boy
+    if (order.assignedDeliveryBoy.toString() !== deliveryBoyId.toString()) {
+        return res.status(403).json(new ApiResponse(403, null, "This order is not assigned to you"));
+    }
+
+    // Check if order status allows rejection (only if delivery assigned or pickup confirmed)
+    if (![2, 6].includes(order.orderStatus)) {
+        return res.status(400).json(new ApiResponse(400, null, "Order cannot be rejected at this stage"));
+    }
+
+    // Update order status to rejected by delivery boy
+    order.orderStatus = 8;
+    
+    // Add rejection to timeline
+    order.orderTimeline.push({
+        title: "Order Rejected by Delivery Boy",
+        dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+        status: "REJECTED_BY_DELIVERY_BOY",
+        reason: reason || "No reason provided"
+    });
+
+    // Clear the assigned delivery boy
+    order.assignedDeliveryBoy = null;
+    
+    await order.save();
+
+    // Send notifications
+    const hotel = await hotelModel.findById(order.hotelId);
+    if (hotel && hotel.userId) {
+        sendNotification(
+            hotel.userId, 
+            "Order Rejected by Delivery Boy", 
+            `Order ${order.orderId} was rejected by delivery boy. Reason: ${reason || "No reason provided"}`
+        );
+    }
+
+    sendNotification(
+        order.userId,
+        "Delivery Boy Rejected Order",
+        `Your order ${order.orderId} was rejected by the assigned delivery boy. We'll assign a new delivery partner soon.`
+    );
+
+    // Notify admin dashboard
+    const io = getIO();
+    io.to("admin_dashboard").emit("orderRejectedByDeliveryBoy", {
+        orderId: order.orderId,
+        deliveryBoyId: deliveryBoyId,
+        reason: reason,
+        timestamp: new Date(),
+        hotelId: order.hotelId,
+        userId: order.userId
+    });
+
+    return res.status(200).json(new ApiResponse(200, order, "Order rejected successfully"));
+});
+
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
     if (!data || data.length === 0) {
         return res
@@ -285,7 +350,62 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     });
 
     //Send Notifications To User About Order is Placed
+    
+    // Get hotel details to find the partner
+    const hotel = await hotelModel.findById(hotelId).populate({
+        path: "userId",
+        select: "name phoneNumber"
+    });
 
+    if (hotel && hotel.userId) {
+        const partnerId = hotel.userId._id;
+        
+        // Populate order details for partner notification
+        const populatedOrder = await Order.findById(order._id)
+            .populate({
+                path: "userId",
+                select: "name phoneNumber"
+            })
+            .populate({
+                path: "address",
+                select: "address type"
+            })
+            .populate({
+                path: "products.dishId",
+                select: "name userPrice"
+            });
+
+        // Send Socket.io notification to partner
+        const io = getIO();
+        
+        // Create notification payload for partner
+        const partnerNotificationPayload = {
+            type: "NEW_ORDER",
+            orderId: order.orderId,
+            order: populatedOrder,
+            timestamp: new Date(),
+            message: `New order received: ${order.orderId}`,
+            priority: "high",
+            customerName: populatedOrder.userId.name,
+            customerPhone: populatedOrder.userId.phoneNumber,
+            totalAmount: order.priceDetails.totalAmountToPay,
+            itemCount: order.products.length
+        };
+
+        // Send to specific partner room
+        io.to(`partner_${partnerId}`).emit("newOrder", partnerNotificationPayload);
+        
+        // Also send to admin dashboard for monitoring
+        io.to("admin_dashboard").emit("newOrder", {
+            ...partnerNotificationPayload,
+            partnerId: partnerId,
+            partnerName: hotel.userId.name,
+            hotelName: hotel.hotelName
+        });
+
+        console.log(`New order notification sent to partner: ${partnerId}`);
+        console.log(`Order details: ${order.orderId} for hotel: ${hotel.hotelName}`);
+    }
     
     return res
         .status(200)
@@ -407,11 +527,11 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     const savedOrder = await Order.findById(orderId);
     let url;
 
-    // if (paymentMode === "UPI") {
-    //     if (!req.file) throw new ApiError(400, "Payment photo is required");
-    //     const { filename } = req.file;
-    //     url = `https://${req.hostname}/upload/${filename}`;
-    // }
+    if (paymentMode === "UPI") {
+        if (!req.file) throw new ApiError(400, "Payment photo is required");
+        const { filename } = req.file;
+        url = `https://${req.hostname}/upload/${filename}`;
+    }
 
     // Check if the order is already assigned and trying to assign again
     if (
@@ -468,6 +588,13 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 title: "Order delivered",
                 dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
                 status: "DELIVERED",
+            };
+            break;
+        case 8:
+            timelineEntry = {
+                title: "Order rejected by delivery boy",
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "REJECTED_BY_DELIVERY_BOY",
             };
             break;
         default:

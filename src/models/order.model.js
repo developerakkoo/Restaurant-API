@@ -141,7 +141,7 @@ const orderSchema = new Schema(
             type: Number,
             required: true,
             default: 0,
-            enum: [0, 1, 2, 3, 4, 5, 6,7], // received = 0, being prepared = 1, delivery assigned = 2, delivered = 3, accepted = 4, cancel order by hotel = 5, pickup confirmed = 6, cancelled by customer = 7
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8], // received = 0, being prepared = 1, delivery assigned = 2, delivered = 3, accepted = 4, cancel order by hotel = 5, pickup confirmed = 6, cancelled by customer = 7, rejected by delivery boy = 8
         },
     },
     { timestamps: true },

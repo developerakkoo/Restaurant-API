@@ -69,7 +69,8 @@ exports.loginPartner = asyncHandler(async (req, res) => {
 
     // Find a user with the provided email in the database
     const user = await Partner.findOne({ phoneNumber });
-
+    console.log(user);
+    
     // If the user is not found, return a 404 response
     if (!user) {
         throw new ApiError(404, responseMessage.userMessage.userNotFound);
@@ -93,10 +94,13 @@ exports.loginPartner = asyncHandler(async (req, res) => {
     const hotels = await hotelModel.countDocuments({
         userId: loggedInUser._id,
     });
-
+    console.log(hotels);
+    
     const hotelId = await hotelModel.findOne({ userId: loggedInUser._id });
-    // Send a successful login response with cookies containing access and refresh tokens
-    return res
+    console.log(hotelId);
+    
+    if(hotelId == null && hotels == 0){
+        return res
         .status(200)
         .cookie("accessToken", accessToken, cookieOptions)
         .cookie("refreshToken", refreshToken, cookieOptions)
@@ -104,8 +108,69 @@ exports.loginPartner = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 {
-                    userId: loggedInUser._id,
-                    hotelId: hotelId._id,
+                    userId: {
+                        _id: loggedInUser._id,
+                        name: loggedInUser.name,
+                        email: loggedInUser.email,
+                        phoneNumber: loggedInUser.phoneNumber,
+                        profile_image: loggedInUser.profile_image,
+                        status: loggedInUser.status,
+                        createdAt: loggedInUser.createdAt,
+                        updatedAt: loggedInUser.updatedAt
+                    },
+                    hotelId: null,
+                    hotelCount: 0,
+                    accessToken,
+                    refreshToken,
+                },
+                responseMessage.userMessage.loginSuccessful,
+            ),
+        );
+    }else if(hotelId != null && hotels > 0){
+        // Populate hotel with detailed information
+        const populatedHotel = await hotelModel.findById(hotelId._id)
+            .populate({
+                path: 'userId',
+                select: 'name email phoneNumber profile_image status'
+            })
+            .populate({
+                path: 'category',
+                select: 'name image_url'
+            })
+            .select('-createdAt -updatedAt -__v');
+            
+        // Send a successful login response with cookies containing access and refresh tokens
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    userId: {
+                        _id: loggedInUser._id,
+                        name: loggedInUser.name,
+                        email: loggedInUser.email,
+                        phoneNumber: loggedInUser.phoneNumber,
+                        profile_image: loggedInUser.profile_image,
+                        status: loggedInUser.status,
+                        createdAt: loggedInUser.createdAt,
+                        updatedAt: loggedInUser.updatedAt
+                    },
+                    hotelId: {
+                        _id: populatedHotel._id,
+                        hotelName: populatedHotel.hotelName,
+                        image_url: populatedHotel.image_url,
+                        local_imagePath: populatedHotel.local_imagePath,
+                        address: populatedHotel.address,
+                        location: populatedHotel.location,
+                        isTop: populatedHotel.isTop,
+                        hotelStatus: populatedHotel.hotelStatus,
+                        isOnline: populatedHotel.isOnline,
+                        userId: populatedHotel.userId, // This will be populated with partner details
+                        category: populatedHotel.category // This will be populated with category details
+                    },
                     hotelCount: hotels,
                     accessToken,
                     refreshToken,
@@ -113,6 +178,8 @@ exports.loginPartner = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.loginSuccessful,
             ),
         );
+    }
+   
 });
 
 exports.addHotel = asyncHandler(async (req, res) => {
@@ -303,11 +370,37 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
     const { partnerId } = req.params;
 
     try {
+        console.log("Partner ID:", partnerId);
+        
+        // Convert partnerId to ObjectId if it's a string
+        const partnerObjectId = new Types.ObjectId(partnerId);
+        
         // Fetch all hotels for the given partner
-        const hotels = await Hotel.find({ userId: partnerId });
+        const hotels = await hotelModel.find({ userId: partnerObjectId });
+        console.log("Hotels found:", hotels.length);
+        console.log("Hotels:", hotels.map(h => ({ id: h._id, name: h.hotelName })));
 
         // Extract the hotel IDs
         const hotelIds = hotels.map((hotel) => hotel._id);
+        console.log("Hotel IDs:", hotelIds);
+
+        // If no hotels found, return empty data
+        if (hotelIds.length === 0) {
+            return res.status(200).json(
+                new ApiResponse(
+                    200,
+                    {
+                        todaysOrders: 0,
+                        monthlyOrder: 0,
+                        dishInStock: 0,
+                        dishOutOfStock: 0,
+                        totalHotels: 0,
+                        message: "No hotels found for this partner"
+                    },
+                    "Partner Dashboard Data Fetched Successfully",
+                ),
+            );
+        }
 
         // Define the date for today and the start of the month
         const startOfToday = new Date();
@@ -321,6 +414,9 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
             1,
         );
 
+        console.log("Date range - Today:", startOfToday, "to", endOfToday);
+        console.log("Date range - Month start:", startOfMonth);
+
         // Define the queries
         let todaysOrderDbQuery = {
             hotelId: { $in: hotelIds },
@@ -330,17 +426,57 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
             hotelId: { $in: hotelIds },
             createdAt: { $gte: startOfMonth },
         };
+        
+        // Check all dishes first to see what exists
+        const allDishes = await hotelDishModel.find({ hotelId: { $in: hotelIds } });
+        console.log("All dishes found:", allDishes.length);
+        console.log("Dish details:", allDishes.map(d => ({
+            id: d._id,
+            name: d.name,
+            stock: d.stock,
+            status: d.status,
+            hotelId: d.hotelId
+        })));
+        
         let dishInStockDbQuery = { hotelId: { $in: hotelIds }, stock: 1 };
         let dishOutOfStockDbQuery = { hotelId: { $in: hotelIds }, stock: 0 };
+        
+        // Also check dishes by status (approved dishes only)
+        let approvedDishesInStockQuery = { 
+            hotelId: { $in: hotelIds }, 
+            stock: 1, 
+            status: 2 // approved status
+        };
+        let approvedDishesOutOfStockQuery = { 
+            hotelId: { $in: hotelIds }, 
+            stock: 0, 
+            status: 2 // approved status
+        };
+
+        console.log("Query for today's orders:", JSON.stringify(todaysOrderDbQuery, null, 2));
+        console.log("Query for monthly orders:", JSON.stringify(monthlyOrderDbQuery, null, 2));
+        console.log("Query for dishes in stock:", JSON.stringify(dishInStockDbQuery, null, 2));
+        console.log("Query for dishes out of stock:", JSON.stringify(dishOutOfStockDbQuery, null, 2));
 
         // Fetch the data using the defined queries
-        const [todaysOrders, monthlyOrder, dishInStock, dishOutOfStock] =
+        const [todaysOrders, monthlyOrder, dishInStock, dishOutOfStock, approvedDishesInStock, approvedDishesOutOfStock] =
             await Promise.all([
                 orderModel.countDocuments(todaysOrderDbQuery), // Today's orders
                 orderModel.countDocuments(monthlyOrderDbQuery), // Monthly orders
-                hotelDishModel.countDocuments(dishInStockDbQuery), // In stock products
-                hotelDishModel.countDocuments(dishOutOfStockDbQuery), // Out of stock products
+                hotelDishModel.countDocuments(dishInStockDbQuery), // All dishes in stock
+                hotelDishModel.countDocuments(dishOutOfStockDbQuery), // All dishes out of stock
+                hotelDishModel.countDocuments(approvedDishesInStockQuery), // Approved dishes in stock
+                hotelDishModel.countDocuments(approvedDishesOutOfStockQuery), // Approved dishes out of stock
             ]);
+
+        console.log("Results:", {
+            todaysOrders,
+            monthlyOrder,
+            dishInStock,
+            dishOutOfStock,
+            approvedDishesInStock,
+            approvedDishesOutOfStock
+        });
 
         // Respond with the fetched data
         res.status(200).json(
@@ -351,11 +487,16 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
                     monthlyOrder,
                     dishInStock,
                     dishOutOfStock,
+                    approvedDishesInStock,
+                    approvedDishesOutOfStock,
+                    totalDishes: allDishes.length,
+                    totalHotels: hotels.length,
                 },
                 "Partner Dashboard Data Fetched Successfully",
             ),
         );
     } catch (error) {
+        console.error("Error in getPartnerDashboard:", error);
         // Handle any errors
         res.status(500).json(
             new ApiResponse(
