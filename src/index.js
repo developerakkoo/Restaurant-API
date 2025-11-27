@@ -48,6 +48,73 @@ connectDB()
                         console.log(`Partner joined room: partner_${roomId}`);
                     });
 
+                    // Delivery boy room joining handler
+                    socket.on("deliveryBoyJoin", async (data) => {
+                        const { deliveryBoyId } = data;
+                        if (!deliveryBoyId) {
+                            console.error("deliveryBoyJoin: deliveryBoyId is required");
+                            return;
+                        }
+                        
+                        // Convert to string to ensure consistent room naming
+                        const deliveryBoyIdStr = deliveryBoyId.toString();
+                        const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
+                        
+                        console.log("📡 Joining delivery boy room:", deliveryBoyIdStr);
+                        socket.join(roomName);
+                        // Also join the all_delivery_boys room for new order notifications
+                        socket.join("all_delivery_boys");
+                        console.log(`✅ Delivery boy ${deliveryBoyIdStr} joined room: ${roomName} and all_delivery_boys`);
+                        
+                        // Verify room was joined
+                        const room = io.sockets.adapter.rooms.get(roomName);
+                        const roomSize = room ? room.size : 0;
+                        console.log(`   Room verification: ${roomName} has ${roomSize} socket(s)`);
+                        
+                        // Send confirmation back to client
+                        socket.emit("deliveryBoyJoined", {
+                            deliveryBoyId: deliveryBoyIdStr,
+                            room: roomName,
+                            timestamp: new Date()
+                        });
+                    });
+
+                    // Admin dashboard room joining handler
+                    socket.on("adminJoin", async (data) => {
+                        console.log("Admin joining dashboard");
+                        socket.join("admin_dashboard");
+                        console.log("Admin joined admin_dashboard room");
+                    });
+
+                    // Customer/User room joining handler
+                    socket.on("userJoin", async (data) => {
+                        const { userId } = data;
+                        if (!userId) {
+                            console.error("userJoin: userId is required");
+                            return;
+                        }
+                        
+                        // Convert to string to ensure consistent room naming
+                        const userIdStr = userId.toString();
+                        const roomName = `user_${userIdStr}`;
+                        
+                        console.log("👤 Joining user room:", userIdStr);
+                        socket.join(roomName);
+                        console.log(`✅ User ${userIdStr} joined room: ${roomName}`);
+                        
+                        // Verify room was joined
+                        const room = io.sockets.adapter.rooms.get(roomName);
+                        const roomSize = room ? room.size : 0;
+                        console.log(`   Room verification: ${roomName} has ${roomSize} socket(s)`);
+                        
+                        // Send confirmation back to client
+                        socket.emit("userJoined", {
+                            userId: userIdStr,
+                            room: roomName,
+                            timestamp: new Date()
+                        });
+                    });
+
                     socket.on("joinChatRoom", async (data) => {
                         console.log("Joining chat room:", data);
                         const roomId = `${data.userId}`;
@@ -67,6 +134,7 @@ connectDB()
                             isUser: data.isUser,
                             isRead: false,
                             time: new Date(),
+                            orderId: data.orderId || null,
                           };
                       console.log(`Messge :- ${message}`);
                       

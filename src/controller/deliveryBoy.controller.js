@@ -600,17 +600,71 @@ exports.getEarnings = asyncHandler(async (req, res) => {
 });
 
 exports.updateDeliveryBoy = asyncHandler(async (req, res) => {
-    const { deliveryBoyId, isOnline } = req.params;
-    const deliveryBoy = await DeliverBoy.findByIdAndUpdate(
-        deliveryBoyId,
+    const { userId, deliveryBoyId } = req.body;
+    const {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        address,
+        city,
+        bloodGroup,
+        dateOfBirth,
         isOnline,
-        { new: true },
-    );
+    } = req.body;
+
+    // Use userId from body or params, or from query
+    const idToUpdate = userId || deliveryBoyId || req.query.userId;
+    
+    if (!idToUpdate) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Delivery Boy ID is required"));
+    }
+
+    if (!Types.ObjectId.isValid(idToUpdate)) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "Invalid Delivery Boy ID format"));
+    }
+
+    // Build update object with only provided fields
+    const updateData = {};
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (email !== undefined) updateData.email = email;
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+    if (address !== undefined) updateData.address = address;
+    if (city !== undefined) updateData.city = city;
+    if (bloodGroup !== undefined) updateData.bloodGroup = bloodGroup;
+    if (dateOfBirth !== undefined) updateData.dateOfBirth = dateOfBirth;
+    if (isOnline !== undefined) updateData.isOnline = isOnline;
+
+    // Check if phone number is being updated and if it's already taken
+    if (phoneNumber) {
+        const existingUser = await DeliverBoy.findOne({ 
+            phoneNumber,
+            _id: { $ne: new Types.ObjectId(idToUpdate) }
+        });
+        if (existingUser) {
+            return res
+                .status(409)
+                .json(new ApiResponse(409, null, "Phone number already exists"));
+        }
+    }
+
+    const deliveryBoy = await DeliverBoy.findByIdAndUpdate(
+        idToUpdate,
+        { $set: updateData },
+        { new: true, runValidators: true }
+    ).select("-refreshToken -password");
+
     if (!deliveryBoy) {
         return res
             .status(404)
             .json(new ApiResponse(404, null, "Delivery Boy Not Found"));
     }
+
     return res
         .status(200)
         .json(

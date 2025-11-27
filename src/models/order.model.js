@@ -28,6 +28,11 @@ const orderSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "deliveryBoy",
         },
+        assignedDeliveryBoys: {
+            type: [Schema.Types.ObjectId],
+            ref: "deliveryBoy",
+            default: [],
+        },
         address: {
             type: Schema.Types.ObjectId,
             ref: "UserAddress",

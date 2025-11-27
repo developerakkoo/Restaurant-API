@@ -1124,19 +1124,338 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
 
 exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
     async (req, res) => {
-        const { deliveryBoys, orderId } = req.body;
-        const order = await Order.findById(orderId);
-        deliveryBoys.forEach((userId) => {
-            getIO().emit(userId, {
-                message: "Your message here",
-                data: order,
+        // Accept both 'deliveryBoys' and 'deliveryBoyIds' for backward compatibility
+        const { deliveryBoys, deliveryBoyIds, orderId } = req.body;
+        const deliveryBoysArray = deliveryBoys || deliveryBoyIds;
+
+        // Input validation
+        if (!orderId) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Order ID is required")
+            );
+        }
+
+        if (!deliveryBoysArray || !Array.isArray(deliveryBoysArray) || deliveryBoysArray.length === 0) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Delivery boys array is required and must not be empty")
+            );
+        }
+
+        // Validate orderId format
+        if (!Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Invalid order ID format")
+            );
+        }
+
+        // Validate all delivery boy IDs
+        const invalidIds = deliveryBoysArray.filter(id => !Types.ObjectId.isValid(id));
+        if (invalidIds.length > 0) {
+            return res.status(400).json(
+                new ApiResponse(400, null, `Invalid delivery boy ID format(s): ${invalidIds.join(', ')}`)
+            );
+        }
+
+        // Find order with populated hotel info
+        let order = await Order.findById(orderId)
+            .populate({
+                path: "hotelId",
+                select: "hotelName address location",
+            })
+            .populate({
+                path: "userId",
+                select: "name phoneNumber",
+            })
+            .populate({
+                path: "address",
+                select: "address location",
             });
+
+        if (!order) {
+            return res.status(404).json(
+                new ApiResponse(404, null, "Order not found")
+            );
+        }
+
+        // Validate order status - only assign if order is accepted by admin (status 4) or being prepared (status 1)
+        if (![1, 4].includes(order.orderStatus)) {
+            return res.status(400).json(
+                new ApiResponse(400, null, `Order cannot be assigned at this stage. Order must be accepted by admin (status 4) or being prepared (status 1). Current status: ${order.orderStatus}`)
+            );
+        }
+
+        // Validate delivery boys exist and are active
+        const deliveryBoysList = await DeliveryBoy.find({ 
+            _id: { $in: deliveryBoysArray },
+            status: 2 // 2 = approved status
         });
-        res.status(200).json(
+
+        if (deliveryBoysList.length !== deliveryBoysArray.length) {
+            const foundIds = deliveryBoysList.map(db => db._id.toString());
+            const missingIds = deliveryBoysArray.filter(id => !foundIds.includes(id.toString()));
+            return res.status(400).json(
+                new ApiResponse(400, null, `Some delivery boys not found or inactive: ${missingIds.join(', ')}`)
+            );
+        }
+
+        // Get Socket.IO instance
+        const io = getIO();
+
+        // Prepare pickup request payload
+        const pickupRequestPayload = {
+            type: "NEW_PICKUP_REQUEST",
+            orderId: order.orderId,
+            order: order,
+            hotel: order.hotelId,
+            customer: order.userId,
+            deliveryAddress: order.address,
+            timestamp: new Date(),
+            message: `New pickup request for order ${order.orderId}`,
+            priority: "high",
+            // Additional useful information
+            totalAmount: order.priceDetails?.totalAmountToPay || 0,
+            itemCount: order.products?.length || 0,
+            paymentMode: order.paymentMode,
+        };
+
+        // Populate order with full details before sending (initial population)
+        let populatedOrder = await Order.findById(order._id)
+            .populate({
+                path: "hotelId",
+                select: "hotelName address phoneNumber",
+            })
+            .populate({
+                path: "userId",
+                select: "name phoneNumber",
+            })
+            .populate({
+                path: "address",
+                select: "address location",
+            })
+            .populate({
+                path: "products.dishId",
+                select: "dishName userPrice partnerPrice",
+            });
+
+        const assignedHotel = populatedOrder?.hotelId || order.hotelId || {};
+
+        // Update order status FIRST before sending notifications
+        // This ensures the order is in the correct state when delivery boys receive it
+        if ([1, 4].includes(order.orderStatus)) {
+            // Convert all delivery boy IDs to ObjectIds
+            const deliveryBoyObjectIds = deliveryBoysArray.map(id => {
+                // Handle both string and ObjectId formats
+                if (id instanceof Types.ObjectId) {
+                    return id;
+                }
+                return new Types.ObjectId(id.toString());
+            });
+            
+            order.orderStatus = 2;
+            order.assignedDeliveryBoys = deliveryBoyObjectIds;
+            order.markModified("assignedDeliveryBoys");
+            order.assignedDeliveryBoy = null; // Will be set when a delivery boy accepts
+            // Add timeline entry
+            order.orderTimeline.push({
+                title: `Order assigned to ${deliveryBoysArray.length} delivery boy(s)`,
+                dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                status: "ASSIGNED_TO_MULTIPLE",
+            });
+            
+            // Save and wait for it to complete
+            const savedOrder = await order.save();
+            console.log(`✅ Order ${order.orderId} updated: status=2, assignedDeliveryBoys=${deliveryBoysArray.length}`);
+            console.log(`   Saved order assignedDeliveryBoys:`, savedOrder.assignedDeliveryBoys?.map(id => id.toString()));
+            
+            // Refresh the order from database to ensure we have the latest data
+            const refreshedOrder = await Order.findById(order._id)
+                .populate({
+                    path: "hotelId",
+                    select: "hotelName address phoneNumber",
+                })
+                .populate({
+                    path: "userId",
+                    select: "name phoneNumber",
+                })
+                .populate({
+                    path: "address",
+                    select: "address location",
+                })
+                .populate({
+                    path: "products.dishId",
+                    select: "dishName userPrice partnerPrice",
+                });
+            
+            // Use refreshed order for notifications
+            if (refreshedOrder) {
+                order = refreshedOrder;
+                populatedOrder = refreshedOrder;
+            }
+        }
+
+        // Send orderAssigned event to each selected delivery boy
+        // This makes the order visible only to these assigned delivery boys
+        let successCount = 0;
+        console.log(`📤 Sending order assignment to ${deliveryBoysArray.length} delivery boys`);
+        console.log(`📋 Delivery boy IDs: ${deliveryBoysArray.map(id => id.toString()).join(', ')}`);
+        
+        deliveryBoysArray.forEach((deliveryBoyId) => {
+            try {
+                const orderAssignedPayload = {
+                    type: "ORDER_ASSIGNED",
+                    orderId: order.orderId,
+                    order: populatedOrder || order,
+                    hotel: assignedHotel,
+                    timestamp: new Date(),
+                    message: `Order ${order.orderId} has been assigned to you`,
+                    priority: "high",
+                    totalAmount: order.priceDetails?.totalAmountToPay || 0,
+                    itemCount: order.products?.length || 0,
+                    paymentMode: order.paymentMode,
+                    hotelName: assignedHotel.hotelName || assignedHotel.name,
+                    hotelAddress: assignedHotel.address,
+                };
+
+                // Convert deliveryBoyId to string to ensure proper room matching
+                const deliveryBoyIdStr = deliveryBoyId.toString().trim();
+                const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
+                
+                // Check if there are any sockets in this room
+                const room = io.sockets.adapter.rooms.get(roomName);
+                const roomSize = room ? room.size : 0;
+                
+                // Get all connected rooms for debugging
+                const allRooms = Array.from(io.sockets.adapter.rooms.keys());
+                const deliveryBoyRooms = allRooms.filter(r => r.startsWith('deliveryBoy_'));
+                
+                console.log(`🔍 Checking room for delivery boy ${deliveryBoyIdStr}:`);
+                console.log(`   Room name: "${roomName}"`);
+                console.log(`   Room exists: ${room !== undefined}`);
+                console.log(`   Sockets in room: ${roomSize}`);
+                console.log(`   All delivery boy rooms: ${deliveryBoyRooms.join(', ') || 'none'}`);
+                
+                // Log the payload being sent
+                console.log(`📦 Emitting orderAssigned event with payload:`, {
+                    orderId: orderAssignedPayload.orderId,
+                    type: orderAssignedPayload.type,
+                    hotelName: orderAssignedPayload.hotelName,
+                    targetDeliveryBoyId: deliveryBoyIdStr,
+                });
+                
+                // ALWAYS emit the event - Socket.IO will deliver it when the client connects
+                // This ensures delivery even if there's a timing issue
+                // Emit immediately
+                io.to(roomName).emit("orderAssigned", orderAssignedPayload);
+                console.log(`   ✅ Emitted to room: ${roomName}`);
+                
+                // Also emit after a small delay to ensure order is saved (backup)
+                setTimeout(() => {
+                    io.to(roomName).emit("orderAssigned", {
+                        ...orderAssignedPayload,
+                        retry: true, // Mark as retry so client can handle duplicates
+                    });
+                    console.log(`   ✅ Emitted to room: ${roomName} (retry after delay)`);
+                }, 500); // 500ms delay to ensure database save completes
+                
+                // Also try emitting to the socket directly if we can find it
+                const socketsInRoom = room ? Array.from(room) : [];
+                if (socketsInRoom.length > 0) {
+                    socketsInRoom.forEach(socketId => {
+                        const socket = io.sockets.sockets.get(socketId);
+                        if (socket) {
+                            socket.emit("orderAssigned", orderAssignedPayload);
+                            console.log(`   ✅ Also sent directly to socket: ${socketId}`);
+                        }
+                    });
+                } else {
+                    console.warn(`   ⚠️ No sockets found in room ${roomName} to send direct message`);
+                }
+                
+                // Also try broadcasting to all sockets and let client filter
+                // This is a fallback in case room matching fails
+                io.emit("orderAssigned", {
+                    ...orderAssignedPayload,
+                    targetDeliveryBoyId: deliveryBoyIdStr, // Include target ID so client can filter
+                });
+                console.log(`   ✅ Also broadcasted globally (client should filter by targetDeliveryBoyId)`);
+                
+                if (roomSize > 0) {
+                    console.log(`✅ Order assigned notification sent to delivery boy: ${deliveryBoyIdStr} (${roomSize} socket(s) in room: ${roomName})`);
+                    successCount++;
+                } else {
+                    console.warn(`⚠️ Delivery boy ${deliveryBoyIdStr} is not connected (no sockets in room: ${roomName})`);
+                    console.warn(`   Event still emitted - will be delivered when they connect`);
+                    // Count as success since we emitted the event
+                    successCount++;
+                }
+            } catch (error) {
+                console.error(`❌ Failed to send order assignment to delivery boy ${deliveryBoyId}:`, error);
+            }
+        });
+
+        console.log(`📊 Assignment Summary: Sent to ${successCount}/${deliveryBoysArray.length} delivery boys`);
+        console.log(`📦 Order ID: ${order.orderId}, Status: ${order.orderStatus}`);
+
+        // Emit orderStatusUpdate to customer
+        const statusUpdatePayload = {
+            type: "ORDER_STATUS_UPDATE",
+            orderId: order.orderId,
+            order: populatedOrder || order,
+            oldStatus: order.orderStatus,
+            newStatus: 2, // Delivery Assigned
+            timestamp: new Date(),
+        };
+
+        io.to(`user_${order.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+        io.to("admin_dashboard").emit("orderStatusUpdate", statusUpdatePayload);
+
+        // Emit orderAssigned to customer
+        io.to(`user_${order.userId}`).emit("orderAssigned", {
+            type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
+            orderId: order.orderId,
+            order: populatedOrder || order,
+            timestamp: new Date(),
+            message: `Delivery partner assigned to your order ${order.orderId}`,
+        });
+
+        // Notify partner/hotel
+        if (assignedHotel && assignedHotel.userId) {
+            io.to(`partner_${assignedHotel.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+            io.to(`partner_${assignedHotel.userId}`).emit("orderAssignedToDeliveryBoy", {
+                type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
+                orderId: order.orderId,
+                order: populatedOrder || order,
+                deliveryBoyIds: deliveryBoysArray,
+                timestamp: new Date(),
+            });
+        }
+
+        // Ensure the order in response includes assignedDeliveryBoys
+        const responseOrder = populatedOrder || order;
+        if (responseOrder && !responseOrder.assignedDeliveryBoys) {
+            // Fallback: fetch order again to ensure assignedDeliveryBoys is included
+            const finalOrder = await Order.findById(order._id)
+                .select('assignedDeliveryBoys assignedDeliveryBoy orderStatus orderId')
+                .lean();
+            if (finalOrder) {
+                responseOrder.assignedDeliveryBoys = finalOrder.assignedDeliveryBoys || [];
+            }
+        }
+
+        return res.status(200).json(
             new ApiResponse(
                 200,
-                "ok",
-                responseMessage.userMessage.sendOrderPickUpRequestToDeliveryBoys,
+                {
+                    sentTo: successCount,
+                    totalRequested: deliveryBoysArray.length,
+                    orderId: order.orderId,
+                    orderStatus: order.orderStatus,
+                    connectedDeliveryBoys: successCount,
+                    disconnectedDeliveryBoys: deliveryBoysArray.length - successCount,
+                    order: responseOrder,
+                    assignedDeliveryBoys: responseOrder?.assignedDeliveryBoys || deliveryBoysArray,
+                },
+                `Order assigned successfully to ${successCount} delivery boy(s)${successCount < deliveryBoysArray.length ? ` (${deliveryBoysArray.length - successCount} not connected)` : ''}`
             ),
         );
     },

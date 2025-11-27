@@ -1,0 +1,2063 @@
+{
+  "apiInfo": {
+    "baseUrl": "/api/v1",
+    "version": "1.0.0",
+    "description": "DropEat Restaurant API - Complete API Documentation",
+    "authentication": {
+      "header": "x-access-token",
+      "refreshHeader": "x-refresh-token",
+      "cookieBased": true
+    }
+  },
+  "routes": {
+    "auth": {
+      "basePath": "/api/v1/auth",
+      "endpoints": [
+        {
+          "path": "/admin/register",
+          "method": "POST",
+          "description": "Register a new admin",
+          "controller": "adminController.registerAdmin",
+          "validation": ["adminDataValidator.validateAdminRegister"],
+          "requestBody": {
+            "name": "string (required)",
+            "email": "string (required)",
+            "password": "string (required)"
+          }
+        },
+        {
+          "path": "/admin/login",
+          "method": "POST",
+          "description": "Admin login",
+          "controller": "adminController.loginAdmin",
+          "validation": ["adminDataValidator.validateAdminLogin"],
+          "requestBody": {
+            "email": "string (required)",
+            "password": "string (required)"
+          }
+        },
+        {
+          "path": "/user/register",
+          "method": "POST",
+          "description": "Register a new user",
+          "controller": "userController.registerUser",
+          "requestBody": {
+            "name": "string",
+            "email": "string",
+            "phoneNumber": "string",
+            "password": "string"
+          }
+        },
+        {
+          "path": "/user/login",
+          "method": "POST",
+          "description": "User login",
+          "controller": "userController.loginUser",
+          "requestBody": {
+            "phoneNumber": "string (required)"
+          }
+        },
+        {
+          "path": "/user/upload/image",
+          "method": "POST",
+          "description": "Upload user profile image",
+          "controller": "userController.uploadProfileImage",
+          "contentType": "multipart/form-data",
+          "fileField": "document"
+        },
+        {
+          "path": "/user/delete/image",
+          "method": "DELETE",
+          "description": "Delete user profile image",
+          "controller": "userController.deletedImage"
+        },
+        {
+          "path": "/delivery-boy/register",
+          "method": "POST",
+          "description": "Register a new delivery boy",
+          "controller": "deliveryBoyController.registerDeliveryBoy",
+          "requestBody": {
+            "name": "string",
+            "email": "string",
+            "phoneNumber": "string",
+            "password": "string"
+          }
+        },
+        {
+          "path": "/delivery-boy/login",
+          "method": "POST",
+          "description": "Delivery boy login",
+          "controller": "deliveryBoyController.loginDeliveryBoy",
+          "requestBody": {
+            "phoneNumber": "string (required)"
+          }
+        },
+        {
+          "path": "/delivery-boy/upload/document",
+          "method": "POST",
+          "description": "Upload delivery boy document",
+          "controller": "deliveryBoyController.uploadDocument",
+          "contentType": "multipart/form-data",
+          "fileField": "document"
+        },
+        {
+          "path": "/delivery-boy/upload/image",
+          "method": "POST",
+          "description": "Upload delivery boy profile image",
+          "controller": "deliveryBoyController.uploadProfileImage",
+          "contentType": "multipart/form-data",
+          "fileField": "document"
+        },
+        {
+          "path": "/delivery-boy/delete/image",
+          "method": "DELETE",
+          "description": "Delete delivery boy profile image",
+          "controller": "deliveryBoyController.deletedImage"
+        },
+        {
+          "path": "/partner/register",
+          "method": "POST",
+          "description": "Register a new partner",
+          "controller": "partnerController.registerPartner",
+          "requestBody": {
+            "name": "string (required)",
+            "email": "string (required)",
+            "phoneNumber": "string (required)",
+            "password": "string (required)"
+          },
+          "response": {
+            "data": {
+              "_id": "string",
+              "name": "string",
+              "email": "string",
+              "phoneNumber": "string"
+            }
+          }
+        },
+        {
+          "path": "/partner/login",
+          "method": "POST",
+          "description": "Partner login",
+          "controller": "partnerController.loginPartner",
+          "requestBody": {
+            "phoneNumber": "string (required)"
+          },
+          "response": {
+            "data": {
+              "userId": {
+                "_id": "string",
+                "name": "string",
+                "email": "string",
+                "phoneNumber": "string",
+                "profile_image": "string",
+                "status": "number",
+                "createdAt": "date",
+                "updatedAt": "date"
+              },
+              "hotelId": "object|null",
+              "hotelCount": "number",
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
+        },
+        {
+          "path": "/user-forgot-password",
+          "method": "GET",
+          "description": "Render forgot password page"
+        },
+        {
+          "path": "/user-forgot-password",
+          "method": "POST",
+          "description": "Send forgot password email",
+          "controller": "authController.forgotPassword"
+        },
+        {
+          "path": "/rest-password/:id/:token",
+          "method": "GET",
+          "description": "Get reset password page",
+          "controller": "authController.getResetPassword",
+          "params": {
+            "id": "string",
+            "token": "string"
+          }
+        },
+        {
+          "path": "/rest-password/:id/:token",
+          "method": "POST",
+          "description": "Reset password",
+          "controller": "authController.ResetPassword",
+          "params": {
+            "id": "string",
+            "token": "string"
+          }
+        },
+        {
+          "path": "/get-current-user",
+          "method": "GET",
+          "description": "Get current user status",
+          "controller": "authController.getCurrentUserStatus"
+        },
+        {
+          "path": "/get-access-token",
+          "method": "POST",
+          "description": "Regenerate access token",
+          "controller": "authController.reGenerateAccessToken"
+        },
+        {
+          "path": "/send-otp",
+          "method": "POST",
+          "description": "Send OTP",
+          "controller": "authController.sendOtp",
+          "requestBody": {
+            "phoneNumber": "string",
+            "otpType": "number"
+          }
+        },
+        {
+          "path": "/verify-otp",
+          "method": "POST",
+          "description": "Verify OTP",
+          "controller": "authController.verifyOtp",
+          "requestBody": {
+            "phoneNumber": "string",
+            "otp": "string"
+          }
+        },
+        {
+          "path": "/google",
+          "method": "GET",
+          "description": "Google OAuth login",
+          "auth": "passport"
+        },
+        {
+          "path": "/google/callback",
+          "method": "GET",
+          "description": "Google OAuth callback",
+          "controller": "authController.handleSocialAuth",
+          "auth": "passport"
+        },
+        {
+          "path": "/facebook",
+          "method": "GET",
+          "description": "Facebook OAuth login",
+          "auth": "passport"
+        },
+        {
+          "path": "/facebook/callback",
+          "method": "GET",
+          "description": "Facebook OAuth callback",
+          "controller": "authController.handleSocialAuth",
+          "auth": "passport"
+        },
+        {
+          "path": "/sso/success",
+          "method": "GET",
+          "description": "SSO login success"
+        }
+      ]
+    },
+    "admin": {
+      "basePath": "/api/v1/admin",
+      "requiresAuth": true,
+      "endpoints": [
+        {
+          "path": "/logout",
+          "method": "POST",
+          "description": "Admin logout",
+          "controller": "authController.logoutUser"
+        },
+        {
+          "path": "/banner/get",
+          "method": "GET",
+          "description": "Get all banners",
+          "controller": "bannerController.getBanner"
+        },
+        {
+          "path": "/category/get/all",
+          "method": "GET",
+          "description": "Get all categories",
+          "controller": "adminController.getAllCategory"
+        },
+        {
+          "path": "/promoCode/get-all",
+          "method": "GET",
+          "description": "Get all promo codes",
+          "controller": "promoCodeController.getAllPromoCodes"
+        },
+        {
+          "path": "/get/all-users",
+          "method": "GET",
+          "description": "Get all users",
+          "controller": "adminController.getAllUsers"
+        },
+        {
+          "path": "/user/delete/:userId",
+          "method": "DELETE",
+          "description": "Delete user",
+          "controller": "deleteUserData",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/deliveryBoy/delete/:deliveryBoyId",
+          "method": "DELETE",
+          "description": "Delete delivery boy",
+          "controller": "deliveryBoyController.deleteDriverData",
+          "params": {
+            "deliveryBoyId": "string"
+          }
+        },
+        {
+          "path": "/send/firebaseNotification",
+          "method": "POST",
+          "description": "Send Firebase notification to user",
+          "controller": "adminController.sendFirebaseNotificationToUser"
+        },
+        {
+          "path": "/get/dashboard-data",
+          "method": "GET",
+          "description": "Get dashboard statistics",
+          "controller": "adminController.getDashboardStats"
+        },
+        {
+          "path": "/get/customerMapChartData",
+          "method": "GET",
+          "description": "Get customer map chart data",
+          "controller": "adminController.customerMapChartData"
+        },
+        {
+          "path": "/get/user-location-cluster",
+          "method": "GET",
+          "description": "Get user location clusters",
+          "controller": "adminController.getUserLocationClusters"
+        },
+        {
+          "path": "/get/orderChartData",
+          "method": "GET",
+          "description": "Get order chart data",
+          "controller": "adminController.orderChartData"
+        },
+        {
+          "path": "/get/revenueChartData",
+          "method": "GET",
+          "description": "Get revenue chart data",
+          "controller": "adminController.totalRevenueData"
+        },
+        {
+          "path": "/get/all-partners",
+          "method": "GET",
+          "description": "Get all partners",
+          "controller": "adminController.getAllPartner"
+        },
+        {
+          "path": "/get/partner/byId/:partnerId",
+          "method": "GET",
+          "description": "Get partner by ID",
+          "controller": "PartnerController.getPartnerById",
+          "params": {
+            "partnerId": "string"
+          },
+          "queryParams": {
+            "populate": "string (optional, '1' to populate hotels)"
+          }
+        },
+        {
+          "path": "/get/all-hotels",
+          "method": "GET",
+          "description": "Get all hotels",
+          "controller": "adminController.getAllHotel"
+        },
+        {
+          "path": "/get/all-hotels-user",
+          "method": "GET",
+          "description": "Get all hotels for user app",
+          "controller": "adminController.getHotelsForUser"
+        },
+        {
+          "path": "/hotel/register",
+          "method": "POST",
+          "description": "Register a hotel",
+          "controller": "PartnerController.addHotel",
+          "requestBody": {
+            "userId": "string (required)",
+            "hotelName": "string (required)",
+            "address": "string (required)",
+            "category": "array (required)",
+            "lng": "number (optional)",
+            "lat": "number (optional)"
+          }
+        },
+        {
+          "path": "/hotel/upload/image",
+          "method": "POST",
+          "description": "Upload hotel image",
+          "controller": "PartnerController.uploadHotelImage",
+          "contentType": "multipart/form-data",
+          "fileField": "document",
+          "requestBody": {
+            "hotelId": "string (required)"
+          }
+        },
+        {
+          "path": "/hotel/delete",
+          "method": "DELETE",
+          "description": "Delete hotel",
+          "controller": "PartnerController.deleteHotel",
+          "queryParams": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/hotel/update",
+          "method": "PUT",
+          "description": "Update hotel",
+          "controller": "PartnerController.updateHotel",
+          "requestBody": {
+            "hotelId": "string",
+            "hotelName": "string",
+            "address": "string",
+            "hotelStatus": "number",
+            "category": "array",
+            "isOnline": "boolean"
+          }
+        },
+        {
+          "path": "/hotel/add-dish",
+          "method": "POST",
+          "description": "Add hotel dish",
+          "controller": "HotelController.addDish",
+          "requestBody": {
+            "hotelId": "string",
+            "name": "string",
+            "description": "string",
+            "price": "number",
+            "categoryId": "string"
+          }
+        },
+        {
+          "path": "/hotel/dish/upload-image",
+          "method": "POST",
+          "description": "Upload dish image",
+          "controller": "HotelController.uploadDishImage",
+          "contentType": "multipart/form-data",
+          "fileField": "document",
+          "requestBody": {
+            "dishId": "string (required)"
+          }
+        },
+        {
+          "path": "/get-dish/:dishId",
+          "method": "GET",
+          "description": "Get dish by ID",
+          "controller": "HotelController.getDishById",
+          "params": {
+            "dishId": "string"
+          }
+        },
+        {
+          "path": "/hotel/dish/update",
+          "method": "PUT",
+          "description": "Update dish",
+          "controller": "HotelController.updateDish",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/hotel/dish/delete",
+          "method": "DELETE",
+          "description": "Delete dish",
+          "controller": "HotelController.deleteDish",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/get/all-deliveryBoy",
+          "method": "GET",
+          "description": "Get all delivery boys",
+          "controller": "adminController.getAllDeliveryBoy"
+        },
+        {
+          "path": "/delete/delivery-boy/:id",
+          "method": "DELETE",
+          "description": "Delete delivery boy document",
+          "controller": "adminController.deletedDocument",
+          "requiresAdmin": true,
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/get-all/delivery-boy/documents",
+          "method": "GET",
+          "description": "Get all delivery boy documents",
+          "controller": "deliveryBoyController.getAllDocuments"
+        },
+        {
+          "path": "/get-all/delivery-boy/documents-deliveryBoyId",
+          "method": "GET",
+          "description": "Get documents by delivery boy ID",
+          "controller": "deliveryBoyController.getAllDocumentsByUserId"
+        },
+        {
+          "path": "/get/delivery-boy/document-by-id",
+          "method": "GET",
+          "description": "Get document by ID",
+          "controller": "deliveryBoyController.getDocumentById"
+        },
+        {
+          "path": "/update/user/status",
+          "method": "PUT",
+          "description": "Update user status",
+          "controller": "adminController.updateUserStatus",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/update/partner/status",
+          "method": "PUT",
+          "description": "Update partner status",
+          "controller": "adminController.updatePartnerStatus",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/update/delivery-boy/status",
+          "method": "PUT",
+          "description": "Update delivery boy status",
+          "controller": "adminController.updateDeliveryBoyStatus"
+        },
+        {
+          "path": "/update/delivery-boy/document/status",
+          "method": "PUT",
+          "description": "Update delivery boy document status",
+          "controller": "adminController.updateDeliveryBoyDocumentStatus"
+        },
+        {
+          "path": "/category/add",
+          "method": "POST",
+          "description": "Add category",
+          "controller": "adminController.addCategory",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/category/upload/image",
+          "method": "POST",
+          "description": "Upload category image",
+          "controller": "adminController.uploadCategoryImage",
+          "requiresAdmin": true,
+          "contentType": "multipart/form-data",
+          "fileField": "document"
+        },
+        {
+          "path": "/category/get/:categoryId",
+          "method": "GET",
+          "description": "Get category by ID",
+          "controller": "adminController.getCategoryById",
+          "params": {
+            "categoryId": "string"
+          }
+        },
+        {
+          "path": "/category/delete/:categoryId",
+          "method": "DELETE",
+          "description": "Delete category",
+          "controller": "adminController.deleteCategory",
+          "requiresAdmin": true,
+          "params": {
+            "categoryId": "string"
+          }
+        },
+        {
+          "path": "/promoCode/add",
+          "method": "POST",
+          "description": "Add promo code",
+          "controller": "promoCodeController.addPromoCode"
+        },
+        {
+          "path": "/promoCode/update/:promoCodeId",
+          "method": "PUT",
+          "description": "Update promo code",
+          "controller": "promoCodeController.updatedPromoCode",
+          "params": {
+            "promoCodeId": "string"
+          }
+        },
+        {
+          "path": "/promoCode/get/:promoCodeId",
+          "method": "GET",
+          "description": "Get promo code by ID",
+          "controller": "promoCodeController.getPromoCode",
+          "params": {
+            "promoCodeId": "string"
+          }
+        },
+        {
+          "path": "/promoCode/delete/:promoCodeId",
+          "method": "DELETE",
+          "description": "Delete promo code",
+          "controller": "promoCodeController.deletePromoCode",
+          "params": {
+            "promoCodeId": "string"
+          }
+        },
+        {
+          "path": "/get/populated-order",
+          "method": "GET",
+          "description": "Get order with populated fields",
+          "controller": "adminController.getOrderWithPopulatedFields"
+        },
+        {
+          "path": "/order/get-all",
+          "method": "GET",
+          "description": "Get all orders",
+          "controller": "orderController.getAllOrders"
+        },
+        {
+          "path": "/order/update",
+          "method": "PUT",
+          "description": "Update order",
+          "controller": "orderController.updateOrder",
+          "contentType": "multipart/form-data",
+          "fileField": "screenshot"
+        },
+        {
+          "path": "/order/send-pickup-request/deliveryBoy",
+          "method": "POST",
+          "description": "Send order pickup request to delivery boys",
+          "controller": "adminController.sendOrderPickUpRequestToDeliveryBoys"
+        },
+        {
+          "path": "/order/settlement",
+          "method": "PUT",
+          "description": "Order settlement",
+          "controller": "orderController.orderSettlement"
+        },
+        {
+          "path": "/order/delete-data",
+          "method": "DELETE",
+          "description": "Bulk delete orders",
+          "controller": "orderController.bulkDelete"
+        },
+        {
+          "path": "/banner/add",
+          "method": "POST",
+          "description": "Add banner",
+          "controller": "bannerController.addBanner",
+          "requiresAdmin": true,
+          "contentType": "multipart/form-data",
+          "fileField": "image"
+        },
+        {
+          "path": "/banner/update/image",
+          "method": "PUT",
+          "description": "Update banner image",
+          "controller": "bannerController.updateBannerImage",
+          "requiresAdmin": true,
+          "contentType": "multipart/form-data",
+          "fileField": "image"
+        },
+        {
+          "path": "/banner/update/:bannerId",
+          "method": "PUT",
+          "description": "Update banner",
+          "controller": "bannerController.updateBanner",
+          "requiresAdmin": true,
+          "params": {
+            "bannerId": "string"
+          }
+        },
+        {
+          "path": "/banner/delete/:bannerId",
+          "method": "DELETE",
+          "description": "Delete banner",
+          "controller": "bannerController.deleteBanner",
+          "requiresAdmin": true,
+          "params": {
+            "bannerId": "string"
+          }
+        },
+        {
+          "path": "/most-selling-products",
+          "method": "GET",
+          "description": "Get most selling products",
+          "controller": "adminController.getMostSellingDishes"
+        },
+        {
+          "path": "/add/data",
+          "method": "POST",
+          "description": "Create data (GST and platform fee)",
+          "controller": "adminController.createData"
+        },
+        {
+          "path": "/get/data",
+          "method": "GET",
+          "description": "Get data",
+          "controller": "adminController.getData"
+        },
+        {
+          "path": "/update/data/:id",
+          "method": "PUT",
+          "description": "Update data",
+          "controller": "adminController.updateData",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/add/deliveryCharges/data",
+          "method": "POST",
+          "description": "Create delivery charges data",
+          "controller": "adminController.createDeliveryChargesData"
+        },
+        {
+          "path": "/get/deliveryCharges/data",
+          "method": "GET",
+          "description": "Get delivery charges data",
+          "controller": "adminController.getDeliveryChargesData"
+        },
+        {
+          "path": "/update/deliveryCharges/data/:id",
+          "method": "PUT",
+          "description": "Update delivery charges data",
+          "controller": "adminController.updateDeliveryChargesData",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/video/upload",
+          "method": "POST",
+          "description": "Upload videos",
+          "controller": "adminController.addVideos",
+          "contentType": "multipart/form-data",
+          "fileField": "video (array, max 5)"
+        },
+        {
+          "path": "/video/get/:videoId",
+          "method": "GET",
+          "description": "Get video by ID",
+          "controller": "adminController.getVideoById",
+          "params": {
+            "videoId": "string"
+          }
+        },
+        {
+          "path": "/video/all",
+          "method": "GET",
+          "description": "Get all videos",
+          "controller": "adminController.getAllVideos"
+        },
+        {
+          "path": "/video/delete/:videoId",
+          "method": "DELETE",
+          "description": "Delete video",
+          "controller": "adminController.deleteVideo",
+          "params": {
+            "videoId": "string"
+          }
+        },
+        {
+          "path": "/leave/get-all",
+          "method": "GET",
+          "description": "Get all leave requests",
+          "controller": "deliveryBoyController.getAllLeaveRequests"
+        },
+        {
+          "path": "/leave/get-by/:leaveRequestId",
+          "method": "GET",
+          "description": "Get leave request by ID",
+          "controller": "deliveryBoyController.getLeaveRequestById",
+          "params": {
+            "leaveRequestId": "string"
+          }
+        },
+        {
+          "path": "/leave/update/:leaveRequestId",
+          "method": "PUT",
+          "description": "Update leave request status",
+          "controller": "deliveryBoyController.updateLeaveRequestStatus",
+          "params": {
+            "leaveRequestId": "string"
+          }
+        },
+        {
+          "path": "/add/pinCode",
+          "method": "POST",
+          "description": "Add pin code",
+          "controller": "adminController.addPinCode"
+        },
+        {
+          "path": "/pinCode/get",
+          "method": "GET",
+          "description": "Get all pin codes",
+          "controller": "adminController.getAllPinCodes"
+        },
+        {
+          "path": "/delete/pinCode/:id",
+          "method": "DELETE",
+          "description": "Delete pin code",
+          "controller": "adminController.deletePinCode",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/check/delivery-available/:pinCode",
+          "method": "GET",
+          "description": "Check if delivery is available for pin code",
+          "controller": "adminController.checkPinCodeIdDeliverable",
+          "params": {
+            "pinCode": "string"
+          }
+        },
+        {
+          "path": "/upload/image",
+          "method": "POST",
+          "description": "Upload image",
+          "controller": "adminController.uploadImage",
+          "contentType": "multipart/form-data",
+          "fileField": "image"
+        },
+        {
+          "path": "/send/order/pickup/request",
+          "method": "POST",
+          "description": "Send order pickup request to all delivery boys",
+          "controller": "orderController.sendOrderToAllDeliveryBoy"
+        },
+        {
+          "path": "/ratings/hotel/:hotelId",
+          "method": "GET",
+          "description": "Get hotel ratings",
+          "controller": "ratingController.getHotelRatings",
+          "requiresAdmin": true,
+          "params": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/ratings/delivery-boy/:deliveryBoyId",
+          "method": "GET",
+          "description": "Get delivery boy ratings",
+          "controller": "ratingController.getDeliveryBoyRatings",
+          "requiresAdmin": true,
+          "params": {
+            "deliveryBoyId": "string"
+          }
+        },
+        {
+          "path": "/ratings/reported",
+          "method": "GET",
+          "description": "Get reported ratings",
+          "controller": "ratingController.getReportedRatings",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/ratings/statistics",
+          "method": "GET",
+          "description": "Get rating statistics",
+          "controller": "ratingController.getRatingStatistics",
+          "requiresAdmin": true
+        },
+        {
+          "path": "/ratings/status/:ratingId",
+          "method": "PUT",
+          "description": "Update rating status",
+          "controller": "ratingController.updateRatingStatus",
+          "requiresAdmin": true,
+          "params": {
+            "ratingId": "string"
+          }
+        },
+        {
+          "path": "/ratings/:ratingId",
+          "method": "DELETE",
+          "description": "Delete rating",
+          "controller": "ratingController.deleteRating",
+          "requiresAdmin": true,
+          "params": {
+            "ratingId": "string"
+          }
+        }
+      ]
+    },
+    "partner": {
+      "basePath": "/api/v1/partner",
+      "requiresAuth": true,
+      "endpoints": [
+        {
+          "path": "/logout",
+          "method": "POST",
+          "description": "Partner logout",
+          "controller": "authController.logoutUser"
+        },
+        {
+          "path": "/hotel/register",
+          "method": "POST",
+          "description": "Register a hotel",
+          "controller": "partnerController.addHotel",
+          "requestBody": {
+            "userId": "string (required)",
+            "hotelName": "string (required)",
+            "address": "string (required)",
+            "category": "array (required)",
+            "lng": "number (optional)",
+            "lat": "number (optional)"
+          }
+        },
+        {
+          "path": "/hotel/upload/image",
+          "method": "POST",
+          "description": "Upload hotel image",
+          "controller": "partnerController.uploadHotelImage",
+          "contentType": "multipart/form-data",
+          "fileField": "document",
+          "requestBody": {
+            "hotelId": "string (required)"
+          }
+        },
+        {
+          "path": "/hotel/update",
+          "method": "PUT",
+          "description": "Update hotel",
+          "controller": "partnerController.updateHotel",
+          "requestBody": {
+            "hotelId": "string",
+            "hotelName": "string",
+            "address": "string",
+            "hotelStatus": "number",
+            "category": "array",
+            "isOnline": "boolean"
+          }
+        },
+        {
+          "path": "/get/hotels/:partnerId",
+          "method": "GET",
+          "description": "Get all hotels by partner ID",
+          "controller": "partnerController.getHotelsByIdPartnerId",
+          "params": {
+            "partnerId": "string"
+          }
+        },
+        {
+          "path": "/hotel/delete",
+          "method": "DELETE",
+          "description": "Delete hotel",
+          "controller": "partnerController.deleteHotel",
+          "queryParams": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/get/dashboard/:partnerId",
+          "method": "GET",
+          "description": "Get partner dashboard statistics",
+          "controller": "partnerController.getPartnerDashboard",
+          "params": {
+            "partnerId": "string"
+          },
+          "response": {
+            "data": {
+              "todaysOrders": "number",
+              "monthlyOrder": "number",
+              "dishInStock": "number",
+              "dishOutOfStock": "number",
+              "approvedDishesInStock": "number",
+              "approvedDishesOutOfStock": "number",
+              "totalDishes": "number",
+              "totalHotels": "number"
+            }
+          }
+        },
+        {
+          "path": "/get/earnings/:partnerId",
+          "method": "GET",
+          "description": "Get partner earnings",
+          "controller": "partnerController.getEarnings",
+          "params": {
+            "partnerId": "string"
+          },
+          "queryParams": {
+            "startDate": "string (optional)",
+            "endDate": "string (optional)"
+          },
+          "response": {
+            "data": {
+              "totalEarnings": "number",
+              "dailyEarnings": "array"
+            }
+          }
+        },
+        {
+          "path": "/get/orders",
+          "method": "GET",
+          "description": "Get all orders",
+          "controller": "getAllOrders"
+        },
+        {
+          "path": "/get/orders-by-status/:hotelId",
+          "method": "GET",
+          "description": "Get orders by status for a hotel",
+          "controller": "getHotelOrdersByStatus",
+          "params": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/get/byId/:partnerId",
+          "method": "GET",
+          "description": "Get partner by ID",
+          "controller": "partnerController.getPartnerById",
+          "params": {
+            "partnerId": "string"
+          },
+          "queryParams": {
+            "populate": "string (optional, '1' to populate hotels)"
+          }
+        },
+        {
+          "path": "/hotel/add-dish",
+          "method": "POST",
+          "description": "Add hotel dish",
+          "controller": "HotelController.addDish"
+        },
+        {
+          "path": "/hotel/dish/upload-image",
+          "method": "POST",
+          "description": "Upload dish image",
+          "controller": "HotelController.uploadDishImage",
+          "contentType": "multipart/form-data",
+          "fileField": "document"
+        },
+        {
+          "path": "/get-dish/:dishId",
+          "method": "GET",
+          "description": "Get dish by ID",
+          "controller": "HotelController.getDishById",
+          "params": {
+            "dishId": "string"
+          }
+        },
+        {
+          "path": "/hotel/dish/update",
+          "method": "PUT",
+          "description": "Update dish",
+          "controller": "HotelController.updateDish"
+        },
+        {
+          "path": "/category/:categoryId/toggleStoke/:hotelId",
+          "method": "PUT",
+          "description": "Toggle category stock status",
+          "controller": "partnerController.toggleCategoryOutOfStock",
+          "params": {
+            "categoryId": "string",
+            "hotelId": "string"
+          },
+          "requestBody": {
+            "isOutOfStock": "number"
+          }
+        },
+        {
+          "path": "/update/:partnerId",
+          "method": "PUT",
+          "description": "Update partner profile",
+          "controller": "partnerController.updatePartner",
+          "params": {
+            "partnerId": "string"
+          },
+          "requestBody": {
+            "name": "string",
+            "email": "string",
+            "phoneNumber": "string"
+          }
+        },
+        {
+          "path": "/hotel/dish/delete",
+          "method": "DELETE",
+          "description": "Delete dish",
+          "controller": "HotelController.deleteDish"
+        },
+        {
+          "path": "/delete-all/:partnerId",
+          "method": "DELETE",
+          "description": "Delete partner and all associated hotels",
+          "controller": "partnerController.deletePartnerAndHotel",
+          "params": {
+            "partnerId": "string"
+          }
+        }
+      ]
+    },
+    "user": {
+      "basePath": "/api/v1/user",
+      "endpoints": [
+        {
+          "path": "/logout/:userId/:userType",
+          "method": "POST",
+          "description": "User logout",
+          "controller": "authController.logoutUser",
+          "params": {
+            "userId": "string",
+            "userType": "string"
+          }
+        },
+        {
+          "path": "/get/user/:userId",
+          "method": "GET",
+          "description": "Get user by ID",
+          "controller": "userController.getUserById",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/get/profile-stats/:id",
+          "method": "GET",
+          "description": "Get user profile statistics",
+          "controller": "userController.getUserProfileStats",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/coordinates/:userId/:hotelId",
+          "method": "GET",
+          "description": "Get coordinates for calculations",
+          "controller": "userController.getCoordinatesForCalculations",
+          "params": {
+            "userId": "string",
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/update/:userId",
+          "method": "PUT",
+          "description": "Update user profile",
+          "controller": "userController.updateUserProfile",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/add-address",
+          "method": "POST",
+          "description": "Add user address",
+          "controller": "userController.addAddresses"
+        },
+        {
+          "path": "/get/all-address/:userId",
+          "method": "GET",
+          "description": "Get all addresses by user ID",
+          "controller": "userController.getAllAddressesByUserId",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/get/addressById/:addressId",
+          "method": "GET",
+          "description": "Get address by ID",
+          "controller": "userController.getAddressesById",
+          "params": {
+            "addressId": "string"
+          }
+        },
+        {
+          "path": "/select-address",
+          "method": "PUT",
+          "description": "Select address",
+          "controller": "userController.selectAddresses"
+        },
+        {
+          "path": "/update-address",
+          "method": "PUT",
+          "description": "Update address",
+          "controller": "userController.updateAddress"
+        },
+        {
+          "path": "/delete-address/:addressId/:userId",
+          "method": "DELETE",
+          "description": "Delete address",
+          "controller": "userController.deleteAddress",
+          "params": {
+            "addressId": "string",
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/promoCode/get/:promoCodeId",
+          "method": "GET",
+          "description": "Get promo code by ID",
+          "controller": "getPromoCode",
+          "params": {
+            "promoCodeId": "string"
+          }
+        },
+        {
+          "path": "/promoCode/get-all",
+          "method": "GET",
+          "description": "Get all promo codes",
+          "controller": "getAllPromoCodes"
+        },
+        {
+          "path": "/track/add",
+          "method": "POST",
+          "description": "Add user track record",
+          "controller": "userController.addUserTrackRecord"
+        },
+        {
+          "path": "/category/get-all",
+          "method": "GET",
+          "description": "Get all categories",
+          "controller": "getAllCategory"
+        },
+        {
+          "path": "/get/recommended/dishes/:userId",
+          "method": "GET",
+          "description": "Get recommended dishes",
+          "controller": "userController.getRecommendation",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/search",
+          "method": "GET",
+          "description": "Hotel and category search",
+          "controller": "userController.hotelAndCategorySearch"
+        },
+        {
+          "path": "/video/all",
+          "method": "GET",
+          "description": "Get all videos",
+          "controller": "getAllVideos"
+        },
+        {
+          "path": "/video/get/:videoId",
+          "method": "GET",
+          "description": "Get video by ID",
+          "controller": "getVideoById",
+          "params": {
+            "videoId": "string"
+          }
+        },
+        {
+          "path": "/check/status",
+          "method": "POST",
+          "description": "Check user status",
+          "controller": "userController.checkUserStatus"
+        },
+        {
+          "path": "/check/delivery-available/:pinCode",
+          "method": "GET",
+          "description": "Check if delivery is available for pin code",
+          "controller": "checkPinCodeIdDeliverable",
+          "params": {
+            "pinCode": "string"
+          }
+        }
+      ]
+    },
+    "order": {
+      "basePath": "/api/v1/order",
+      "endpoints": [
+        {
+          "path": "/initiate/payment",
+          "method": "POST",
+          "description": "Initiate payment",
+          "controller": "orderController.initiatePayment"
+        },
+        {
+          "path": "/calculate/amount-to-pay",
+          "method": "POST",
+          "description": "Calculate amount to pay",
+          "controller": "orderController.CalculateAmountToPay"
+        },
+        {
+          "path": "/place-order",
+          "method": "POST",
+          "description": "Place order",
+          "controller": "orderController.placeOrder"
+        },
+        {
+          "path": "/accept-reject",
+          "method": "PUT",
+          "description": "Accept or reject order",
+          "controller": "orderController.acceptOrder"
+        },
+        {
+          "path": "/get/order-by-id/:id",
+          "method": "GET",
+          "description": "Get order by ID",
+          "controller": "orderController.getOrderById",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/get-order/:orderId",
+          "method": "GET",
+          "description": "Get order by order ID",
+          "controller": "orderController.getOrderByOrderId",
+          "params": {
+            "orderId": "string"
+          }
+        },
+        {
+          "path": "/update/order-status",
+          "method": "PUT",
+          "description": "Update order status",
+          "controller": "orderController.updateOrder",
+          "contentType": "multipart/form-data",
+          "fileField": "paymentScreenshot"
+        },
+        {
+          "path": "/get/all-order/deliveryBoyId/:deliveryBoyId",
+          "method": "GET",
+          "description": "Get all orders by delivery boy ID",
+          "controller": "orderController.getAllOrdersByDeliveryBoyId",
+          "params": {
+            "deliveryBoyId": "string"
+          }
+        },
+        {
+          "path": "/get/all-order/userId/:userId",
+          "method": "GET",
+          "description": "Get orders by user ID",
+          "controller": "orderController.getOrdersByUserId",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/apply/promoCode",
+          "method": "POST",
+          "description": "Apply promo code",
+          "controller": "applyPromoCode"
+        },
+        {
+          "path": "/get/invoice/:orderId",
+          "method": "GET",
+          "description": "Generate invoice",
+          "controller": "orderController.generateInvoice",
+          "params": {
+            "orderId": "string"
+          }
+        },
+        {
+          "path": "/cancel/order",
+          "method": "POST",
+          "description": "Cancel order",
+          "controller": "orderController.cancelOrder"
+        },
+        {
+          "path": "/reject-by-delivery-boy",
+          "method": "POST",
+          "description": "Reject order by delivery boy",
+          "controller": "orderController.rejectOrderByDeliveryBoy"
+        },
+        {
+          "path": "/accept-by-delivery-boy",
+          "method": "POST",
+          "description": "Accept order by delivery boy",
+          "controller": "orderController.acceptOrderByDeliveryBoy"
+        }
+      ]
+    },
+    "cart": {
+      "basePath": "/api/v1/user/cart",
+      "endpoints": [
+        {
+          "path": "/add-to-cart",
+          "method": "POST",
+          "description": "Add to cart or update cart",
+          "controller": "cartController.updateCart"
+        },
+        {
+          "path": "/get-cart/:userId",
+          "method": "GET",
+          "description": "Get user cart",
+          "controller": "cartController.getMyCart",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/get-cart/byId/:cartId",
+          "method": "GET",
+          "description": "Get cart by ID",
+          "controller": "cartController.getCartById",
+          "params": {
+            "cartId": "string"
+          }
+        },
+        {
+          "path": "/delete/product",
+          "method": "POST",
+          "description": "Delete product from cart",
+          "controller": "cartController.deleteProductFromCart"
+        },
+        {
+          "path": "/:userId/clear",
+          "method": "DELETE",
+          "description": "Clear cart",
+          "controller": "cartController.clearCart",
+          "params": {
+            "userId": "string"
+          }
+        }
+      ]
+    },
+    "hotel": {
+      "basePath": "/api/v1/hotel",
+      "endpoints": [
+        {
+          "path": "/get/byId/:hotelId",
+          "method": "GET",
+          "description": "Get hotel by ID",
+          "controller": "HotelStarController.getHotelById",
+          "params": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/add-star",
+          "method": "POST",
+          "description": "Add star to hotel",
+          "controller": "HotelStarController.addStartToHotel"
+        },
+        {
+          "path": "/get-star/:starId",
+          "method": "GET",
+          "description": "Get star by ID",
+          "controller": "HotelStarController.getStartById",
+          "params": {
+            "starId": "string"
+          }
+        },
+        {
+          "path": "/get/all-star/hotelId/:hotelId",
+          "method": "GET",
+          "description": "Get all stars by hotel ID",
+          "controller": "HotelStarController.getAllStartsByHotelId",
+          "params": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/get-top",
+          "method": "GET",
+          "description": "Get top hotels",
+          "controller": "HotelStarController.getTopHotels"
+        },
+        {
+          "path": "/get-by/:categoryId/category",
+          "method": "GET",
+          "description": "Get hotels by category",
+          "controller": "getAllHotel",
+          "params": {
+            "categoryId": "string"
+          }
+        },
+        {
+          "path": "/delete-star/userId",
+          "method": "DELETE",
+          "description": "Delete star from hotel by user ID",
+          "controller": "HotelStarController.deleteStartFromHotelByUserId"
+        },
+        {
+          "path": "/delete-star/id/:starId",
+          "method": "DELETE",
+          "description": "Delete star from hotel by star ID",
+          "controller": "HotelStarController.deleteStartFromHotelById",
+          "params": {
+            "starId": "string"
+          }
+        },
+        {
+          "path": "/dish/bulk/add",
+          "method": "POST",
+          "description": "Bulk create dishes",
+          "controller": "HotelStarController.bulkDishCreate"
+        },
+        {
+          "path": "/dish/add-star",
+          "method": "POST",
+          "description": "Add star to dish",
+          "controller": "HotelStarController.addStartToDish",
+          "contentType": "multipart/form-data",
+          "fileField": "image (array, max 5)"
+        },
+        {
+          "path": "/dish/get/:hotelId",
+          "method": "GET",
+          "description": "Get dishes by hotel ID",
+          "controller": "HotelStarController.getDishByHotelId",
+          "params": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/dish/get-star/:starId",
+          "method": "GET",
+          "description": "Get dish star by ID",
+          "controller": "HotelStarController.getDishStartById",
+          "params": {
+            "starId": "string"
+          }
+        },
+        {
+          "path": "/dish/get/all-star/:dishId",
+          "method": "GET",
+          "description": "Get all stars by dish ID",
+          "controller": "HotelStarController.getAllStartsByDishId",
+          "params": {
+            "dishId": "string"
+          }
+        },
+        {
+          "path": "/dish/delete-star/userId",
+          "method": "DELETE",
+          "description": "Delete star from dish by user ID",
+          "controller": "HotelStarController.deleteStartFromDishByUserId"
+        },
+        {
+          "path": "/dish/delete-star/id/:starId",
+          "method": "DELETE",
+          "description": "Delete star from dish by star ID",
+          "controller": "HotelStarController.deleteStartFromHotelById",
+          "params": {
+            "starId": "string"
+          }
+        },
+        {
+          "path": "/search-dish",
+          "method": "GET",
+          "description": "Search all dishes",
+          "controller": "HotelStarController.getAllDishes"
+        },
+        {
+          "path": "/nearby",
+          "method": "GET",
+          "description": "Get nearby hotels",
+          "controller": "HotelStarController.getHotelsNearby"
+        },
+        {
+          "path": "/get-hotel-and-dishes",
+          "method": "GET",
+          "description": "Get hotels and dishes",
+          "controller": "HotelStarController.getHotelsAndDishes"
+        },
+        {
+          "path": "/with-ratings",
+          "method": "GET",
+          "description": "Get all hotels with ratings",
+          "controller": "HotelStarController.getAllHotelsWithRatings"
+        }
+      ]
+    },
+    "favorite": {
+      "basePath": "/api/v1/user/favorite",
+      "endpoints": [
+        {
+          "path": "/add-favorite",
+          "method": "POST",
+          "description": "Add to favorites",
+          "controller": "favoriteController.addFavorite"
+        },
+        {
+          "path": "/get-favorite/:id",
+          "method": "GET",
+          "description": "Get favorite by ID",
+          "controller": "favoriteController.getFavorite",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/getMy/favorites/:userId",
+          "method": "GET",
+          "description": "Get my favorites list",
+          "controller": "favoriteController.getMyFavoritesList",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/remove/favorite",
+          "method": "POST",
+          "description": "Remove from favorites",
+          "controller": "favoriteController.removeFavorite"
+        }
+      ]
+    },
+    "deliveryBoy": {
+      "basePath": "/api/v1/deliver-boy",
+      "requiresAuth": true,
+      "endpoints": [
+        {
+          "path": "/logout",
+          "method": "POST",
+          "description": "Delivery boy logout",
+          "controller": "authController.logoutUser"
+        },
+        {
+          "path": "/delete/document",
+          "method": "DELETE",
+          "description": "Delete document",
+          "controller": "deliveryBoyController.deletedDocument"
+        },
+        {
+          "path": "/profile",
+          "method": "GET",
+          "description": "Get my profile",
+          "controller": "deliveryBoyController.getMyProfile"
+        },
+        {
+          "path": "/get-all/documents-deliveryBoyId",
+          "method": "GET",
+          "description": "Get all documents by delivery boy ID",
+          "controller": "deliveryBoyController.getAllDocumentsByUserId"
+        },
+        {
+          "path": "/get/document-by-id",
+          "method": "GET",
+          "description": "Get document by ID",
+          "controller": "deliveryBoyController.getDocumentById"
+        },
+        {
+          "path": "/accept/order-pickup-request",
+          "method": "PUT",
+          "description": "Accept order pickup request",
+          "controller": "updateOrder"
+        },
+        {
+          "path": "/update-delivered-orders/:orderId/:userid",
+          "method": "PUT",
+          "description": "Update delivered orders",
+          "controller": "deliveryBoyController.updateDeliveredOrders",
+          "params": {
+            "orderId": "string",
+            "userid": "string"
+          }
+        },
+        {
+          "path": "/update",
+          "method": "PUT",
+          "description": "Update delivery boy profile",
+          "controller": "deliveryBoyController.updateDeliveryBoy"
+        },
+        {
+          "path": "/ask-for-leave",
+          "method": "POST",
+          "description": "Ask for leave",
+          "controller": "deliveryBoyController.askForLeave"
+        },
+        {
+          "path": "/get/leave-requests",
+          "method": "GET",
+          "description": "Get all leave requests",
+          "controller": "deliveryBoyController.getAllLeaveRequests"
+        },
+        {
+          "path": "/earnings/:deliveryBoyId",
+          "method": "GET",
+          "description": "Get delivery boy earnings",
+          "controller": "deliveryBoyController.getEarnings",
+          "params": {
+            "deliveryBoyId": "string"
+          }
+        }
+      ]
+    },
+    "notification": {
+      "basePath": "/api/v1/notification",
+      "endpoints": [
+        {
+          "path": "/get/byId",
+          "method": "GET",
+          "description": "Get notification by ID",
+          "controller": "notificationController.getNotificationById"
+        },
+        {
+          "path": "/get/all/user/:userId",
+          "method": "GET",
+          "description": "Get all notifications by user ID",
+          "controller": "notificationController.getAllNotificationsByUserId",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/read/:id",
+          "method": "PUT",
+          "description": "Mark notification as read",
+          "controller": "notificationController.markNotificationAsRead",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/delete/:id",
+          "method": "DELETE",
+          "description": "Delete notification by ID",
+          "controller": "notificationController.deleteNotificationById",
+          "params": {
+            "id": "string"
+          }
+        }
+      ]
+    },
+    "rating": {
+      "basePath": "/api/v1/ratings",
+      "endpoints": [
+        {
+          "path": "/submit",
+          "method": "POST",
+          "description": "Submit a rating",
+          "controller": "ratingController.submitRating",
+          "requiresAuth": true
+        },
+        {
+          "path": "/hotel/:hotelId",
+          "method": "GET",
+          "description": "Get ratings for a hotel",
+          "controller": "ratingController.getHotelRatings",
+          "params": {
+            "hotelId": "string"
+          }
+        },
+        {
+          "path": "/delivery-boy/:deliveryBoyId",
+          "method": "GET",
+          "description": "Get ratings for a delivery boy",
+          "controller": "ratingController.getDeliveryBoyRatings",
+          "params": {
+            "deliveryBoyId": "string"
+          }
+        },
+        {
+          "path": "/report/:ratingId",
+          "method": "POST",
+          "description": "Report a rating",
+          "controller": "ratingController.reportRating",
+          "requiresAuth": true,
+          "params": {
+            "ratingId": "string"
+          }
+        },
+        {
+          "path": "/user",
+          "method": "GET",
+          "description": "Get user's own ratings",
+          "controller": "ratingController.getUserRatings",
+          "requiresAuth": true
+        }
+      ]
+    },
+    "payment": {
+      "basePath": "/api/v1/payment",
+      "endpoints": [
+        {
+          "path": "/initiate",
+          "method": "POST",
+          "description": "Initiate RazorPay payment",
+          "controller": "initiateRazorPayPayment"
+        },
+        {
+          "path": "/validate/:merchantTransactionId",
+          "method": "GET",
+          "description": "Validate payment",
+          "controller": "validatePayment",
+          "params": {
+            "merchantTransactionId": "string"
+          }
+        }
+      ]
+    },
+    "message": {
+      "basePath": "/api/v1/chat",
+      "endpoints": [
+        {
+          "path": "/history/:userId",
+          "method": "GET",
+          "description": "Get chat history",
+          "controller": "chatController.getChatHistory",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/history/admin/:userId/:adminId",
+          "method": "GET",
+          "description": "Get chat history for admin",
+          "controller": "chatController.getChatHistoryAdmin",
+          "params": {
+            "userId": "string",
+            "adminId": "string"
+          }
+        },
+        {
+          "path": "/active",
+          "method": "GET",
+          "description": "Get active chats",
+          "controller": "chatController.getActiveChats"
+        },
+        {
+          "path": "/read/:userId",
+          "method": "PUT",
+          "description": "Mark as read",
+          "controller": "chatController.markAsRead",
+          "params": {
+            "userId": "string"
+          }
+        },
+        {
+          "path": "/send",
+          "method": "POST",
+          "description": "Send message",
+          "controller": "chatController.sendMessage"
+        }
+      ]
+    },
+    "hotelOffer": {
+      "basePath": "/api/v1/offer",
+      "endpoints": [
+        {
+          "path": "/create",
+          "method": "POST",
+          "description": "Create hotel offer",
+          "controller": "hotelOfferController.createHotelOffer",
+          "requiresAuth": true
+        },
+        {
+          "path": "/update/:offerId",
+          "method": "PUT",
+          "description": "Update hotel offer",
+          "controller": "hotelOfferController.updateHotelOffer",
+          "requiresAuth": true,
+          "params": {
+            "offerId": "string"
+          }
+        },
+        {
+          "path": "/delete/:offerId",
+          "method": "DELETE",
+          "description": "Delete hotel offer",
+          "controller": "hotelOfferController.deleteHotelOffer",
+          "requiresAuth": true,
+          "params": {
+            "offerId": "string"
+          }
+        },
+        {
+          "path": "/all-active",
+          "method": "GET",
+          "description": "Get all active offers",
+          "controller": "hotelOfferController.getAllActiveOffers",
+          "requiresAuth": true
+        },
+        {
+          "path": "/hotel/:hotelId",
+          "method": "GET",
+          "description": "Get hotel offers",
+          "controller": "hotelOfferController.getHotelOffers",
+          "params": {
+            "hotelId": "string"
+          }
+        }
+      ]
+    },
+    "status": {
+      "basePath": "/api/v1/status",
+      "endpoints": [
+        {
+          "path": "/:userId/:userType",
+          "method": "GET",
+          "description": "Get online status of a specific user",
+          "controller": "statusController.getOnlineStatus",
+          "params": {
+            "userId": "string",
+            "userType": "string"
+          }
+        },
+        {
+          "path": "/online/:userType",
+          "method": "GET",
+          "description": "Get list of online users by type",
+          "controller": "statusController.getOnlineUsers",
+          "params": {
+            "userType": "string"
+          }
+        },
+        {
+          "path": "/update",
+          "method": "PUT",
+          "description": "Update user's online status",
+          "controller": "statusController.updateOnlineStatus"
+        }
+      ]
+    },
+    "deliverySettings": {
+      "basePath": "/api/v1/delivery-settings",
+      "endpoints": [
+        {
+          "path": "/create",
+          "method": "POST",
+          "description": "Create driver settings",
+          "controller": "driverSettingsController.createDriverSettings"
+        },
+        {
+          "path": "/update",
+          "method": "PUT",
+          "description": "Update driver settings",
+          "controller": "driverSettingsController.updateDriverSettings"
+        },
+        {
+          "path": "/get",
+          "method": "GET",
+          "description": "Get driver settings",
+          "controller": "driverSettingsController.getDriverSettings"
+        }
+      ]
+    },
+    "deliveryEarnings": {
+      "basePath": "/api/v1/delivery-earnings",
+      "endpoints": [
+        {
+          "path": "/create",
+          "method": "POST",
+          "description": "Create earning",
+          "controller": "driverEarningController.createEarning"
+        },
+        {
+          "path": "/list",
+          "method": "GET",
+          "description": "Get driver earnings",
+          "controller": "driverEarningController.getDriverEarnings"
+        }
+      ]
+    },
+    "deliverySettlement": {
+      "basePath": "/api/v1/delivery-settlement",
+      "endpoints": [
+        {
+          "path": "/settle",
+          "method": "POST",
+          "description": "Settle driver",
+          "controller": "driverSettlementController.settleDriver"
+        },
+        {
+          "path": "/list",
+          "method": "GET",
+          "description": "Get settlements",
+          "controller": "driverSettlementController.getSettlements"
+        }
+      ]
+    },
+    "invoice": {
+      "basePath": "/api/v1/invoice",
+      "endpoints": [
+        {
+          "path": "/generate",
+          "method": "POST",
+          "description": "Generate partner invoice",
+          "controller": "invoiceController.generatePartnerInvoice"
+        }
+      ]
+    },
+    "analytics": {
+      "basePath": "/api/v1/analytics",
+      "endpoints": [
+        {
+          "path": "/admin-earnings",
+          "method": "GET",
+          "description": "Get admin earnings analytics",
+          "controller": "adminAnalyticsController.getAdminEarnings"
+        },
+        {
+          "path": "/admin-earnings-breakdown",
+          "method": "GET",
+          "description": "Get admin earnings breakdown",
+          "controller": "adminAnalyticsController.getEarningsBreakdown"
+        }
+      ]
+    },
+    "customNotifications": {
+      "basePath": "/api/v1/custom-notifications",
+      "endpoints": [
+        {
+          "path": "/notifications",
+          "method": "POST",
+          "description": "Create a notification",
+          "controller": "notificationController.createNotification"
+        },
+        {
+          "path": "/notifications/read/:id",
+          "method": "PUT",
+          "description": "Mark notification as read",
+          "controller": "notificationController.markAsRead",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/notifications/:id",
+          "method": "DELETE",
+          "description": "Delete a notification",
+          "controller": "notificationController.deleteNotification",
+          "params": {
+            "id": "string"
+          }
+        },
+        {
+          "path": "/notifications",
+          "method": "GET",
+          "description": "Get notifications (for user, deliveryBoy, or hotel)",
+          "controller": "notificationController.getNotifications"
+        }
+      ]
+    },
+    "partnerSettlement": {
+      "basePath": "/api/v1/partner-settlement",
+      "endpoints": [
+        {
+          "path": "/partner-settlements",
+          "method": "GET",
+          "description": "Get partner settlements",
+          "controller": "partnerSettlementController.getSettlements"
+        },
+        {
+          "path": "/partner-settlements/settle",
+          "method": "PUT",
+          "description": "Mark settlement as settled",
+          "controller": "partnerSettlementController.markAsSettled"
+        },
+        {
+          "path": "/partner-settlements/analytics",
+          "method": "GET",
+          "description": "Get earnings analytics",
+          "controller": "partnerSettlementController.getEarningsAnalytics"
+        }
+      ]
+    }
+  },
+  "responseFormat": {
+    "success": {
+      "statusCode": 200,
+      "message": "string",
+      "data": "object|array"
+    },
+    "error": {
+      "statusCode": "number",
+      "message": "string",
+      "error": "string (optional)"
+    }
+  },
+  "notes": {
+    "authentication": "Most endpoints require authentication via 'x-access-token' header or cookies",
+    "fileUploads": "File upload endpoints use multipart/form-data content type",
+    "baseUrl": "All routes are prefixed with /api/v1",
+    "adminPrivileges": "Some admin endpoints require adminPrivilegesRequired middleware",
+    "pagination": "Some list endpoints may support pagination (check controller implementation)",
+    "populate": "Some GET endpoints support 'populate' query parameter to include related data"
+  }
+}
+

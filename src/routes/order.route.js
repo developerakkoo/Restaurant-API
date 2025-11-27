@@ -34,4 +34,6 @@ router.post("/cancel/order", orderController.cancelOrder);
 
 router.post("/reject-by-delivery-boy", orderController.rejectOrderByDeliveryBoy);
 
+router.post("/accept-by-delivery-boy", orderController.acceptOrderByDeliveryBoy);
+
 module.exports = { orderRoutes: router };

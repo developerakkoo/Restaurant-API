@@ -9,8 +9,10 @@ const dishModel = require("../models/hotelDish.model");
 const hotelModel = require("../models/hotel.model");
 const { responseMessage } = require("../constant");
 const dataModel = require("../models/data.model");
+const Data = require("../models/data.model");
 const Order = require("../models/order.model");
 const Cart = require("../models/cart.model");
+const DeliverBoy = require("../models/deliveryBoy.model");
 const { getIO } = require("../utils/socket");
 const { v4: uuidv4 } = require("uuid");
 const { Readable } = require("stream");
@@ -27,6 +29,7 @@ const {
     generateCustomerInformation,
 } = require("../utils/invoice");
 const { createSettlement } = require("./Partner-Settlement/partner-settlement");
+const { createEarningInternal } = require("./Delivery-Boy/delivery-boy-earnings");
 
 
 let instance = new razorpay({
@@ -51,8 +54,70 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
         return res.status(404).json(new ApiResponse(404, null, "Order not found"));
     }
 
+    const oldStatus = order.orderStatus;
     order.orderStatus = 7; // Cancelled status
+    
+    // Add timeline entry
+    order.orderTimeline.push({
+        title: "Order Cancelled",
+        dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+        status: "CANCELLED_BY_CUSTOMER",
+    });
+    
     await order.save();
+
+    // Populate order for socket events
+    const populatedOrder = await Order.findById(orderId)
+        .populate({
+            path: "hotelId",
+            select: "hotelName address phoneNumber userId",
+        })
+        .populate({
+            path: "userId",
+            select: "name phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "address location",
+        })
+        .populate({
+            path: "products.dishId",
+            select: "dishName userPrice partnerPrice",
+        });
+
+    const io = getIO();
+
+    // Emit generic orderStatusUpdate event
+    const statusUpdatePayload = {
+        type: "ORDER_STATUS_UPDATE",
+        orderId: order.orderId,
+        order: populatedOrder || order,
+        oldStatus: oldStatus,
+        newStatus: 7,
+        timestamp: new Date(),
+    };
+
+    io.to(`user_${order.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+    io.to("admin_dashboard").emit("orderStatusUpdate", statusUpdatePayload);
+
+    // Emit orderCancelled event
+    const cancelledPayload = {
+        type: "ORDER_CANCELLED",
+        orderId: order.orderId,
+        order: populatedOrder || order,
+        cancelledBy: "customer",
+        timestamp: new Date(),
+    };
+
+    io.to(`user_${order.userId}`).emit("orderCancelled", cancelledPayload);
+    io.to("admin_dashboard").emit("orderCancelled", cancelledPayload);
+
+    // Notify partner if hotel exists
+    const hotel = await hotelModel.findById(order.hotelId);
+    if (hotel && hotel.userId) {
+        io.to(`partner_${hotel.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+        io.to(`partner_${hotel.userId}`).emit("orderCancelled", cancelledPayload);
+    }
 
     return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
 });
@@ -60,66 +125,197 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
 exports.rejectOrderByDeliveryBoy = asyncHandler(async (req, res) => {
     const { orderId, deliveryBoyId, reason } = req.body;
     
+    // Input validation
+    if (!orderId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order ID is required")
+        );
+    }
+
+    if (!deliveryBoyId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Delivery boy ID is required")
+        );
+    }
+
+    if (!Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid order ID format")
+        );
+    }
+
+    if (!Types.ObjectId.isValid(deliveryBoyId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid delivery boy ID format")
+        );
+    }
+
+    // Validate reason length (max 500 characters)
+    if (reason && reason.length > 500) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Reason cannot exceed 500 characters")
+        );
+    }
+
     // Find the order
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate('hotelId');
     if (!order) {
-        return res.status(404).json(new ApiResponse(404, null, "Order not found"));
+        return res.status(404).json(
+            new ApiResponse(404, null, "Order not found")
+        );
+    }
+
+    // Verify delivery boy exists
+    const deliveryBoy = await DeliverBoy.findById(deliveryBoyId);
+    if (!deliveryBoy) {
+        return res.status(404).json(
+            new ApiResponse(404, null, "Delivery boy not found")
+        );
     }
 
     // Check if the order is assigned to this delivery boy
-    if (order.assignedDeliveryBoy.toString() !== deliveryBoyId.toString()) {
-        return res.status(403).json(new ApiResponse(403, null, "This order is not assigned to you"));
+    if (!order.assignedDeliveryBoy || 
+        order.assignedDeliveryBoy.toString() !== deliveryBoyId.toString()) {
+        return res.status(403).json(
+            new ApiResponse(403, null, "This order is not assigned to you")
+        );
     }
 
     // Check if order status allows rejection (only if delivery assigned or pickup confirmed)
     if (![2, 6].includes(order.orderStatus)) {
-        return res.status(400).json(new ApiResponse(400, null, "Order cannot be rejected at this stage"));
-    }
-
-    // Update order status to rejected by delivery boy
-    order.orderStatus = 8;
-    
-    // Add rejection to timeline
-    order.orderTimeline.push({
-        title: "Order Rejected by Delivery Boy",
-        dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
-        status: "REJECTED_BY_DELIVERY_BOY",
-        reason: reason || "No reason provided"
-    });
-
-    // Clear the assigned delivery boy
-    order.assignedDeliveryBoy = null;
-    
-    await order.save();
-
-    // Send notifications
-    const hotel = await hotelModel.findById(order.hotelId);
-    if (hotel && hotel.userId) {
-        sendNotification(
-            hotel.userId, 
-            "Order Rejected by Delivery Boy", 
-            `Order ${order.orderId} was rejected by delivery boy. Reason: ${reason || "No reason provided"}`
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order cannot be rejected at this stage. Only orders with status 'assigned' (2) or 'pickup confirmed' (6) can be rejected.")
         );
     }
 
+    // Update order status to rejected by delivery boy
+    // Use atomic update to remove delivery boy from assignedDeliveryBoys array and clear assignedDeliveryBoy
+    const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+            $set: {
+                orderStatus: 8,
+                assignedDeliveryBoy: null,
+            },
+            $pull: {
+                assignedDeliveryBoys: deliveryBoyId
+            },
+            $push: {
+                orderTimeline: {
+                    title: "Order Rejected by Delivery Boy",
+                    dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                    status: "REJECTED_BY_DELIVERY_BOY",
+                    reason: reason || "No reason provided"
+                }
+            }
+        },
+        { new: true }
+    );
+    
+    if (!updatedOrder) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Failed to reject order")
+        );
+    }
+    
+    // Populate the updated order for subsequent operations
+    const populatedUpdatedOrder = await Order.findById(updatedOrder._id)
+        .populate('hotelId');
+
+    const io = getIO();
+
+    // Send Socket.IO notifications
+    io.to(`deliveryBoy_${deliveryBoyId}`).emit("orderRejected", {
+        type: "ORDER_REJECTED",
+        orderId: populatedUpdatedOrder.orderId,
+        order: populatedUpdatedOrder,
+        reason: reason || "No reason provided",
+        timestamp: new Date(),
+    });
+
+    // Notify hotel/partner
+    if (populatedUpdatedOrder.hotelId && populatedUpdatedOrder.hotelId.userId) {
+        const partnerId = populatedUpdatedOrder.hotelId.userId;
+        sendNotification(
+            partnerId, 
+            "Order Rejected by Delivery Boy", 
+            `Order ${populatedUpdatedOrder.orderId} was rejected by delivery boy. Reason: ${reason || "No reason provided"}`
+        );
+        
+        io.to(`partner_${partnerId}`).emit("orderRejectedByDeliveryBoy", {
+            type: "ORDER_REJECTED_BY_DELIVERY_BOY",
+            orderId: populatedUpdatedOrder.orderId,
+            order: populatedUpdatedOrder,
+            deliveryBoyId: deliveryBoyId,
+            deliveryBoyName: `${deliveryBoy.firstName} ${deliveryBoy.lastName}`,
+            reason: reason || "No reason provided",
+            timestamp: new Date(),
+        });
+    }
+
+    // Populate order for customer notification
+    const populatedOrderForCustomer = await Order.findById(populatedUpdatedOrder._id)
+        .populate({
+            path: "hotelId",
+            select: "hotelName address phoneNumber userId",
+        })
+        .populate({
+            path: "userId",
+            select: "name phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "address location",
+        })
+        .populate({
+            path: "products.dishId",
+            select: "dishName userPrice partnerPrice",
+        });
+
+    // Emit orderStatusUpdate to customer
+    const oldStatus = order.orderStatus; // Preserve old status from original order
+    io.to(`user_${populatedOrderForCustomer.userId}`).emit("orderStatusUpdate", {
+        type: "ORDER_STATUS_UPDATE",
+        orderId: populatedOrderForCustomer.orderId,
+        order: populatedOrderForCustomer,
+        oldStatus: oldStatus,
+        newStatus: 8, // Rejected by delivery boy
+        timestamp: new Date(),
+    });
+
+    // Emit orderRejectedByDeliveryBoy to customer
+    io.to(`user_${populatedOrderForCustomer.userId}`).emit("orderRejectedByDeliveryBoy", {
+        type: "ORDER_REJECTED_BY_DELIVERY_BOY",
+        orderId: populatedOrderForCustomer.orderId,
+        order: populatedOrderForCustomer,
+        deliveryBoyId: deliveryBoyId,
+        deliveryBoyName: `${deliveryBoy.firstName} ${deliveryBoy.lastName}`,
+        reason: reason || "No reason provided",
+        timestamp: new Date(),
+    });
+
+    // Notify customer
     sendNotification(
-        order.userId,
+        populatedOrderForCustomer.userId,
         "Delivery Boy Rejected Order",
-        `Your order ${order.orderId} was rejected by the assigned delivery boy. We'll assign a new delivery partner soon.`
+        `Your order ${populatedOrderForCustomer.orderId} was rejected by the assigned delivery boy. We'll assign a new delivery partner soon.`
     );
 
     // Notify admin dashboard
-    const io = getIO();
     io.to("admin_dashboard").emit("orderRejectedByDeliveryBoy", {
-        orderId: order.orderId,
+        type: "ORDER_REJECTED_BY_DELIVERY_BOY",
+        orderId: populatedOrderForCustomer.orderId,
         deliveryBoyId: deliveryBoyId,
-        reason: reason,
+        deliveryBoyName: `${deliveryBoy.firstName} ${deliveryBoy.lastName}`,
+        reason: reason || "No reason provided",
         timestamp: new Date(),
-        hotelId: order.hotelId,
-        userId: order.userId
+        hotelId: populatedOrderForCustomer.hotelId?._id || populatedOrderForCustomer.hotelId,
+        userId: populatedOrderForCustomer.userId
     });
 
-    return res.status(200).json(new ApiResponse(200, order, "Order rejected successfully"));
+    return res.status(200).json(
+        new ApiResponse(200, populatedOrderForCustomer, "Order rejected successfully")
+    );
 });
 
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
@@ -403,8 +599,24 @@ exports.placeOrder = asyncHandler(async (req, res) => {
             hotelName: hotel.hotelName
         });
 
+        // Emit to customer room
+        io.to(`user_${userId}`).emit("newOrder", {
+            type: "NEW_ORDER",
+            orderId: order.orderId,
+            order: populatedOrder,
+            timestamp: new Date(),
+            message: `Your order ${order.orderId} has been placed successfully`,
+            status: 0, // Received status
+        });
+
+        // NOTE: Orders are NOT broadcasted to all delivery boys when placed
+        // Orders will only be visible to delivery boys when admin assigns them
+        // This prevents all delivery boys from seeing unassigned orders
+        
         console.log(`New order notification sent to partner: ${partnerId}`);
-        console.log(`Order details: ${order.orderId} for hotel: ${hotel.hotelName}`);
+        console.log(`New order notification sent to customer: ${userId}`);
+        console.log(`Order placed: ${order.orderId} for hotel: ${hotel.hotelName}`);
+        console.log(`Order will be visible to delivery boys only after admin assignment`);
     }
     
     return res
@@ -454,6 +666,95 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
         return res
             .status(404)
             .json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    // Populate order for socket events
+    const populatedOrder = await Order.findById(orderId)
+        .populate({
+            path: "hotelId",
+            select: "hotelName address phoneNumber userId",
+        })
+        .populate({
+            path: "userId",
+            select: "name phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "address location",
+        })
+        .populate({
+            path: "products.dishId",
+            select: "dishName userPrice partnerPrice",
+        });
+
+    const io = getIO();
+    const oldStatus = order.orderStatus;
+
+    // Emit generic orderStatusUpdate event
+    const statusUpdatePayload = {
+        type: "ORDER_STATUS_UPDATE",
+        orderId: order.orderId,
+        order: populatedOrder || order,
+        oldStatus: oldStatus,
+        newStatus: status,
+        timestamp: new Date(),
+    };
+
+    // Emit to customer
+    io.to(`user_${order.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+
+    // Emit to partner if hotel exists
+    if (populatedOrder?.hotelId?.userId) {
+        io.to(`partner_${populatedOrder.hotelId.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+    }
+
+    // Emit to admin dashboard
+    io.to("admin_dashboard").emit("orderStatusUpdate", statusUpdatePayload);
+
+    // Emit specific events based on status
+    if (status === 4) {
+        // Order accepted
+        const acceptedPayload = {
+            type: "ORDER_ACCEPTED",
+            orderId: order.orderId,
+            order: populatedOrder || order,
+            timestamp: new Date(),
+        };
+
+        io.to(`user_${order.userId}`).emit("orderAccepted", acceptedPayload);
+        
+        if (populatedOrder?.hotelId?.userId) {
+            io.to(`partner_${populatedOrder.hotelId.userId}`).emit("orderAccepted", acceptedPayload);
+        }
+
+        io.to("admin_dashboard").emit("orderAccepted", acceptedPayload);
+    } else if (status === 5) {
+        // Order cancelled by hotel
+        const cancelledPayload = {
+            type: "ORDER_CANCELLED",
+            orderId: order.orderId,
+            order: populatedOrder || order,
+            cancelledBy: "hotel",
+            timestamp: new Date(),
+        };
+
+        io.to(`user_${order.userId}`).emit("orderCancelled", cancelledPayload);
+        io.to("admin_dashboard").emit("orderCancelled", cancelledPayload);
+    } else if (status === 7) {
+        // Order cancelled by customer
+        const cancelledPayload = {
+            type: "ORDER_CANCELLED",
+            orderId: order.orderId,
+            order: populatedOrder || order,
+            cancelledBy: "customer",
+            timestamp: new Date(),
+        };
+
+        if (populatedOrder?.hotelId?.userId) {
+            io.to(`partner_${populatedOrder.hotelId.userId}`).emit("orderCancelled", cancelledPayload);
+        }
+
+        io.to("admin_dashboard").emit("orderCancelled", cancelledPayload);
     }
 
     sendNotification(order.userId, message, order);
@@ -522,44 +823,382 @@ exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
         );
 });
 
-exports.updateOrder = asyncHandler(async (req, res) => {
-    const { orderId, status, deliveryBoyId, paymentMode } = req.body;
-    const savedOrder = await Order.findById(orderId);
-    let url;
+/**
+ * Accept order by delivery boy
+ * When a delivery boy accepts an order, remove other delivery boys from assignedDeliveryBoys
+ * and set assignedDeliveryBoy to only this delivery boy
+ */
+exports.acceptOrderByDeliveryBoy = asyncHandler(async (req, res) => {
+    const { orderId, deliveryBoyId } = req.body;
 
+    // Input validation
+    if (!orderId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order ID is required")
+        );
+    }
+
+    if (!deliveryBoyId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Delivery Boy ID is required")
+        );
+    }
+
+    if (!Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid order ID format")
+        );
+    }
+
+    if (!Types.ObjectId.isValid(deliveryBoyId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid delivery boy ID format")
+        );
+    }
+
+    // Find order
+    const order = await Order.findById(orderId);
+    if (!order) {
+        return res.status(404).json(
+            new ApiResponse(404, null, "Order not found")
+        );
+    }
+
+    // Check if order is in assignedDeliveryBoys array (not yet accepted by anyone)
+    if (!order.assignedDeliveryBoys || !order.assignedDeliveryBoys.includes(deliveryBoyId)) {
+        // Check if already accepted by this delivery boy
+        if (order.assignedDeliveryBoy && order.assignedDeliveryBoy.toString() === deliveryBoyId.toString()) {
+            return res.status(200).json(
+                new ApiResponse(200, order, "Order already accepted by you")
+            );
+        }
+        // Check if accepted by another delivery boy
+        if (order.assignedDeliveryBoy && order.assignedDeliveryBoy.toString() !== deliveryBoyId.toString()) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "This order has already been accepted by another delivery boy")
+            );
+        }
+        return res.status(403).json(
+            new ApiResponse(403, null, "This order is not assigned to you")
+        );
+    }
+
+    // Check if order status is 2 (assigned)
+    if (order.orderStatus !== 2) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order cannot be accepted at this stage")
+        );
+    }
+
+    // Verify delivery boy exists and is active
+    const deliveryBoy = await DeliverBoy.findById(deliveryBoyId);
+    if (!deliveryBoy) {
+        return res.status(404).json(
+            new ApiResponse(404, null, "Delivery boy not found")
+        );
+    }
+    if (deliveryBoy.status !== 2) { // 2 = approved status
+        return res.status(400).json(
+            new ApiResponse(400, null, "Delivery boy is not active")
+        );
+    }
+
+    // Atomic update: Remove this delivery boy from assignedDeliveryBoys and set assignedDeliveryBoy
+    // Include condition to ensure assignedDeliveryBoy is null/undefined to prevent race conditions
+    const updatedOrder = await Order.findOneAndUpdate(
+        {
+            _id: orderId,
+            $or: [
+                { assignedDeliveryBoy: null },
+                { assignedDeliveryBoy: { $exists: false } }
+            ],
+            assignedDeliveryBoys: deliveryBoyId,
+            orderStatus: 2
+        },
+        {
+            $set: {
+                assignedDeliveryBoy: deliveryBoyId,
+            },
+            $pull: {
+                assignedDeliveryBoys: deliveryBoyId
+            },
+            $push: {
+                orderTimeline: {
+                    title: `Order accepted by delivery boy`,
+                    dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                    status: "ACCEPTED_BY_DELIVERY_BOY",
+                }
+            }
+        },
+        { new: true }
+    ).populate({
+        path: "hotelId",
+        select: "hotelName address phoneNumber",
+    }).populate({
+        path: "userId",
+        select: "name phoneNumber",
+    });
+
+    if (!updatedOrder) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Failed to accept order")
+        );
+    }
+
+    const io = getIO();
+
+    // Notify other delivery boys that order was accepted
+    const otherDeliveryBoys = order.assignedDeliveryBoys.filter(
+        id => id.toString() !== deliveryBoyId.toString()
+    );
+
+    otherDeliveryBoys.forEach((otherDeliveryBoyId) => {
+        io.to(`deliveryBoy_${otherDeliveryBoyId}`).emit("orderAcceptedByOther", {
+            type: "ORDER_ACCEPTED_BY_OTHER",
+            orderId: order.orderId,
+            message: `Order ${order.orderId} has been accepted by another delivery boy`,
+            timestamp: new Date(),
+        });
+    });
+
+    // Notify the accepting delivery boy
+    io.to(`deliveryBoy_${deliveryBoyId}`).emit("orderAccepted", {
+        type: "ORDER_ACCEPTED",
+        orderId: order.orderId,
+        order: updatedOrder,
+        message: `Order ${order.orderId} accepted successfully`,
+        timestamp: new Date(),
+    });
+
+    // Populate order for customer notification
+    const populatedOrderForCustomer = await Order.findById(order._id)
+        .populate({
+            path: "hotelId",
+            select: "hotelName address phoneNumber userId",
+        })
+        .populate({
+            path: "userId",
+            select: "name phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "address location",
+        })
+        .populate({
+            path: "products.dishId",
+            select: "dishName userPrice partnerPrice",
+        });
+
+    // Emit orderStatusUpdate to customer
+    io.to(`user_${order.userId}`).emit("orderStatusUpdate", {
+        type: "ORDER_STATUS_UPDATE",
+        orderId: order.orderId,
+        order: populatedOrderForCustomer || updatedOrder,
+        oldStatus: order.orderStatus,
+        newStatus: order.orderStatus, // Status remains 2, but delivery boy is now assigned
+        timestamp: new Date(),
+    });
+
+    // Emit orderAcceptedByDeliveryBoy to customer
+    io.to(`user_${order.userId}`).emit("orderAcceptedByDeliveryBoy", {
+        type: "ORDER_ACCEPTED_BY_DELIVERY_BOY",
+        orderId: order.orderId,
+        order: populatedOrderForCustomer || updatedOrder,
+        deliveryBoyId: deliveryBoyId,
+        timestamp: new Date(),
+    });
+
+    // Notify partner/hotel
+    const hotel = await hotelModel.findById(order.hotelId);
+    if (hotel && hotel.userId) {
+        io.to(`partner_${hotel.userId}`).emit("orderAcceptedByDeliveryBoy", {
+            type: "ORDER_ACCEPTED_BY_DELIVERY_BOY",
+            orderId: order.orderId,
+            order: updatedOrder,
+            deliveryBoyId: deliveryBoyId,
+            timestamp: new Date(),
+        });
+    }
+
+    console.log(`✅ Order ${order.orderId} accepted by delivery boy ${deliveryBoyId}`);
+    console.log(`📢 Notified ${otherDeliveryBoys.length} other delivery boys`);
+    console.log(`👤 Notified customer: ${order.userId}`);
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedOrder, "Order accepted successfully")
+    );
+});
+
+exports.updateOrder = asyncHandler(async (req, res) => {
+    const { orderId, status, deliveryBoyId, paymentMode, otp } = req.body;
+
+    // Input validation
+    if (!orderId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order ID is required")
+        );
+    }
+
+    if (status === undefined || status === null) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order status is required")
+        );
+    }
+
+    if (!Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid order ID format")
+        );
+    }
+
+    // Validate status enum
+    const validStatuses = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    if (!validStatuses.includes(Number(status))) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid order status")
+        );
+    }
+
+    // Validate delivery boy ID if provided
+    if (deliveryBoyId && !Types.ObjectId.isValid(deliveryBoyId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid delivery boy ID format")
+        );
+    }
+
+    // Find order first
+    const savedOrder = await Order.findById(orderId);
+    if (!savedOrder) {
+        return res.status(404).json(
+            new ApiResponse(404, null, "Order not found")
+        );
+    }
+
+    // Validate delivery boy exists if assigning
+    if (deliveryBoyId && status === 2) {
+        const deliveryBoy = await DeliverBoy.findById(deliveryBoyId);
+        if (!deliveryBoy) {
+            return res.status(404).json(
+                new ApiResponse(404, null, "Delivery boy not found")
+            );
+        }
+        if (deliveryBoy.status !== 2) { // 2 = approved status
+            return res.status(400).json(
+                new ApiResponse(400, null, "Delivery boy is not active")
+            );
+        }
+    }
+
+    // Handle payment screenshot for UPI
+    let url;
     if (paymentMode === "UPI") {
-        if (!req.file) throw new ApiError(400, "Payment photo is required");
+        if (!req.file) {
+            throw new ApiError(400, "Payment photo is required for UPI payment");
+        }
         const { filename } = req.file;
         url = `https://${req.hostname}/upload/${filename}`;
     }
 
-    console.log("req.file");
-    console.log(req.file);
-    console.log(req.body);
-
-    // Check if the order is already assigned and trying to assign again
-    if (
-        savedOrder.orderStatus === 2 &&
-        savedOrder.assignedDeliveryBoy &&
-        req.body.deliveryBoyId
-    ) {
-        return res
-            .status(400)
-            .json(
+    // Comprehensive status transition validation
+    const oldStatus = savedOrder.orderStatus;
+    const newStatus = Number(status);
+    const statusNumber = Number(status); // Convert status to number for consistent comparison throughout function // Convert to number for consistent comparison
+    
+    // Define valid status transitions based on documented flow
+    const validTransitions = {
+        0: [1, 4, 5, 7], // Received can transition to: Being Prepared, Accepted, Cancelled by Hotel, Cancelled by Customer
+        1: [2, 5], // Being Prepared can transition to: Delivery Assigned, Cancelled by Hotel
+        2: [3, 6, 8], // Delivery Assigned can transition to: Delivered, Pickup Confirmed, Rejected by Delivery Boy
+        3: [], // Delivered is final (cannot transition)
+        4: [1, 2, 5], // Accepted can transition to: Being Prepared, Delivery Assigned, Cancelled by Hotel
+        5: [], // Cancelled by Hotel is final (cannot transition)
+        6: [3, 8], // Pickup Confirmed can transition to: Delivered, Rejected by Delivery Boy
+        7: [], // Cancelled by Customer is final (cannot transition)
+        8: [2], // Rejected by Delivery Boy can transition to: Delivery Assigned (re-assignment)
+    };
+    
+    // Check if transition is valid
+    if (oldStatus !== newStatus) {
+        const allowedTransitions = validTransitions[oldStatus] || [];
+        if (!allowedTransitions.includes(newStatus)) {
+            return res.status(400).json(
                 new ApiResponse(
-                    400,
-                    null,
-                    responseMessage.userMessage.ORDER_ALREADY_ASSIGNED,
-                ),
+                    400, 
+                    null, 
+                    `Invalid status transition: Cannot change order status from ${oldStatus} (${getStatusName(oldStatus)}) to ${newStatus} (${getStatusName(newStatus)}). Valid transitions from ${oldStatus} are: ${allowedTransitions.join(', ')}`
+                )
             );
+        }
+    }
+    
+    // Helper function to get status name
+    function getStatusName(statusCode) {
+        const statusNames = {
+            0: 'Received',
+            1: 'Being Prepared',
+            2: 'Delivery Assigned',
+            3: 'Delivered',
+            4: 'Accepted',
+            5: 'Cancelled by Hotel',
+            6: 'Pickup Confirmed',
+            7: 'Cancelled by Customer',
+            8: 'Rejected by Delivery Boy'
+        };
+        return statusNames[statusCode] || 'Unknown';
+    }
+    
+    // Validate order status transitions for assignment
+    const validStatusesForAssignment = [0, 1, 4]; // received, being prepared, accepted
+    if (status === 2 && !validStatusesForAssignment.includes(savedOrder.orderStatus)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order cannot be assigned at this stage. Order must be in status 0 (Received), 1 (Being Prepared), or 4 (Accepted)")
+        );
+    }
+
+    // Require OTP verification when delivery boy marks order as delivered
+    if (Number(status) === 3 && deliveryBoyId) {
+        const trimmedOtp = otp ? otp.toString().trim() : "";
+        if (!trimmedOtp) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Delivery OTP is required to complete the order"),
+            );
+        }
+
+        if (!savedOrder.otp) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Delivery OTP not available for this order"),
+            );
+        }
+
+        if (savedOrder.otp !== trimmedOtp) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Invalid delivery OTP. Please try again."),
+            );
+        }
+    }
+
+    // Atomic update to prevent race conditions
+    const updateCondition = {
+        _id: orderId,
+    };
+
+    // For assignment (status 2), ensure order is not already assigned
+    if (status === 2 && deliveryBoyId) {
+        updateCondition.$or = [
+            { assignedDeliveryBoy: null },
+            { orderStatus: { $ne: 2 } }
+        ];
     }
 
     const update = {
         $set: {
             orderStatus: status,
-            assignedDeliveryBoy: deliveryBoyId,
-            paymentMode: paymentMode,
-            upi_paymentScreenShot: url,
+            ...(deliveryBoyId && { 
+                assignedDeliveryBoy: deliveryBoyId,
+                assignedDeliveryBoys: [deliveryBoyId] // Also add to array for consistency
+            }),
+            ...(paymentMode && { paymentMode: paymentMode }),
+            ...(url && { upi_paymentScreenShot: url }),
         },
     };
 
@@ -609,10 +1248,181 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         update.$push = { orderTimeline: timelineEntry };
     }
 
-    // Update order status and other details
-    const order = await Order.findByIdAndUpdate(orderId, update, { new: true });
+    // Atomic update with condition check
+    const order = await Order.findOneAndUpdate(updateCondition, update, { new: true });
 
-    if (deliveryBoyId && status === 3) {
+    if (!order) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Order already assigned or invalid status for this operation")
+        );
+    }
+
+    const io = getIO();
+
+    // Populate order for socket events
+    const populatedOrderForSocket = await Order.findById(order._id)
+        .populate({
+            path: "hotelId",
+            select: "hotelName address phoneNumber userId",
+        })
+        .populate({
+            path: "userId",
+            select: "name phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "address location",
+        })
+        .populate({
+            path: "products.dishId",
+            select: "dishName userPrice partnerPrice",
+        });
+
+    // Emit generic orderStatusUpdate event for all status changes
+    const statusUpdatePayload = {
+        type: "ORDER_STATUS_UPDATE",
+        orderId: order.orderId,
+        order: populatedOrderForSocket || order,
+        oldStatus: oldStatus,
+        newStatus: status,
+        timestamp: new Date(),
+    };
+
+    // Get hotel for partner notifications
+    const hotel = await hotelModel.findById(order.hotelId);
+
+    // Emit to customer
+    io.to(`user_${order.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+
+    // Emit to partner if hotel exists
+    if (hotel && hotel.userId) {
+        io.to(`partner_${hotel.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+    }
+
+    // Emit to admin dashboard
+    io.to("admin_dashboard").emit("orderStatusUpdate", statusUpdatePayload);
+
+    // Handle delivery boy assignment (status 2)
+    // statusNumber already declared above
+    console.log(`🔍 [updateOrder] Checking delivery boy assignment condition:`);
+    console.log(`   deliveryBoyId: ${deliveryBoyId} (type: ${typeof deliveryBoyId})`);
+    console.log(`   status: ${status} (type: ${typeof status})`);
+    console.log(`   statusNumber: ${statusNumber} (converted)`);
+    console.log(`   Condition check: deliveryBoyId && statusNumber === 2`);
+    console.log(`   Result: ${deliveryBoyId && statusNumber === 2}`);
+    
+    if (deliveryBoyId && statusNumber === 2) {
+        console.log(`✅ [updateOrder] Emitting orderAssigned event to delivery boy: ${deliveryBoyId}`);
+        
+        // Use already populated order
+        const assignedHotel = populatedOrderForSocket?.hotelId || hotel || {};
+
+        // Send Socket.IO notification to delivery boy with populated order
+        const orderAssignedPayload = {
+            type: "ORDER_ASSIGNED",
+            orderId: order.orderId,
+            order: populatedOrderForSocket || order,
+            hotel: assignedHotel,
+            timestamp: new Date(),
+            message: `Order ${order.orderId} has been assigned to you`,
+            priority: "high",
+            totalAmount: order.priceDetails?.totalAmountToPay,
+            itemCount: order.products?.length,
+            paymentMode: order.paymentMode,
+            hotelName: assignedHotel.hotelName || assignedHotel.name,
+            hotelAddress: assignedHotel.address,
+        };
+
+        const roomName = `deliveryBoy_${deliveryBoyId}`;
+        console.log(`   Room name: ${roomName}`);
+        
+        // Check if room exists
+        const room = io.sockets.adapter.rooms.get(roomName);
+        const roomSize = room ? room.size : 0;
+        console.log(`   Room exists: ${room !== undefined}, Sockets in room: ${roomSize}`);
+        
+        io.to(roomName).emit("orderAssigned", orderAssignedPayload);
+        
+        console.log(`✅ Order assigned notification sent to delivery boy: ${deliveryBoyId}`);
+        console.log(`📦 Order ID: ${order.orderId}`);
+        console.log(`🏨 Hotel: ${assignedHotel.hotelName || assignedHotel.name || 'N/A'}`);
+        console.log(`💰 Amount: ₹${order.priceDetails?.totalAmountToPay || 'N/A'}`);
+
+        // Send push notifications
+        sendNotification(deliveryBoyId, "Order assigned to you", order);
+        sendNotification(
+            order.userId,
+            "Delivery boy assigned to your order",
+            order,
+        );
+
+        // Emit to customer room
+        io.to(`user_${order.userId}`).emit("orderAssigned", {
+            ...orderAssignedPayload,
+            type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
+        });
+
+        // Notify hotel/partner
+        if (hotel && hotel.userId) {
+            io.to(`partner_${hotel.userId}`).emit("orderAssignedToDeliveryBoy", {
+                type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
+                orderId: order.orderId,
+                order: populatedOrderForSocket || order,
+                deliveryBoyId: deliveryBoyId,
+                timestamp: new Date(),
+            });
+        }
+    }
+
+    // Handle pickup confirmation (status 6)
+    // Convert status to number for comparison (frontend may send as string)
+    if (statusNumber === 6 && deliveryBoyId) {
+        const pickupPayload = {
+            type: "PICKUP_CONFIRMED",
+            orderId: order.orderId,
+            order: populatedOrderForSocket || order,
+            timestamp: new Date(),
+        };
+
+        io.to(`deliveryBoy_${deliveryBoyId}`).emit("pickupConfirmed", pickupPayload);
+        
+        // Emit to customer
+        io.to(`user_${order.userId}`).emit("pickupConfirmed", pickupPayload);
+
+        if (hotel && hotel.userId) {
+            sendNotification(hotel.userId, "Order pickup confirmed", order);
+            io.to(`partner_${hotel.userId}`).emit("orderPickupConfirmed", {
+                type: "ORDER_PICKUP_CONFIRMED",
+                orderId: order.orderId,
+                order: populatedOrderForSocket || order,
+                timestamp: new Date(),
+            });
+        }
+    }
+
+    // Handle order delivery (status 3)
+    // statusNumber already declared above
+    if (statusNumber === 3 && deliveryBoyId) {
+        // Verify order status is actually 3 (Delivered) before creating earning
+        if (order.orderStatus !== 3) {
+            console.warn(`⚠️ Order ${order.orderId} status is ${order.orderStatus}, not 3 (Delivered). Skipping earning creation.`);
+        } else {
+            // Create earning for driver when order is delivered
+            try {
+                console.log(`💰 Creating earning for driver ${deliveryBoyId} on order ${order.orderId}`);
+                const result = await createEarningInternal(deliveryBoyId, order._id.toString());
+                
+                if (result.existing) {
+                    console.log(`⚠️ Earning already exists for order ${order.orderId} and driver ${deliveryBoyId}`);
+                } else {
+                    console.log(`✅ Earning created successfully for driver ${deliveryBoyId} on order ${order.orderId}`);
+                }
+            } catch (error) {
+                // Log error but don't fail the order update
+                console.error(`❌ Error creating earning for driver ${deliveryBoyId} on order ${order.orderId}:`, error.message || error);
+            }
+        }
+
         // Fetch today's orders for the delivery boy
         const todayStart = moment().startOf("day").toDate();
         const todayEnd = moment().endOf("day").toDate();
@@ -628,10 +1438,12 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         const data = await Data.findOne(); // Fetching incentive data
         let incentive = 0;
 
-        if (deliveryCount >= 21) {
-            incentive = data.deliveryBoyIncentiveFor21delivery || 200; // Default to 200 if not set
-        } else if (deliveryCount >= 16) {
-            incentive = data.deliveryBoyIncentiveFor16delivery || 100; // Default to 100 if not set
+        if (data) {
+            if (deliveryCount >= 21) {
+                incentive = data.deliveryBoyIncentiveFor21delivery || 200;
+            } else if (deliveryCount >= 16) {
+                incentive = data.deliveryBoyIncentiveFor16delivery || 100;
+            }
         }
 
         if (incentive > 0) {
@@ -641,19 +1453,27 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             );
         }
 
-        // Send notifications to delivery boy and others
-        const hotel = await hotelModel.findById(order.hotelId);
-        sendNotification(hotel.userId, "Order pick up confirm", order);
-        sendNotification(deliveryBoyId, "Order assigned to you", order);
-        sendNotification(
-            order.userId,
-            "Delivery boy assigned to your order",
-            order,
-        );
+        // Send Socket.IO notification
+        const deliveredPayload = {
+            type: "ORDER_DELIVERED",
+            orderId: order.orderId,
+            order: populatedOrderForSocket || order,
+            incentive: incentive,
+            deliveryCount: deliveryCount,
+            timestamp: new Date(),
+        };
 
-        if (status === 3) {
-            sendNotification(savedOrder.userId, "Order delivered", order);
+        io.to(`deliveryBoy_${deliveryBoyId}`).emit("orderDelivered", deliveredPayload);
+        
+        // Emit to customer
+        io.to(`user_${order.userId}`).emit("orderDelivered", deliveredPayload);
+
+        // Send notifications
+        if (hotel && hotel.userId) {
+            sendNotification(hotel.userId, "Order delivered", order);
         }
+        sendNotification(order.userId, "Order delivered", order);
+        sendNotification(deliveryBoyId, "Order delivered successfully", order);
     }
 
     return res
@@ -924,7 +1744,17 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
         );
     }
     const dataCount = await Order.countDocuments(dbQuery);
-    const orders = await Order.aggregate(orderAggregation);
+    let orders = await Order.aggregate(orderAggregation);
+
+    // Populate product dish details so frontend can access product information
+    orders = await Order.populate(orders, {
+        path: "products.dishId",
+        select: "name image_url local_imagePath userPrice partnerPrice description categoryId",
+        populate: {
+            path: "categoryId",
+            select: "name image_url",
+        },
+    });
     const startItem = skip + 1;
     const endItem = Math.min(
         startItem + pageSize - 1,
@@ -975,14 +1805,182 @@ exports.getOrderByOrderId = asyncHandler(async (req, res) => {
 
 exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
     const { deliveryBoyId } = req.params;
-    let dbQuery = {
-        assignedDeliveryBoy: deliveryBoyId,
-    };
-    if (req.query.status) {
-        dbQuery.orderStatus = req.query.status;
+    
+    // Input validation
+    if (!deliveryBoyId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Delivery boy ID is required")
+        );
     }
+
+    if (!Types.ObjectId.isValid(deliveryBoyId)) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Invalid delivery boy ID format")
+        );
+    }
+
+    // Verify delivery boy exists
+    const deliveryBoy = await DeliverBoy.findById(deliveryBoyId);
+    if (!deliveryBoy) {
+        return res.status(404).json(
+            new ApiResponse(404, null, "Delivery boy not found")
+        );
+    }
+
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Status filter
+    // Query parameter 'accepted' differentiates between:
+    //   - accepted=false or undefined: Show orders in assignedDeliveryBoys (New Orders - not yet accepted)
+    //   - accepted=true: Show orders where assignedDeliveryBoy equals this delivery boy (Accepted Orders)
+    let dbQuery = {};
+    
+    const isAccepted = req.query.accepted === 'true';
+    
+    if (req.query.status !== undefined) {
+        const status = parseInt(req.query.status);
+        if (!isNaN(status) && [0, 1, 2, 3, 4, 5, 6, 7, 8].includes(status)) {
+            dbQuery.orderStatus = status;
+            
+            // For status 2: Differentiate between new orders and accepted orders
+            if (status === 2) {
+                const deliveryBoyObjectId = new Types.ObjectId(deliveryBoyId);
+                if (isAccepted) {
+                    // Accepted Orders: Show only orders accepted by this delivery boy
+                    dbQuery.assignedDeliveryBoy = deliveryBoyObjectId;
+                } else {
+                    // New Orders: Show only orders in assignedDeliveryBoys array (not yet accepted by ANYONE)
+                    // Order must be in assignedDeliveryBoys array AND assignedDeliveryBoy must be null/undefined
+                    // (meaning it hasn't been accepted by anyone yet)
+                    dbQuery.$and = [
+                        { assignedDeliveryBoys: deliveryBoyObjectId }, // Delivery boy is in the assigned array
+                        {
+                            $or: [
+                                { assignedDeliveryBoy: null },
+                                { assignedDeliveryBoy: { $exists: false } }
+                            ]
+                        }
+                    ];
+                }
+            } else {
+                // For other statuses: Only show orders assigned to this delivery boy
+                dbQuery.assignedDeliveryBoy = new Types.ObjectId(deliveryBoyId);
+            }
+        }
+    } else {
+        // No status filter: Show all orders assigned to this delivery boy
+        const deliveryBoyObjectId = new Types.ObjectId(deliveryBoyId);
+        if (isAccepted) {
+            dbQuery.assignedDeliveryBoy = deliveryBoyObjectId;
+        } else {
+            dbQuery.$or = [
+                { assignedDeliveryBoy: deliveryBoyObjectId },
+                { assignedDeliveryBoys: deliveryBoyObjectId }
+            ];
+        }
+    }
+    
+    // Debug logging - show full query
+    console.log(`🔍 Query for delivery boy ${deliveryBoyId}:`);
+    console.log(`   Status: ${req.query.status || 'all'}`);
+    console.log(`   Accepted: ${isAccepted} (from query: ${req.query.accepted})`);
+    console.log(`   Delivery Boy ID (string): ${deliveryBoyId}`);
+    console.log(`   Delivery Boy ID (ObjectId): ${new Types.ObjectId(deliveryBoyId)}`);
+    console.log(`   Query structure:`, JSON.stringify(dbQuery, null, 2));
+    
+    // Test queries to verify data exists
+    console.log(`🧪 Running test queries...`);
+    
+    // Test 1: Simple query - just check if any order has this delivery boy in array
+    const testQuery1 = { 
+        orderStatus: 2,
+        assignedDeliveryBoys: new Types.ObjectId(deliveryBoyId)
+    };
+    const testOrder1 = await Order.findOne(testQuery1);
+    console.log(`   Test 1 - Simple query (status=2, assignedDeliveryBoys=ID):`, testOrder1 ? {
+        orderId: testOrder1.orderId,
+        orderStatus: testOrder1.orderStatus,
+        assignedDeliveryBoys: testOrder1.assignedDeliveryBoys?.map(id => id.toString()),
+        assignedDeliveryBoy: testOrder1.assignedDeliveryBoy?.toString() || 'null'
+    } : '❌ No order found');
+    
+    // Test 2: Check all orders with status 2
+    const testQuery2 = { orderStatus: 2 };
+    const allStatus2Orders = await Order.find(testQuery2).limit(5);
+    console.log(`   Test 2 - All orders with status 2 (first 5):`, allStatus2Orders.map(o => ({
+        orderId: o.orderId,
+        assignedDeliveryBoys: o.assignedDeliveryBoys?.map(id => id.toString()) || [],
+        assignedDeliveryBoy: o.assignedDeliveryBoy?.toString() || 'null'
+    })));
+    
+    // Test 3: Check if delivery boy ID matches any in database
+    const allOrdersWithDeliveryBoys = await Order.find({ 
+        orderStatus: 2,
+        assignedDeliveryBoys: { $exists: true, $ne: [] }
+    }).limit(5);
+    console.log(`   Test 3 - Orders with assignedDeliveryBoys array:`, allOrdersWithDeliveryBoys.map(o => ({
+        orderId: o.orderId,
+        assignedDeliveryBoys: o.assignedDeliveryBoys?.map(id => id.toString()) || [],
+        assignedDeliveryBoy: o.assignedDeliveryBoy?.toString() || 'null',
+        deliveryBoyIdInArray: o.assignedDeliveryBoys?.some(id => id.toString() === deliveryBoyId.toString())
+    })));
+
+    // Get total count for pagination
+    const totalCount = await Order.countDocuments(dbQuery);
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    console.log(`📊 Query result: Found ${totalCount} orders for delivery boy ${deliveryBoyId}`);
+    console.log(`   Status filter: ${req.query.status || 'all'}, accepted=${isAccepted}`);
+    
+    // If no results, try alternative queries to debug
+    if (totalCount === 0 && req.query.status === '2' && !isAccepted) {
+        console.log(`⚠️ No results found. Trying alternative queries...`);
+        
+        // Alternative 1: Just check array match
+        const altQuery1 = {
+            orderStatus: 2,
+            assignedDeliveryBoys: new Types.ObjectId(deliveryBoyId)
+        };
+        const altCount1 = await Order.countDocuments(altQuery1);
+        console.log(`   Alt Query 1 (direct array match): Found ${altCount1} orders`);
+        
+        // Alternative 2: Use $in
+        const altQuery2 = {
+            orderStatus: 2,
+            assignedDeliveryBoys: { $in: [new Types.ObjectId(deliveryBoyId)] }
+        };
+        const altCount2 = await Order.countDocuments(altQuery2);
+        console.log(`   Alt Query 2 (using $in): Found ${altCount2} orders`);
+        
+        // Alternative 3: Use $elemMatch
+        const altQuery3 = {
+            orderStatus: 2,
+            assignedDeliveryBoys: { $elemMatch: { $eq: new Types.ObjectId(deliveryBoyId) } }
+        };
+        const altCount3 = await Order.countDocuments(altQuery3);
+        console.log(`   Alt Query 3 (using $elemMatch): Found ${altCount3} orders`);
+        
+        // Show sample order if any alternative works
+        if (altCount1 > 0 || altCount2 > 0 || altCount3 > 0) {
+            const workingQuery = altCount1 > 0 ? altQuery1 : (altCount2 > 0 ? altQuery2 : altQuery3);
+            const altOrder = await Order.findOne(workingQuery);
+            console.log(`   ✅ Working query found order:`, {
+                orderId: altOrder?.orderId,
+                assignedDeliveryBoys: altOrder?.assignedDeliveryBoys?.map(id => id.toString()),
+                assignedDeliveryBoy: altOrder?.assignedDeliveryBoy?.toString() || 'null',
+                assignedDeliveryBoyType: altOrder?.assignedDeliveryBoy ? 'ObjectId' : 'null'
+            });
+        }
+    }
+
+    // Fetch orders with pagination
     const orders = await Order.find(dbQuery)
         .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
         .populate({
             path: "userId",
             select: "name profile_image phoneNumber",
@@ -1007,15 +2005,24 @@ exports.getAllOrdersByDeliveryBoyId = asyncHandler(async (req, res) => {
             path: "promoCode",
             select: "-createdAt -updatedAt -__v",
         });
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                orders,
-                responseMessage.userMessage.ORDER_FETCHED_SUCCESSFULLY,
-            ),
-        );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                orders: orders,
+                pagination: {
+                    currentPage: page,
+                    totalPages: totalPages,
+                    totalCount: totalCount,
+                    limit: limit,
+                    hasNextPage: page < totalPages,
+                    hasPreviousPage: page > 1,
+                },
+            },
+            responseMessage.userMessage.ORDER_FETCHED_SUCCESSFULLY,
+        ),
+    );
 });
 
 exports.getOrderById = asyncHandler(async (req, res) => {

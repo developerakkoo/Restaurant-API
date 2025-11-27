@@ -53,31 +53,47 @@ exports.getChatHistoryAdmin = asyncHandler(async (req, res) => {
  * @description Retrieves all active chats for admin
  */
 exports.getActiveChats = asyncHandler(async (req, res) => {
-    const activeChats = await ChatMessage.find({ isRead: false })
-        .sort({ time: -1 })
-        .populate('userId', 'name email phoneNumber')
-        .exec();
-
-    if (!activeChats) {
-        throw new ApiError(404, "No active chats found");
-    }
-
-    // Group by userId and get the last message for each user
-    const groupedChats = activeChats.reduce((acc, message) => {
-        if (!acc[message.userId._id]) {
-            acc[message.userId._id] = {
-                _id: message.userId._id,
-                user: message.userId,
-                lastMessage: message
-            };
-        }
-        return acc;
-    }, {});
-
-    const result = Object.values(groupedChats);
+    const chats = await ChatMessage.aggregate([
+        { $sort: { time: -1 } },
+        {
+            $group: {
+                _id: "$userId",
+                lastMessage: { $first: "$$ROOT" },
+                unreadCount: {
+                    $sum: {
+                        $cond: [
+                            { $and: [{ $eq: ["$isRead", false] }, { $eq: ["$isUser", true] }] },
+                            1,
+                            0,
+                        ],
+                    },
+                },
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [
+                    {
+                        $project: {
+                            name: 1,
+                            email: 1,
+                            phoneNumber: 1,
+                            profileImage: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        { $unwind: "$user" },
+        { $sort: { "lastMessage.time": -1 } },
+    ]);
 
     return res.status(200).json(
-        new ApiResponse(200, result, "Active chats retrieved successfully")
+        new ApiResponse(200, chats, "Active chats retrieved successfully")
     );
 });
 
@@ -132,11 +148,12 @@ exports.sendMessage = asyncHandler(async (req, res) => {
 
     // Emit message through socket
     const io = getIO();
-    if (isUser) {
-        io.emit('chatHistory', message);
-    }
-    getIO().emit('chatHistory', message);
-
+    const roomId = `${userId}`;
+    io.to(roomId).emit('chatMessage', message);
+    io.emit('chatNotification', {
+        userId,
+        lastMessage: message,
+    });
 
     return res.status(201).json(
         new ApiResponse(201, message, "Message sent successfully")
