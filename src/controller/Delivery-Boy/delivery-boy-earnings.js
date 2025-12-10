@@ -41,9 +41,15 @@ const createEarningInternal = async (driverId, orderId) => {
     throw new ApiError(400, `Order status must be 3 (Delivered). Current status: ${order.orderStatus}`);
   }
 
-  // Count total deliveries for this driver
-  const totalDeliveries = await DriverEarning.countDocuments({ driverId });
-  const deliveryNumber = totalDeliveries + 1; // This will be the delivery number
+  // Get the highest delivery number for this driver to calculate the next sequential number
+  // This ensures correct bonus calculation even if earnings are deleted
+  const lastEarning = await DriverEarning.findOne({ driverId })
+    .sort({ deliveryNumber: -1 })
+    .select('deliveryNumber');
+  
+  const deliveryNumber = lastEarning && lastEarning.deliveryNumber 
+    ? lastEarning.deliveryNumber + 1 
+    : 1; // First delivery for this driver
 
   // Calculate bonus (only for 16th and 21st delivery)
   let bonus = 0;
@@ -56,19 +62,23 @@ const createEarningInternal = async (driverId, orderId) => {
   // Calculate total amount
   const amount = settings.perDeliveryAmount + bonus;
 
-  // Create partner settlement if it doesn't exist
+  // Note: Partner settlement should already be created when order status changes to 3
+  // This is handled in order.controller.js to ensure it's created even without a driver
+  // We check here just to be safe, but it should already exist
   const settlement = await PartnerSettlement.findOne({ orderId });
   if (!settlement) {
+    console.warn(`⚠️ Partner settlement not found for order ${orderId}, creating it now`);
     await createSettlement(order);
   }
 
-  // Create earning record
+  // Create earning record with sequential delivery number
   const earning = new DriverEarning({
     driverId,
     orderId,
     date: new Date(),
     amount,
     bonus,
+    deliveryNumber,
   });
 
   await earning.save();

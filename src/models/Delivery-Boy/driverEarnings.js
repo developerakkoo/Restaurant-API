@@ -24,6 +24,11 @@ const driverEarningSchema = new Schema({
     type: Number,
     default: 0,
   },
+  deliveryNumber: {
+    type: Number,
+    required: true,
+    index: true, // Index for faster queries
+  },
   isSettled: {
     type: Boolean,
     default: false,

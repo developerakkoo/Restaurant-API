@@ -541,6 +541,7 @@ exports.getEarnings = asyncHandler(async (req, res) => {
     const { partnerId } = req.params;
     const { startDate } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
+    
     // Fetch Hotel based on partnerId
     const hotels = await hotelModel.find({ userId: partnerId });
 
@@ -559,14 +560,14 @@ exports.getEarnings = asyncHandler(async (req, res) => {
     // Extract the hotel IDs
     const hotelIds = hotels.map((hotel) => hotel._id);
 
-    // Define date filters based on user input or default to current month
-    let filter = { hotelId: { $in: hotelIds }, orderStatus: 3 };
+    // Calculate date filters based on user input or default to current month
+    let dateFilter = {};
     if (startDate && endDate) {
         const sDate = new Date(startDate);
         const eDate = new Date(endDate);
         sDate.setHours(0, 0, 0, 0);
         eDate.setHours(23, 59, 59, 999);
-        filter.createdAt = {
+        dateFilter.createdAt = {
             $gte: sDate,
             $lte: eDate,
         };
@@ -574,51 +575,70 @@ exports.getEarnings = asyncHandler(async (req, res) => {
         // Default to current month
         const startOfMonth = moment().startOf("month").toDate();
         const endOfMonth = moment().endOf("month").toDate();
-        filter.createdAt = {
+        dateFilter.createdAt = {
             $gte: startOfMonth,
             $lte: endOfMonth,
         };
     }
 
-    // Fetch orders within the date range and for the specified hotel
-    const orders = await orderModel.find(filter).populate({
-        path: "products.dishId",
-        model: "HotelDish",
+    // Fetch partner settlements from PartnerSettlement collection (ensures consistency with admin settlement view)
+    const PartnerSettlement = require("../models/Partner-Settlements/partner-settlement");
+    const Order = require("../models/order.model");
+    
+    // Get settlements for the partner's hotels
+    const settlements = await PartnerSettlement.find({
+        hotelId: { $in: hotelIds },
+        ...dateFilter
+    })
+    .populate({
+        path: 'orderId',
+        select: 'orderId createdAt',
+        match: { orderStatus: 3 } // Only include delivered orders
+    })
+    .populate({
+        path: 'dishId',
+        select: 'dishName partnerPrice'
     });
 
-    // Calculate total earnings for the hotel
+    // Filter out settlements where order is null (order might have been deleted or not delivered)
+    const validSettlements = settlements.filter(s => s.orderId !== null);
+
+    // Calculate total earnings and daily breakdown from settlement records
     let totalEarnings = 0;
     const dailyEarnings = {}; // Object to store daily earnings
-    orders.forEach((order) => {
-        order.products.forEach((product) => {
-            const dish = product.dishId;
+    
+    validSettlements.forEach((settlement) => {
+        const earning = settlement.totalPartnerEarning || 0;
+        totalEarnings += earning;
 
-            // Find the hotelId associated with this dish
-            const dishHotelId = String(dish.hotelId);
-            // Check if this dish belongs to any of the hotels fetched
-            // if (hotelIds.includes(dishHotelId)) {
-            const earning = dish.partnerPrice * product.quantity;
-            totalEarnings += earning;
-
-            // Aggregate daily earnings
-            const dateKey = new Date(order.createdAt)
+        // Aggregate daily earnings based on order creation date
+        if (settlement.orderId && settlement.orderId.createdAt) {
+            const dateKey = new Date(settlement.orderId.createdAt)
                 .toISOString()
                 .split("T")[0]; // YYYY-MM-DD format
             if (!dailyEarnings[dateKey]) {
                 dailyEarnings[dateKey] = 0;
             }
             dailyEarnings[dateKey] += earning;
-            // }
-        });
+        }
     });
 
     // Prepare response
     const response = {
         totalEarnings,
-        dailyEarnings: Object.entries(dailyEarnings).map(
-            ([date, earnings]) => ({ date, earnings }),
-        ),
+        dailyEarnings: Object.entries(dailyEarnings)
+            .map(([date, earnings]) => ({ date, earnings }))
+            .sort((a, b) => a.date.localeCompare(b.date)), // Sort by date
+        // Add settlement status breakdown for better visibility
+        totalSettlements: validSettlements.length,
+        settledAmount: validSettlements
+            .filter(s => s.isSettled)
+            .reduce((sum, s) => sum + (s.totalPartnerEarning || 0), 0),
+        pendingAmount: validSettlements
+            .filter(s => !s.isSettled)
+            .reduce((sum, s) => sum + (s.totalPartnerEarning || 0), 0),
     };
+    
     res.status(200).json(
         new ApiResponse(200, response, "Earnings Data Fetched Successfully"),
     );

@@ -1402,24 +1402,43 @@ exports.updateOrder = asyncHandler(async (req, res) => {
 
     // Handle order delivery (status 3)
     // statusNumber already declared above
-    if (statusNumber === 3 && deliveryBoyId) {
-        // Verify order status is actually 3 (Delivered) before creating earning
-        if (order.orderStatus !== 3) {
-            console.warn(`⚠️ Order ${order.orderId} status is ${order.orderStatus}, not 3 (Delivered). Skipping earning creation.`);
-        } else {
-            // Create earning for driver when order is delivered
-            try {
-                console.log(`💰 Creating earning for driver ${deliveryBoyId} on order ${order.orderId}`);
-                const result = await createEarningInternal(deliveryBoyId, order._id.toString());
-                
-                if (result.existing) {
-                    console.log(`⚠️ Earning already exists for order ${order.orderId} and driver ${deliveryBoyId}`);
-                } else {
-                    console.log(`✅ Earning created successfully for driver ${deliveryBoyId} on order ${order.orderId}`);
+    if (statusNumber === 3) {
+        // Create partner settlement when order is delivered (independent of driver)
+        try {
+            const PartnerSettlement = require("../models/Partner-Settlements/partner-settlement");
+            const existingSettlement = await PartnerSettlement.findOne({ orderId: order._id });
+            
+            if (!existingSettlement) {
+                console.log(`💰 Creating partner settlement for order ${order.orderId}`);
+                await createSettlement(order);
+                console.log(`✅ Partner settlement created successfully for order ${order.orderId}`);
+            } else {
+                console.log(`⚠️ Partner settlement already exists for order ${order.orderId}`);
+            }
+        } catch (error) {
+            // Log error but don't fail the order update
+            console.error(`❌ Error creating partner settlement for order ${order.orderId}:`, error.message || error);
+        }
+
+        // Create earning for driver when order is delivered (only if driver assigned)
+        if (deliveryBoyId) {
+            // Verify order status is actually 3 (Delivered) before creating earning
+            if (order.orderStatus !== 3) {
+                console.warn(`⚠️ Order ${order.orderId} status is ${order.orderStatus}, not 3 (Delivered). Skipping earning creation.`);
+            } else {
+                try {
+                    console.log(`💰 Creating earning for driver ${deliveryBoyId} on order ${order.orderId}`);
+                    const result = await createEarningInternal(deliveryBoyId, order._id.toString());
+                    
+                    if (result.existing) {
+                        console.log(`⚠️ Earning already exists for order ${order.orderId} and driver ${deliveryBoyId}`);
+                    } else {
+                        console.log(`✅ Earning created successfully for driver ${deliveryBoyId} on order ${order.orderId}`);
+                    }
+                } catch (error) {
+                    // Log error but don't fail the order update
+                    console.error(`❌ Error creating earning for driver ${deliveryBoyId} on order ${order.orderId}:`, error.message || error);
                 }
-            } catch (error) {
-                // Log error but don't fail the order update
-                console.error(`❌ Error creating earning for driver ${deliveryBoyId} on order ${order.orderId}:`, error.message || error);
             }
         }
 
