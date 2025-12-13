@@ -1124,12 +1124,22 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
 
 exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
     async (req, res) => {
+        console.log('📥 [sendOrderPickUpRequestToDeliveryBoys] Function called');
+        console.log('   Request body:', JSON.stringify(req.body, null, 2));
+        
         // Accept both 'deliveryBoys' and 'deliveryBoyIds' for backward compatibility
         const { deliveryBoys, deliveryBoyIds, orderId } = req.body;
         const deliveryBoysArray = deliveryBoys || deliveryBoyIds;
+        
+        console.log('   Extracted values:');
+        console.log(`     orderId: ${orderId}`);
+        console.log(`     deliveryBoys: ${deliveryBoys}`);
+        console.log(`     deliveryBoyIds: ${deliveryBoyIds}`);
+        console.log(`     deliveryBoysArray: ${JSON.stringify(deliveryBoysArray)}`);
 
         // Input validation
         if (!orderId) {
+            console.log('   ❌ Validation failed: Order ID is required');
             return res.status(400).json(
                 new ApiResponse(400, null, "Order ID is required")
             );
