@@ -1314,6 +1314,9 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     if (deliveryBoyId && statusNumber === 2) {
         console.log(`✅ [updateOrder] Emitting orderAssigned event to delivery boy: ${deliveryBoyId}`);
         
+        // Convert deliveryBoyId to string to ensure proper room matching (consistent with admin.controller.js)
+        const deliveryBoyIdStr = deliveryBoyId.toString().trim();
+        
         // Use already populated order
         const assignedHotel = populatedOrderForSocket?.hotelId || hotel || {};
 
@@ -1323,7 +1326,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             orderId: order.orderId,
             order: populatedOrderForSocket || order,
             hotel: assignedHotel,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(), // Convert to ISO string for client compatibility
             message: `Order ${order.orderId} has been assigned to you`,
             priority: "high",
             totalAmount: order.priceDetails?.totalAmountToPay,
@@ -1333,23 +1336,52 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             hotelAddress: assignedHotel.address,
         };
 
-        const roomName = `deliveryBoy_${deliveryBoyId}`;
+        const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
         console.log(`   Room name: ${roomName}`);
+        console.log(`   Delivery Boy ID (string): ${deliveryBoyIdStr}`);
         
         // Check if room exists
         const room = io.sockets.adapter.rooms.get(roomName);
         const roomSize = room ? room.size : 0;
         console.log(`   Room exists: ${room !== undefined}, Sockets in room: ${roomSize}`);
         
-        io.to(roomName).emit("orderAssigned", orderAssignedPayload);
+        // Get all connected rooms for debugging
+        const allRooms = Array.from(io.sockets.adapter.rooms.keys());
+        const deliveryBoyRooms = allRooms.filter(r => r.startsWith('deliveryBoy_'));
+        console.log(`   All delivery boy rooms: ${deliveryBoyRooms.join(', ') || 'none'}`);
         
-        console.log(`✅ Order assigned notification sent to delivery boy: ${deliveryBoyId}`);
+        // Log the payload being sent
+        console.log(`📦 Emitting orderAssigned event with payload:`, {
+            orderId: orderAssignedPayload.orderId,
+            type: orderAssignedPayload.type,
+            hotelName: orderAssignedPayload.hotelName,
+            targetDeliveryBoyId: deliveryBoyIdStr,
+        });
+        
+        io.to(roomName).emit("orderAssigned", orderAssignedPayload);
+        console.log(`   ✅ Emitted to room: ${roomName}`);
+        
+        // Also try emitting to the socket directly if we can find it (backup)
+        const socketsInRoom = room ? Array.from(room) : [];
+        if (socketsInRoom.length > 0) {
+            socketsInRoom.forEach(socketId => {
+                const socket = io.sockets.sockets.get(socketId);
+                if (socket) {
+                    socket.emit("orderAssigned", orderAssignedPayload);
+                    console.log(`   ✅ Also sent directly to socket: ${socketId}`);
+                }
+            });
+        } else {
+            console.warn(`   ⚠️ No sockets found in room ${roomName} to send direct message`);
+        }
+        
+        console.log(`✅ Order assigned notification sent to delivery boy: ${deliveryBoyIdStr}`);
         console.log(`📦 Order ID: ${order.orderId}`);
         console.log(`🏨 Hotel: ${assignedHotel.hotelName || assignedHotel.name || 'N/A'}`);
         console.log(`💰 Amount: ₹${order.priceDetails?.totalAmountToPay || 'N/A'}`);
 
         // Send push notifications
-        sendNotification(deliveryBoyId, "Order assigned to you", order);
+        sendNotification(deliveryBoyIdStr, "Order assigned to you", order);
         sendNotification(
             order.userId,
             "Delivery boy assigned to your order",
@@ -1359,6 +1391,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         // Emit to customer room
         io.to(`user_${order.userId}`).emit("orderAssigned", {
             ...orderAssignedPayload,
+            timestamp: new Date().toISOString(), // Ensure ISO string format
             type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
         });
 
@@ -1368,8 +1401,8 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
                 orderId: order.orderId,
                 order: populatedOrderForSocket || order,
-                deliveryBoyId: deliveryBoyId,
-                timestamp: new Date(),
+                deliveryBoyId: deliveryBoyIdStr, // Use string version
+                timestamp: new Date().toISOString(), // Convert to ISO string
             });
         }
     }

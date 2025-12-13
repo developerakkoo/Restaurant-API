@@ -1306,7 +1306,7 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
                     orderId: order.orderId,
                     order: populatedOrder || order,
                     hotel: assignedHotel,
-                    timestamp: new Date(),
+                    timestamp: new Date().toISOString(), // Convert to ISO string for client compatibility
                     message: `Order ${order.orderId} has been assigned to you`,
                     priority: "high",
                     totalAmount: order.priceDetails?.totalAmountToPay || 0,
@@ -1352,6 +1352,7 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
                 setTimeout(() => {
                     io.to(roomName).emit("orderAssigned", {
                         ...orderAssignedPayload,
+                        timestamp: new Date().toISOString(), // Update timestamp for retry
                         retry: true, // Mark as retry so client can handle duplicates
                     });
                     console.log(`   ✅ Emitted to room: ${roomName} (retry after delay)`);
