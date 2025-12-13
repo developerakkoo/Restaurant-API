@@ -763,7 +763,14 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
 });
 
 exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
+    console.log('📥 [sendOrderToAllDeliveryBoy] Function called');
+    console.log('   Request body:', JSON.stringify(req.body, null, 2));
+    
     const { orderId, deliveryBoyIds } = req.body;
+    
+    console.log('   Extracted values:');
+    console.log(`     orderId: ${orderId}`);
+    console.log(`     deliveryBoyIds: ${JSON.stringify(deliveryBoyIds)}`);
 
     // Validate input
     if (
@@ -771,37 +778,169 @@ exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
         !Array.isArray(deliveryBoyIds) ||
         deliveryBoyIds.length === 0
     ) {
+        console.log('   ❌ Validation failed: Invalid input');
         return res
             .status(400)
             .json(new ApiResponse(400, null, "Invalid input"));
     }
 
-    // Find and update the order
-    const order = await Order.findByIdAndUpdate(
-        orderId,
-        {
-            $set: {
-                orderStatus: 2,
-                assignedDeliveryBoy: null,
-            },
-        },
-        { new: true },
-    );
+    // Get Socket.IO instance
+    const io = getIO();
+
+    // Find and populate order
+    let order = await Order.findById(orderId)
+        .populate({
+            path: "hotelId",
+            select: "hotelName address phoneNumber userId",
+        })
+        .populate({
+            path: "userId",
+            select: "name phoneNumber",
+        })
+        .populate({
+            path: "address",
+            select: "address location",
+        })
+        .populate({
+            path: "products.dishId",
+            select: "dishName userPrice partnerPrice",
+        });
 
     if (!order) {
+        console.log('   ❌ Order not found');
         return res
             .status(404)
             .json(new ApiResponse(404, null, "Order not found"));
     }
 
-    // Send notifications to all delivery boys
+    // Convert delivery boy IDs to ObjectIds and update order
+    const deliveryBoyObjectIds = deliveryBoyIds.map(id => {
+        if (id instanceof Types.ObjectId) {
+            return id;
+        }
+        return new Types.ObjectId(id.toString());
+    });
+
+    // Update order with assignedDeliveryBoys array
+    const updatedOrder = await Order.findByIdAndUpdate(
+        orderId,
+        {
+            $set: {
+                orderStatus: 2,
+                assignedDeliveryBoy: null,
+                assignedDeliveryBoys: deliveryBoyObjectIds,
+            },
+            $push: {
+                orderTimeline: {
+                    title: `Order assigned to ${deliveryBoyIds.length} delivery boy(s)`,
+                    dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+                    status: "ASSIGNED_TO_MULTIPLE",
+                }
+            }
+        },
+        { new: true },
+    ).populate({
+        path: "hotelId",
+        select: "hotelName address phoneNumber userId",
+    })
+    .populate({
+        path: "userId",
+        select: "name phoneNumber",
+    })
+    .populate({
+        path: "address",
+        select: "address location",
+    })
+    .populate({
+        path: "products.dishId",
+        select: "dishName userPrice partnerPrice",
+    });
+
+    if (!updatedOrder) {
+        console.log('   ❌ Failed to update order');
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "Order not found"));
+    }
+
+    console.log(`✅ Order ${updatedOrder.orderId} updated: status=2, assignedDeliveryBoys=${deliveryBoyIds.length}`);
+    
+    // Use updated order for Socket.IO events
+    const populatedOrder = updatedOrder;
+    const assignedHotel = populatedOrder.hotelId || {};
+
+    // Send orderAssigned Socket.IO events to each delivery boy
+    let successCount = 0;
+    console.log(`📤 Sending orderAssigned events to ${deliveryBoyIds.length} delivery boys`);
+    
+    deliveryBoyIds.forEach((deliveryBoyId) => {
+        try {
+            const deliveryBoyIdStr = deliveryBoyId.toString().trim();
+            const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
+            
+            const orderAssignedPayload = {
+                type: "ORDER_ASSIGNED",
+                orderId: populatedOrder.orderId,
+                order: populatedOrder,
+                hotel: assignedHotel,
+                timestamp: new Date().toISOString(),
+                message: `Order ${populatedOrder.orderId} has been assigned to you`,
+                priority: "high",
+                totalAmount: populatedOrder.priceDetails?.totalAmountToPay || 0,
+                itemCount: populatedOrder.products?.length || 0,
+                paymentMode: populatedOrder.paymentMode,
+                hotelName: assignedHotel.hotelName || assignedHotel.name,
+                hotelAddress: assignedHotel.address,
+            };
+
+            // Check room membership
+            const room = io.sockets.adapter.rooms.get(roomName);
+            const roomSize = room ? room.size : 0;
+            
+            console.log(`🔍 Checking room for delivery boy ${deliveryBoyIdStr}:`);
+            console.log(`   Room name: "${roomName}"`);
+            console.log(`   Room exists: ${room !== undefined}`);
+            console.log(`   Sockets in room: ${roomSize}`);
+            
+            // Emit Socket.IO event
+            io.to(roomName).emit("orderAssigned", orderAssignedPayload);
+            console.log(`   ✅ Emitted orderAssigned to room: ${roomName}`);
+            
+            // Also try direct socket emission
+            const socketsInRoom = room ? Array.from(room) : [];
+            if (socketsInRoom.length > 0) {
+                socketsInRoom.forEach(socketId => {
+                    const socket = io.sockets.sockets.get(socketId);
+                    if (socket) {
+                        socket.emit("orderAssigned", orderAssignedPayload);
+                        console.log(`   ✅ Also sent directly to socket: ${socketId}`);
+                    }
+                });
+            }
+            
+            // Also broadcast globally as fallback
+            io.emit("orderAssigned", {
+                ...orderAssignedPayload,
+                targetDeliveryBoyId: deliveryBoyIdStr,
+            });
+            console.log(`   ✅ Also broadcasted globally (client should filter by targetDeliveryBoyId)`);
+            
+            if (roomSize > 0) {
+                successCount++;
+            }
+        } catch (error) {
+            console.error(`❌ Failed to send orderAssigned event to delivery boy ${deliveryBoyId}:`, error);
+        }
+    });
+
+    // Send push notifications to all delivery boys
     await Promise.all(
         deliveryBoyIds.map(async (deliveryBoyId) => {
             try {
                 await sendNotification(
                     deliveryBoyId,
                     "New Order. Accept it fast to start delivering this order.",
-                    order,
+                    updatedOrder,
                 );
             } catch (notificationError) {
                 console.error(
@@ -812,13 +951,19 @@ exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
         }),
     );
 
+    console.log(`📊 Summary: Sent orderAssigned events to ${successCount}/${deliveryBoyIds.length} delivery boys`);
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                order,
-                "Notification sent successfully to all delivery boys",
+                {
+                    order: updatedOrder,
+                    sentTo: successCount,
+                    totalRequested: deliveryBoyIds.length,
+                },
+                `Order assigned successfully to ${successCount} delivery boy(s)${successCount < deliveryBoyIds.length ? ` (${deliveryBoyIds.length - successCount} not connected)` : ''}`,
             ),
         );
 });
