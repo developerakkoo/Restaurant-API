@@ -1030,16 +1030,28 @@ exports.acceptOrderByDeliveryBoy = asyncHandler(async (req, res) => {
 });
 
 exports.updateOrder = asyncHandler(async (req, res) => {
+    console.log('📥 [updateOrder] Function called');
+    console.log('   Request body:', JSON.stringify(req.body, null, 2));
+    
     const { orderId, status, deliveryBoyId, paymentMode, otp } = req.body;
+    
+    console.log('   Extracted values:');
+    console.log(`     orderId: ${orderId}`);
+    console.log(`     status: ${status} (type: ${typeof status})`);
+    console.log(`     deliveryBoyId: ${deliveryBoyId} (type: ${typeof deliveryBoyId})`);
+    console.log(`     paymentMode: ${paymentMode}`);
+    console.log(`     otp: ${otp}`);
 
     // Input validation
     if (!orderId) {
+        console.log('   ❌ Validation failed: Order ID is required');
         return res.status(400).json(
             new ApiResponse(400, null, "Order ID is required")
         );
     }
 
     if (status === undefined || status === null) {
+        console.log('   ❌ Validation failed: Order status is required');
         return res.status(400).json(
             new ApiResponse(400, null, "Order status is required")
         );
@@ -1249,13 +1261,22 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     }
 
     // Atomic update with condition check
+    console.log('   📝 Attempting database update...');
+    console.log('   Update condition:', JSON.stringify(updateCondition, null, 2));
+    console.log('   Update data:', JSON.stringify(update, null, 2));
+    
     const order = await Order.findOneAndUpdate(updateCondition, update, { new: true });
 
     if (!order) {
+        console.log('   ❌ Database update failed: Order already assigned or invalid status');
         return res.status(400).json(
             new ApiResponse(400, null, "Order already assigned or invalid status for this operation")
         );
     }
+    
+    console.log('   ✅ Database update successful');
+    console.log(`   Updated order status: ${order.orderStatus}`);
+    console.log(`   Updated assignedDeliveryBoy: ${order.assignedDeliveryBoy}`);
 
     const io = getIO();
 
@@ -1305,11 +1326,13 @@ exports.updateOrder = asyncHandler(async (req, res) => {
     // Handle delivery boy assignment (status 2)
     // statusNumber already declared above
     console.log(`🔍 [updateOrder] Checking delivery boy assignment condition:`);
-    console.log(`   deliveryBoyId: ${deliveryBoyId} (type: ${typeof deliveryBoyId})`);
-    console.log(`   status: ${status} (type: ${typeof status})`);
-    console.log(`   statusNumber: ${statusNumber} (converted)`);
-    console.log(`   Condition check: deliveryBoyId && statusNumber === 2`);
-    console.log(`   Result: ${deliveryBoyId && statusNumber === 2}`);
+    console.log(`   deliveryBoyId from request: ${deliveryBoyId} (type: ${typeof deliveryBoyId})`);
+    console.log(`   deliveryBoyId truthy check: ${!!deliveryBoyId}`);
+    console.log(`   status from request: ${status} (type: ${typeof status})`);
+    console.log(`   statusNumber (converted): ${statusNumber} (type: ${typeof statusNumber})`);
+    console.log(`   statusNumber === 2 check: ${statusNumber === 2}`);
+    console.log(`   Full condition: deliveryBoyId && statusNumber === 2`);
+    console.log(`   Condition result: ${deliveryBoyId && statusNumber === 2}`);
     
     if (deliveryBoyId && statusNumber === 2) {
         console.log(`✅ [updateOrder] Emitting orderAssigned event to delivery boy: ${deliveryBoyId}`);
