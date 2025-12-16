@@ -407,11 +407,9 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
             );
         }
 
-        // Define date ranges
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        const endOfToday = new Date();
-        endOfToday.setHours(23, 59, 59, 999);
+        // Define date ranges using moment for consistent timezone handling
+        const startOfToday = moment().startOf('day').toDate();
+        const endOfToday = moment().endOf('day').toDate();
 
         const startOfMonth = moment().startOf("month").toDate();
         const endOfMonth = moment().endOf("month").toDate();
@@ -473,7 +471,7 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
             },
             {
                 $match: {
-                    hotelId: { $in: hotelIds },
+            hotelId: { $in: hotelIds },
                     "order.orderStatus": 3,
                     "order.createdAt": {
                         $gte: startOfMonth,
@@ -567,12 +565,12 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
                 }
             }
         ]);
-
+        
         // Get order counts from orders collection (source of truth for order counts)
         const weeklyOrdersResult = await orderModel.aggregate([
             {
                 $match: {
-                    hotelId: { $in: hotelIds },
+            hotelId: { $in: hotelIds }, 
                     orderStatus: 3,
                     createdAt: {
                         $gte: startOfWeek,
@@ -723,13 +721,12 @@ exports.getEarnings = asyncHandler(async (req, res) => {
     const hotelIds = hotels.map((hotel) => hotel._id);
 
     // Calculate date filters based on user input or default to current month
-    let dateFilter = {};
+    // Use order creation date for filtering, not settlement creation date
+    let orderDateFilter = {};
     if (startDate && endDate) {
-        const sDate = new Date(startDate);
-        const eDate = new Date(endDate);
-        sDate.setHours(0, 0, 0, 0);
-        eDate.setHours(23, 59, 59, 999);
-        dateFilter.createdAt = {
+        const sDate = moment(startDate).startOf('day').toDate();
+        const eDate = moment(endDate).endOf('day').toDate();
+        orderDateFilter.createdAt = {
             $gte: sDate,
             $lte: eDate,
         };
@@ -737,51 +734,80 @@ exports.getEarnings = asyncHandler(async (req, res) => {
         // Default to current month
         const startOfMonth = moment().startOf("month").toDate();
         const endOfMonth = moment().endOf("month").toDate();
-        dateFilter.createdAt = {
+        orderDateFilter.createdAt = {
             $gte: startOfMonth,
             $lte: endOfMonth,
         };
     }
 
-    // Fetch partner settlements from PartnerSettlement collection (ensures consistency with admin settlement view)
+    // Fetch partner settlements from PartnerSettlement collection
+    // Use aggregation to filter by order creation date (not settlement creation date)
     const PartnerSettlement = require("../models/Partner-Settlements/partner-settlement");
     const Order = require("../models/order.model");
     
-    // Get settlements for the partner's hotels
-    const settlements = await PartnerSettlement.find({
-        hotelId: { $in: hotelIds },
-        ...dateFilter
-    })
-    .populate({
-        path: 'orderId',
-        select: 'orderId createdAt',
-        match: { orderStatus: 3 } // Only include delivered orders
-    })
-    .populate({
-        path: 'dishId',
-        select: 'dishName partnerPrice'
-    });
-
-    // Filter out settlements where order is null (order might have been deleted or not delivered)
-    const validSettlements = settlements.filter(s => s.orderId !== null);
-
-    // Calculate total earnings and daily breakdown from settlement records
-    let totalEarnings = 0;
-    const dailyEarnings = {}; // Object to store daily earnings
-    
-    validSettlements.forEach((settlement) => {
-        const earning = settlement.totalPartnerEarning || 0;
-        totalEarnings += earning;
-
-        // Aggregate daily earnings based on order creation date
-        if (settlement.orderId && settlement.orderId.createdAt) {
-            const dateKey = new Date(settlement.orderId.createdAt)
-                .toISOString()
-                .split("T")[0]; // YYYY-MM-DD format
-            if (!dailyEarnings[dateKey]) {
-                dailyEarnings[dateKey] = 0;
+    // Use aggregation to properly filter by order creation date
+    const settlementsResult = await PartnerSettlement.aggregate([
+        {
+            $lookup: {
+                from: "orders",
+                localField: "orderId",
+                foreignField: "_id",
+                as: "order"
             }
-            dailyEarnings[dateKey] += earning;
+        },
+        {
+            $unwind: "$order"
+        },
+        {
+            $match: {
+        hotelId: { $in: hotelIds },
+                "order.orderStatus": 3, // Only delivered orders
+                "order.createdAt": orderDateFilter.createdAt
+            }
+        },
+        {
+            $group: {
+                _id: {
+                    $dateToString: { format: "%Y-%m-%d", date: "$order.createdAt" }
+                },
+                totalEarnings: { $sum: "$totalPartnerEarning" },
+                settlements: { $push: "$$ROOT" }
+            }
+        },
+        {
+            $project: {
+                date: "$_id",
+                totalEarnings: 1,
+                settlements: 1,
+                _id: 0
+            }
+        },
+        {
+            $sort: { date: 1 }
+        }
+    ]);
+
+    // Calculate total earnings and daily breakdown
+    let totalEarnings = 0;
+    const dailyEarnings = {};
+    let totalSettlements = 0;
+    let settledAmount = 0;
+    let pendingAmount = 0;
+    
+    settlementsResult.forEach((dayData) => {
+        totalEarnings += dayData.totalEarnings;
+        dailyEarnings[dayData.date] = dayData.totalEarnings;
+        
+        // Calculate settlement status breakdown
+        if (dayData.settlements && Array.isArray(dayData.settlements)) {
+            dayData.settlements.forEach((settlement) => {
+                totalSettlements++;
+                if (settlement.isSettled) {
+                    settledAmount += settlement.totalPartnerEarning || 0;
+                } else {
+                    pendingAmount += settlement.totalPartnerEarning || 0;
+                }
+            });
         }
     });
 
@@ -792,13 +818,9 @@ exports.getEarnings = asyncHandler(async (req, res) => {
             .map(([date, earnings]) => ({ date, earnings }))
             .sort((a, b) => a.date.localeCompare(b.date)), // Sort by date
         // Add settlement status breakdown for better visibility
-        totalSettlements: validSettlements.length,
-        settledAmount: validSettlements
-            .filter(s => s.isSettled)
-            .reduce((sum, s) => sum + (s.totalPartnerEarning || 0), 0),
-        pendingAmount: validSettlements
-            .filter(s => !s.isSettled)
-            .reduce((sum, s) => sum + (s.totalPartnerEarning || 0), 0),
+        totalSettlements,
+        settledAmount,
+        pendingAmount,
     };
     
     res.status(200).json(

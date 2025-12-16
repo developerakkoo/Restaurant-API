@@ -34,8 +34,34 @@ exports.getSettlements = async (req, res) => {
   try {
     const { hotelId, isSettled } = req.query;
     const query = {};
+    const mongoose = require('mongoose');
+    const { Types } = mongoose;
 
-    if (hotelId) query.hotelId = hotelId;
+    // Support both single hotelId and multiple hotelIds (comma-separated)
+    if (hotelId) {
+      // Check if hotelId contains comma (multiple IDs)
+      if (hotelId.includes(',')) {
+        const hotelIds = hotelId.split(',').map(id => {
+          try {
+            return new Types.ObjectId(id.trim());
+          } catch (e) {
+            return null;
+          }
+        }).filter(id => id !== null);
+        
+        if (hotelIds.length > 0) {
+          query.hotelId = { $in: hotelIds };
+        }
+      } else {
+        // Single hotelId
+        try {
+          query.hotelId = new Types.ObjectId(hotelId);
+        } catch (e) {
+          return res.status(400).json({ success: false, message: 'Invalid hotelId format' });
+        }
+      }
+    }
+    
     if (isSettled !== undefined) query.isSettled = isSettled === 'true';
 
     const settlements = await PartnerSettlement.find(query)
@@ -45,15 +71,20 @@ exports.getSettlements = async (req, res) => {
       })
       .populate({
         path: 'dishId',
-        select: 'name dishType' // Choose dish fields
+        select: 'name dishType image_url' // Choose dish fields
       })
       .populate({
         path: 'orderId',
-        select: 'orderId userId paymentStatus' // Choose order fields
+        select: 'orderId userId paymentStatus createdAt orderStatus' // Choose order fields
       })
-      .sort({ settledAt: -1 });
+      .sort({ createdAt: -1 });
 
-    res.json({ success: true, data: settlements });
+    // Filter out settlements where order is null or not delivered (orderStatus: 3)
+    const validSettlements = settlements.filter(s => {
+      return s.orderId !== null && s.orderId.orderStatus === 3;
+    });
+
+    res.json({ success: true, data: validSettlements });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server Error' });
