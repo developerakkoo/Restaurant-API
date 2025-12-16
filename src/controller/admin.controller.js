@@ -387,6 +387,7 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             $limit: pageSize,
         },
     ];
+    
     // Conditionally add $lookup stage if populate is true
     if (populate && Number(populate) === 1) {
         deliveryBoyAggregation.splice(
@@ -428,6 +429,47 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             },
         );
     }
+    
+    // Always add lookup for active orders to determine busy status
+    // Insert after $sort but before $project stage
+    // Find the index of $project stage (it shifts if populate is true)
+    const projectIndex = deliveryBoyAggregation.findIndex(stage => stage.$project);
+    const insertIndex = projectIndex > -1 ? projectIndex : 2;
+    
+    deliveryBoyAggregation.splice(
+        insertIndex,
+        0,
+        {
+            $lookup: {
+                as: "activeOrders",
+                from: "orders",
+                foreignField: "assignedDeliveryBoy",
+                localField: "_id",
+                pipeline: [
+                    {
+                        $match: {
+                            orderStatus: { 
+                                $nin: [7, 3, 4, 5, 8] // Exclude DELIVERED (7) and cancelled statuses (3, 4, 5, 8)
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                isBusy: {
+                    $gt: [
+                        { $size: { $ifNull: ["$activeOrders", []] } },
+                        0
+                    ]
+                },
+                activeOrderCount: {
+                    $size: { $ifNull: ["$activeOrders", []] }
+                }
+            }
+        }
+    );
     const deliveryBoys = await DeliveryBoy.aggregate(
         deliveryBoyAggregation,
     ).exec();

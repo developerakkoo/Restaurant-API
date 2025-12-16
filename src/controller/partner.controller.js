@@ -11,6 +11,7 @@ const orderModel = require("../models/order.model");
 const hotelDishModel = require("../models/hotelDish.model");
 const moment = require("moment");
 const hotelModel = require("../models/hotel.model");
+const PartnerSettlement = require("../models/Partner-Settlements/partner-settlement");
 
 /**
  *  @function registerPartner
@@ -384,113 +385,274 @@ exports.getPartnerDashboard = asyncHandler(async (req, res) => {
         const hotelIds = hotels.map((hotel) => hotel._id);
         console.log("Hotel IDs:", hotelIds);
 
-        // If no hotels found, return empty data
+        // If no hotels found, return empty data in expected format
         if (hotelIds.length === 0) {
             return res.status(200).json(
                 new ApiResponse(
                     200,
                     {
+                        totalStats: {
+                            totalOrders: 0,
+                            totalEarnings: 0
+                        },
+                        currentMonthStats: {
+                            totalEarnings: 0
+                        },
                         todaysOrders: 0,
-                        monthlyOrder: 0,
-                        dishInStock: 0,
-                        dishOutOfStock: 0,
-                        totalHotels: 0,
-                        message: "No hotels found for this partner"
+                        todaysRevenue: 0,
+                        weeklyStats: []
                     },
                     "Partner Dashboard Data Fetched Successfully",
                 ),
             );
         }
 
-        // Define the date for today and the start of the month
+        // Define date ranges
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
         const endOfToday = new Date();
         endOfToday.setHours(23, 59, 59, 999);
 
-        const startOfMonth = new Date(
-            new Date().getFullYear(),
-            new Date().getMonth(),
-            1,
-        );
+        const startOfMonth = moment().startOf("month").toDate();
+        const endOfMonth = moment().endOf("month").toDate();
+
+        // Calculate start of week (7 days ago including today)
+        const startOfWeek = moment().subtract(6, 'days').startOf('day').toDate();
+        const endOfWeek = moment().endOf('day').toDate();
 
         console.log("Date range - Today:", startOfToday, "to", endOfToday);
         console.log("Date range - Month start:", startOfMonth);
+        console.log("Date range - Week start:", startOfWeek);
 
-        // Define the queries
-        let todaysOrderDbQuery = {
-            hotelId: { $in: hotelIds },
-            createdAt: { $gte: startOfToday, $lte: endOfToday },
-        };
-        let monthlyOrderDbQuery = {
-            hotelId: { $in: hotelIds },
-            createdAt: { $gte: startOfMonth },
-        };
-        
-        // Check all dishes first to see what exists
-        const allDishes = await hotelDishModel.find({ hotelId: { $in: hotelIds } });
-        console.log("All dishes found:", allDishes.length);
-        console.log("Dish details:", allDishes.map(d => ({
-            id: d._id,
-            name: d.name,
-            stock: d.stock,
-            status: d.status,
-            hotelId: d.hotelId
-        })));
-        
-        let dishInStockDbQuery = { hotelId: { $in: hotelIds }, stock: 1 };
-        let dishOutOfStockDbQuery = { hotelId: { $in: hotelIds }, stock: 0 };
-        
-        // Also check dishes by status (approved dishes only)
-        let approvedDishesInStockQuery = { 
-            hotelId: { $in: hotelIds }, 
-            stock: 1, 
-            status: 2 // approved status
-        };
-        let approvedDishesOutOfStockQuery = { 
-            hotelId: { $in: hotelIds }, 
-            stock: 0, 
-            status: 2 // approved status
-        };
-
-        console.log("Query for today's orders:", JSON.stringify(todaysOrderDbQuery, null, 2));
-        console.log("Query for monthly orders:", JSON.stringify(monthlyOrderDbQuery, null, 2));
-        console.log("Query for dishes in stock:", JSON.stringify(dishInStockDbQuery, null, 2));
-        console.log("Query for dishes out of stock:", JSON.stringify(dishOutOfStockDbQuery, null, 2));
-
-        // Fetch the data using the defined queries
-        const [todaysOrders, monthlyOrder, dishInStock, dishOutOfStock, approvedDishesInStock, approvedDishesOutOfStock] =
-            await Promise.all([
-                orderModel.countDocuments(todaysOrderDbQuery), // Today's orders
-                orderModel.countDocuments(monthlyOrderDbQuery), // Monthly orders
-                hotelDishModel.countDocuments(dishInStockDbQuery), // All dishes in stock
-                hotelDishModel.countDocuments(dishOutOfStockDbQuery), // All dishes out of stock
-                hotelDishModel.countDocuments(approvedDishesInStockQuery), // Approved dishes in stock
-                hotelDishModel.countDocuments(approvedDishesOutOfStockQuery), // Approved dishes out of stock
-            ]);
-
-        console.log("Results:", {
-            todaysOrders,
-            monthlyOrder,
-            dishInStock,
-            dishOutOfStock,
-            approvedDishesInStock,
-            approvedDishesOutOfStock
+        // 1. Calculate total orders count (all time)
+        const totalOrders = await orderModel.countDocuments({
+            hotelId: { $in: hotelIds }
         });
 
-        // Respond with the fetched data
+        // 2. Calculate total earnings (all time) from PartnerSettlement
+        // Only count delivered orders (orderStatus: 3)
+        const totalEarningsResult = await PartnerSettlement.aggregate([
+            {
+                $lookup: {
+                    from: "orders",
+                    localField: "orderId",
+                    foreignField: "_id",
+                    as: "order"
+                }
+            },
+            {
+                $unwind: "$order"
+            },
+            {
+                $match: {
+                    hotelId: { $in: hotelIds },
+                    "order.orderStatus": 3 // Only delivered orders
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalEarnings: { $sum: "$totalPartnerEarning" }
+                }
+            }
+        ]);
+        const totalEarnings = totalEarningsResult.length > 0 ? totalEarningsResult[0].totalEarnings : 0;
+
+        // 3. Calculate monthly earnings
+        const monthlyEarningsResult = await PartnerSettlement.aggregate([
+            {
+                $lookup: {
+                    from: "orders",
+                    localField: "orderId",
+                    foreignField: "_id",
+                    as: "order"
+                }
+            },
+            {
+                $unwind: "$order"
+            },
+            {
+                $match: {
+                    hotelId: { $in: hotelIds },
+                    "order.orderStatus": 3,
+                    "order.createdAt": {
+                        $gte: startOfMonth,
+                        $lte: endOfMonth
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalEarnings: { $sum: "$totalPartnerEarning" }
+                }
+            }
+        ]);
+        const monthlyEarnings = monthlyEarningsResult.length > 0 ? monthlyEarningsResult[0].totalEarnings : 0;
+
+        // 4. Calculate today's orders and earnings
+        const todaysOrders = await orderModel.countDocuments({
+            hotelId: { $in: hotelIds },
+            createdAt: { $gte: startOfToday, $lte: endOfToday }
+        });
+
+        const todaysEarningsResult = await PartnerSettlement.aggregate([
+            {
+                $lookup: {
+                    from: "orders",
+                    localField: "orderId",
+                    foreignField: "_id",
+                    as: "order"
+                }
+            },
+            {
+                $unwind: "$order"
+            },
+            {
+                $match: {
+                    hotelId: { $in: hotelIds },
+                    "order.orderStatus": 3,
+                    "order.createdAt": {
+                        $gte: startOfToday,
+                        $lte: endOfToday
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalEarnings: { $sum: "$totalPartnerEarning" }
+                }
+            }
+        ]);
+        const todaysRevenue = todaysEarningsResult.length > 0 ? todaysEarningsResult[0].totalEarnings : 0;
+
+        // 5. Calculate weekly stats breakdown (last 7 days)
+        // Get earnings from settlements
+        const weeklyEarningsResult = await PartnerSettlement.aggregate([
+            {
+                $lookup: {
+                    from: "orders",
+                    localField: "orderId",
+                    foreignField: "_id",
+                    as: "order"
+                }
+            },
+            {
+                $unwind: "$order"
+            },
+            {
+                $match: {
+                    hotelId: { $in: hotelIds },
+                    "order.orderStatus": 3,
+                    "order.createdAt": {
+                        $gte: startOfWeek,
+                        $lte: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$order.createdAt" }
+                    },
+                    totalEarnings: { $sum: "$totalPartnerEarning" }
+                }
+            },
+            {
+                $project: {
+                    date: "$_id",
+                    totalEarnings: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        // Get order counts from orders collection (source of truth for order counts)
+        const weeklyOrdersResult = await orderModel.aggregate([
+            {
+                $match: {
+                    hotelId: { $in: hotelIds },
+                    orderStatus: 3,
+                    createdAt: {
+                        $gte: startOfWeek,
+                        $lte: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                    },
+                    totalOrders: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    date: "$_id",
+                    totalOrders: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        // Merge weekly stats and format day names
+        const weeklyStatsMap = new Map();
+        
+        // Initialize all 7 days with zero values
+        for (let i = 6; i >= 0; i--) {
+            const date = moment().subtract(i, 'days');
+            const dateStr = date.format('YYYY-MM-DD');
+            const dayName = date.format('dddd'); // Monday, Tuesday, etc.
+            weeklyStatsMap.set(dateStr, {
+                day: dayName,
+                totalOrders: 0,
+                totalEarnings: 0
+            });
+        }
+
+        // Update with earnings data
+        weeklyEarningsResult.forEach(stat => {
+            if (weeklyStatsMap.has(stat.date)) {
+                weeklyStatsMap.get(stat.date).totalEarnings = stat.totalEarnings;
+            }
+        });
+
+        // Update with order counts from orders collection
+        weeklyOrdersResult.forEach(stat => {
+            if (weeklyStatsMap.has(stat.date)) {
+                weeklyStatsMap.get(stat.date).totalOrders = stat.totalOrders;
+            }
+        });
+
+        // Convert map to array
+        const weeklyStats = Array.from(weeklyStatsMap.values());
+
+        console.log("Dashboard Results:", {
+            totalOrders,
+            totalEarnings,
+            monthlyEarnings,
+            todaysOrders,
+            todaysRevenue,
+            weeklyStats
+        });
+
+        // Respond with the data in the format expected by frontend
         res.status(200).json(
             new ApiResponse(
                 200,
                 {
+                    totalStats: {
+                        totalOrders,
+                        totalEarnings
+                    },
+                    currentMonthStats: {
+                        totalEarnings: monthlyEarnings
+                    },
                     todaysOrders,
-                    monthlyOrder,
-                    dishInStock,
-                    dishOutOfStock,
-                    approvedDishesInStock,
-                    approvedDishesOutOfStock,
-                    totalDishes: allDishes.length,
-                    totalHotels: hotels.length,
+                    todaysRevenue,
+                    weeklyStats
                 },
                 "Partner Dashboard Data Fetched Successfully",
             ),
