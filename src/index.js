@@ -42,10 +42,28 @@ connectDB()
                     // Yes, this is correct. The code listens for a "partnerJoin" event, logs the data, 
                     // creates a room name using the userId, joins the socket to that room, and logs the action.
                     socket.on("partnerJoin", async (data) => {
-                        console.log("Joining partner room:", data["userId"]);
-                        const roomId = `${data["userId"]}`;
-                        socket.join(`partner_${data["userId"]}`);
-                        console.log(`Partner joined room: partner_${roomId}`);
+                        const userIdStr = data.userId.toString().trim();
+                        const roomName = `partner_${userIdStr}`;
+                        
+                        console.log(`📡 [SERVER] Partner joining room: ${roomName}`);
+                        console.log(`   Original userId: ${data.userId}`);
+                        console.log(`   Normalized userId: ${userIdStr}`);
+                        console.log(`   Socket ID: ${socket.id} (will change on reconnect)`);
+                        console.log(`   Room name: ${roomName} (MUST stay consistent)`);
+                        
+                        socket.join(roomName);
+                        
+                        // Verify room was joined
+                        const room = io.sockets.adapter.rooms.get(roomName);
+                        const roomSize = room ? room.size : 0;
+                        console.log(`   Room verification: ${roomName} has ${roomSize} socket(s)`);
+                        
+                        // Send confirmation back to client
+                        socket.emit("partnerJoined", {
+                            userId: userIdStr,
+                            room: roomName,
+                            timestamp: new Date()
+                        });
                     });
 
                     // Delivery boy room joining handler
@@ -56,11 +74,16 @@ connectDB()
                             return;
                         }
                         
-                        // Convert to string to ensure consistent room naming
-                        const deliveryBoyIdStr = deliveryBoyId.toString();
+                        // Convert to string and trim to ensure consistent room naming
+                        const deliveryBoyIdStr = deliveryBoyId.toString().trim();
                         const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
                         
-                        console.log("📡 Joining delivery boy room:", deliveryBoyIdStr);
+                        console.log(`📡 [SERVER] Joining room: ${roomName}`);
+                        console.log(`   Original deliveryBoyId: ${deliveryBoyId}`);
+                        console.log(`   Normalized deliveryBoyId: ${deliveryBoyIdStr}`);
+                        console.log(`   Socket ID: ${socket.id} (will change on reconnect)`);
+                        console.log(`   Room name: ${roomName} (MUST stay consistent)`);
+                        
                         socket.join(roomName);
                         // Also join the all_delivery_boys room for new order notifications
                         socket.join("all_delivery_boys");
@@ -94,11 +117,16 @@ connectDB()
                             return;
                         }
                         
-                        // Convert to string to ensure consistent room naming
-                        const userIdStr = userId.toString();
+                        // Convert to string and trim to ensure consistent room naming
+                        const userIdStr = userId.toString().trim();
                         const roomName = `user_${userIdStr}`;
                         
-                        console.log("👤 Joining user room:", userIdStr);
+                        console.log(`📡 [SERVER] User joining room: ${roomName}`);
+                        console.log(`   Original userId: ${userId}`);
+                        console.log(`   Normalized userId: ${userIdStr}`);
+                        console.log(`   Socket ID: ${socket.id} (will change on reconnect)`);
+                        console.log(`   Room name: ${roomName} (MUST stay consistent)`);
+                        
                         socket.join(roomName);
                         console.log(`✅ User ${userIdStr} joined room: ${roomName}`);
                         

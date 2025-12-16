@@ -1175,8 +1175,15 @@ exports.acceptOrderByDeliveryBoy = asyncHandler(async (req, res) => {
 });
 
 exports.updateOrder = asyncHandler(async (req, res) => {
-    console.log('📥 [updateOrder] Function called');
+    // IMMEDIATE LOGGING - First thing in function
+    console.log('='.repeat(80));
+    console.log('📥 [updateOrder] REQUEST RECEIVED');
+    console.log('   Method:', req.method);
+    console.log('   URL:', req.originalUrl || req.url);
+    console.log('   Timestamp:', new Date().toISOString());
     console.log('   Request body:', JSON.stringify(req.body, null, 2));
+    console.log('   Request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('='.repeat(80));
     
     const { orderId, status, deliveryBoyId, paymentMode, otp } = req.body;
     

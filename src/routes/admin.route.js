@@ -193,6 +193,12 @@ router.get("/order/get-all", orderController.getAllOrders);
 
 router.put(
     "/order/update",
+    (req, res, next) => {
+        console.log('🔵 [ROUTE] PUT /admin/order/update matched');
+        console.log('   Request body:', JSON.stringify(req.body, null, 2));
+        console.log('   Timestamp:', new Date().toISOString());
+        next();
+    },
     upload.single("screenshot"),
     orderController.updateOrder,
 );
