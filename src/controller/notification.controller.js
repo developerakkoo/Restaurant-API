@@ -14,7 +14,7 @@ exports.sendNotification = async (
             title,
             content,
         });
-        getIO().to(userId).emit("notification", notification);
+        getIO().to(`user_${userId}`).emit("notification", notification);
     } catch (error) {
         console.log(error.message);
     }

@@ -42,11 +42,20 @@ connectDB()
                     // Yes, this is correct. The code listens for a "partnerJoin" event, logs the data, 
                     // creates a room name using the userId, joins the socket to that room, and logs the action.
                     socket.on("partnerJoin", async (data) => {
-                        const userIdStr = data.userId.toString().trim();
+                        const userId = data.userId || data.partnerId;
+                        if (!userId) {
+                            console.error("partnerJoin: userId is required");
+                            socket.emit("partnerJoinError", {
+                                message: "userId is required",
+                            });
+                            return;
+                        }
+
+                        const userIdStr = userId.toString().trim();
                         const roomName = `partner_${userIdStr}`;
                         
                         console.log(`📡 [SERVER] Partner joining room: ${roomName}`);
-                        console.log(`   Original userId: ${data.userId}`);
+                        console.log(`   Original userId: ${userId}`);
                         console.log(`   Normalized userId: ${userIdStr}`);
                         console.log(`   Socket ID: ${socket.id} (will change on reconnect)`);
                         console.log(`   Room name: ${roomName} (MUST stay consistent)`);

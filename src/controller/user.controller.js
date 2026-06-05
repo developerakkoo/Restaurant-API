@@ -166,17 +166,17 @@ exports.checkUserStatus = asyncHandler(async (req, res) => {
 
 exports.updateUserProfile = asyncHandler(async (req, res) => {
     const { name, email, phoneNumber, firebaseToken, isOnline } = req.body;
+    const updateFields = {};
+
+    if (name !== undefined) updateFields.name = name;
+    if (email !== undefined) updateFields.email = email;
+    if (phoneNumber !== undefined) updateFields.phoneNumber = phoneNumber;
+    if (firebaseToken !== undefined) updateFields.firebaseToken = firebaseToken;
+    if (isOnline !== undefined) updateFields.isOnline = isOnline;
+
     const updatedUser = await User.findByIdAndUpdate(
         req.params.userId,
-        {
-            $set: {
-                name: name,
-                email: email,
-                phoneNumber: phoneNumber,
-                firebaseToken,
-                isOnline,
-            },
-        },
+        { $set: updateFields },
         { new: true },
     ).select("-password");
 

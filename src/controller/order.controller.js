@@ -1,5 +1,9 @@
 const deliveryChargesModel = require("../models/deliveryCharges.model");
 const { sendNotification } = require("./notification.controller");
+const {
+    notifyCustomerOrderStatusAsync,
+    notifyCustomerAsync,
+} = require("../services/customerNotification.service");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { getDistance } = require("../utils/getDistance.utils");
 const promoCodeModel = require("../models/promoCode.model");
@@ -118,6 +122,8 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
         io.to(`partner_${hotel.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
         io.to(`partner_${hotel.userId}`).emit("orderCancelled", cancelledPayload);
     }
+
+    notifyCustomerOrderStatusAsync(order.userId, populatedOrder || order, 7);
 
     return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
 });
@@ -295,10 +301,10 @@ exports.rejectOrderByDeliveryBoy = asyncHandler(async (req, res) => {
     });
 
     // Notify customer
-    sendNotification(
+    notifyCustomerOrderStatusAsync(
         populatedOrderForCustomer.userId,
-        "Delivery Boy Rejected Order",
-        `Your order ${populatedOrderForCustomer.orderId} was rejected by the assigned delivery boy. We'll assign a new delivery partner soon.`
+        populatedOrderForCustomer,
+        8,
     );
 
     // Notify admin dashboard
@@ -617,6 +623,8 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         console.log(`New order notification sent to customer: ${userId}`);
         console.log(`Order placed: ${order.orderId} for hotel: ${hotel.hotelName}`);
         console.log(`Order will be visible to delivery boys only after admin assignment`);
+
+        notifyCustomerOrderStatusAsync(userId, populatedOrder, 0);
     }
     
     return res
@@ -757,7 +765,9 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
         io.to("admin_dashboard").emit("orderCancelled", cancelledPayload);
     }
 
-    sendNotification(order.userId, message, order);
+    notifyCustomerOrderStatusAsync(order.userId, populatedOrder || order, status, {
+        hotelName: populatedOrder?.hotelId?.hotelName,
+    });
 
     return res.status(200).json(new ApiResponse(200, order, message));
 });
@@ -1169,6 +1179,15 @@ exports.acceptOrderByDeliveryBoy = asyncHandler(async (req, res) => {
     console.log(`📢 Notified ${otherDeliveryBoys.length} other delivery boys`);
     console.log(`👤 Notified customer: ${order.userId}`);
 
+    notifyCustomerAsync(order.userId, {
+        title: "Delivery partner assigned",
+        body: `A delivery partner accepted your order #${order.orderId}.`,
+        type: "ORDER_STATUS",
+        orderId: order.orderId,
+        orderStatus: 2,
+        mongoOrderId: order._id?.toString() || "",
+    });
+
     return res.status(200).json(
         new ApiResponse(200, updatedOrder, "Order accepted successfully")
     );
@@ -1557,11 +1576,6 @@ exports.updateOrder = asyncHandler(async (req, res) => {
 
         // Send push notifications
         sendNotification(deliveryBoyIdStr, "Order assigned to you", order);
-        sendNotification(
-            order.userId,
-            "Delivery boy assigned to your order",
-            order,
-        );
 
         // Emit to customer room
         io.to(`user_${order.userId}`).emit("orderAssigned", {
@@ -1699,8 +1713,16 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         if (hotel && hotel.userId) {
             sendNotification(hotel.userId, "Order delivered", order);
         }
-        sendNotification(order.userId, "Order delivered", order);
         sendNotification(deliveryBoyId, "Order delivered successfully", order);
+    }
+
+    if (oldStatus !== statusNumber) {
+        notifyCustomerOrderStatusAsync(
+            order.userId,
+            populatedOrderForSocket || order,
+            statusNumber,
+            { hotelName: populatedOrderForSocket?.hotelId?.hotelName || hotel?.hotelName },
+        );
     }
 
     return res

@@ -28,6 +28,12 @@ router.get("/category/get/all", adminController.getAllCategory);
 
 router.get("/promoCode/get-all", promoCodeController.getAllPromoCodes);
 
+router.post(
+    "/send/firebaseNotification",
+    adminPrivilegesRequired,
+    adminController.sendFirebaseNotificationToUser,
+);
+
 // router.use(adminPrivilegesRequired);
 
 router.get("/get/all-users", adminController.getAllUsers);
@@ -39,13 +45,9 @@ router.delete(
     deliveryBoyController.deleteDriverData,
 );
 
-router.post(
-    "/send/firebaseNotification",
-    adminController.sendFirebaseNotificationToUser,
-);
-
 /* Dashboard routes*/
 router.get("/get/dashboard-data", adminController.getDashboardStats);
+router.get("/analytics/summary", adminController.getAnalyticsSummary);
 
 router.get("/get/customerMapChartData", adminController.customerMapChartData);
 

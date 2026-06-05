@@ -24,6 +24,8 @@ const moment = require("moment");
 const userTrackModel = require("../models/userTrack.model");
 const { Types } = require("mongoose");
 const { v4: uuidV4 } = require("uuid");
+const adminAnalytics = require("../services/adminAnalytics.service");
+const { buildOrderDateMatch } = require("../utils/analyticsDateRange");
 
 /**
  *  @function registerAdmin
@@ -1517,102 +1519,47 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
 exports.getDashboardStats = asyncHandler(async (req, res) => {
     const { sort, startDate, endDate } = req.query;
 
-    let DateFilterPipeline = [];
-
-    // Check if sort, startDate, or endDate are provided
+    let dateMatch = {};
     if (sort || startDate || endDate) {
-        const start = startDate
-            ? moment(startDate, "DD-MM-YYYY")
-            : moment().startOf(sort || "day");
-        const end = endDate
-            ? moment(endDate, "DD-MM-YYYY")
-            : moment().endOf(sort || "day");
-
-        // Validate the parsed dates
-        if (!start.isValid() || !end.isValid()) {
-            return res
-                .status(400)
-                .json(
-                    new ApiResponse(
-                        400,
-                        null,
-                        "Invalid date format. Please use DD-MM-YYYY.",
-                    ),
-                );
-        }
-
-        // Add date filter to the pipeline
-        DateFilterPipeline = [
-            {
-                $match: {
-                    createdAt: {
-                        $gte: start.toDate(),
-                        $lte: end.toDate(),
-                    },
+        if (startDate && endDate) {
+            const range = buildOrderDateMatch(startDate, endDate);
+            if (range.error) {
+                return res.status(400).json(new ApiResponse(400, null, range.error));
+            }
+            dateMatch = range.match;
+        } else {
+            const unit = sort || "day";
+            dateMatch = {
+                createdAt: {
+                    $gte: moment().startOf(unit).toDate(),
+                    $lte: moment().endOf(unit).toDate(),
                 },
-            },
-        ];
+            };
+        }
     }
 
-    const [
-        totalOrders,
-        totalDeliveredOrders,
-        totalCanceledOrders,
-        totalUsers,
-        totalOnlineUsers,
-        totalPartners,
-        totalDeliveryBoys,
-        totalRevenue,
-    ] = await Promise.all([
-        Order.countDocuments(DateFilterPipeline[0]?.$match || {}),
-        Order.countDocuments({
-            ...(DateFilterPipeline[0]?.$match || {}),
-            orderStatus: 3,
-        }),
-        Order.countDocuments({
-            ...(DateFilterPipeline[0]?.$match || {}),
-            orderStatus: 5, // Corrected to match 'cancel order' status
-        }),
-        User.countDocuments(DateFilterPipeline[0]?.$match || {}),
-        User.countDocuments({
-            ...(DateFilterPipeline[0]?.$match || {}),
-            isOnline: true,
-        }),
-        Partner.countDocuments(DateFilterPipeline[0]?.$match || {}),
-        DeliveryBoy.countDocuments(DateFilterPipeline[0]?.$match || {}),
-        Order.aggregate([
-            {
-                $match: DateFilterPipeline[0]?.$match || {},
-            },
-            {
-                $group: {
-                    _id: null,
-                    sum_totalPrice: {
-                        $sum: "$priceDetails.totalAmountToPay", // Corrected to match the correct field
-                    },
-                },
-            },
-        ]),
-    ]);
+    const data = await adminAnalytics.getDashboardKpis(dateMatch);
 
     res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                totalOrders,
-                totalDeliveredOrders,
-                totalCanceledOrders,
-                totalUsers,
-                totalOnlineUsers,
-                totalPartners,
-                totalDeliveryBoys,
-                totalRevenue:
-                    totalRevenue.length > 0
-                        ? Number(totalRevenue[0].sum_totalPrice.toFixed(2))
-                        : 0,
-            },
-            "Dashboard data fetched successfully",
-        ),
+        new ApiResponse(200, data, "Dashboard data fetched successfully"),
+    );
+});
+
+exports.getAnalyticsSummary = asyncHandler(async (req, res) => {
+    const { startDate, endDate, granularity = "day", includePrevious = "true" } = req.query;
+    const summary = await adminAnalytics.getAnalyticsSummary({
+        startDate,
+        endDate,
+        granularity,
+        includePrevious: includePrevious !== "false",
+    });
+
+    if (summary.error) {
+        return res.status(400).json(new ApiResponse(400, null, summary.error));
+    }
+
+    res.status(200).json(
+        new ApiResponse(200, summary, "Analytics summary fetched successfully"),
     );
 });
 
@@ -1665,35 +1612,8 @@ exports.getUserLocationClusters = asyncHandler(
     });
 
 exports.customerMapChartData = asyncHandler(async (req, res) => {
-    const { sort = "month" } = req.query;
-    const startDate = moment().startOf(sort); // Today's date at 00:00:00
-    const endDate = moment().endOf(sort);
-    const pipeline = [
-        {
-            $project: {
-                sortField: {
-                    [`$${sort}`]: "$createdAt",
-                },
-            },
-        },
-        {
-            $group: {
-                _id: "$sortField",
-                userCount: {
-                    $sum: 1,
-                },
-            },
-        },
-        {
-            $project: {
-                _id: 0,
-                [sort]: "$_id",
-                userCount: 1,
-            },
-        },
-    ];
-
-    const data = await userTrackModel.aggregate(pipeline);
+    const { sort = "month", startDate, endDate } = req.query;
+    const data = await adminAnalytics.getCustomerActivityChart({ sort, startDate, endDate });
     res.status(200).json(
         new ApiResponse(
             200,
@@ -1705,87 +1625,8 @@ exports.customerMapChartData = asyncHandler(async (req, res) => {
 
 
 exports.getOrderWithPopulatedFields = asyncHandler(async (req, res) => {
-  const pipeline = [
-    { $sort: { createdAt: -1 } },
-
-    // User
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user',
-      },
-    },
-    { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-
-    // Hotel
-    {
-      $lookup: {
-        from: 'hotels',
-        localField: 'hotelId',
-        foreignField: '_id',
-        as: 'hotel',
-      },
-    },
-    { $unwind: { path: '$hotel', preserveNullAndEmptyArrays: true } },
-
-    // Address
-    {
-      $lookup: {
-        from: 'useraddresses',
-        localField: 'address',
-        foreignField: '_id',
-        as: 'userAddress',
-      },
-    },
-    { $unwind: { path: '$userAddress', preserveNullAndEmptyArrays: true } },
-
-    // Promo Code
-    {
-      $lookup: {
-        from: 'promocodes',
-        localField: 'promoCode',
-        foreignField: '_id',
-        as: 'promoCodeDetails',
-      },
-    },
-    { $unwind: { path: '$promoCodeDetails', preserveNullAndEmptyArrays: true } },
-
-    // Delivery Boy
-    {
-      $lookup: {
-        from: 'deliveryboys',
-        localField: 'assignedDeliveryBoy',
-        foreignField: '_id',
-        as: 'deliveryBoy',
-      },
-    },
-    { $unwind: { path: '$deliveryBoy', preserveNullAndEmptyArrays: true } },
-
-    // Products (dishes)
-    {
-      $lookup: {
-        from: 'hoteldishes',
-        localField: 'products.dishId',
-        foreignField: '_id',
-        as: 'productDetails',
-        pipeline: [
-          {
-            $lookup: {
-              from: 'categories',
-              localField: 'categoryId',
-              foreignField: '_id',
-              as: 'categoryDetails',
-            },
-          },
-          { $unwind: { path: '$categoryDetails', preserveNullAndEmptyArrays: true } },
-        ],
-      },
-    },
-  ];
-
-  const orders = await Order.aggregate(pipeline);
+  const { startDate, endDate, limit = 5 } = req.query;
+  const orders = await adminAnalytics.getRecentOrders({ startDate, endDate, limit });
   res.status(200).json({
     success: true,
     data: orders,
@@ -1795,243 +1636,66 @@ exports.getOrderWithPopulatedFields = asyncHandler(async (req, res) => {
 exports.orderChartData = asyncHandler(async (req, res) => {
     let { sort = "day", startDate, endDate } = req.query;
 
-  // Default range if not provided
-  if (!startDate || !endDate) {
-    if (sort === "day") {
-      startDate = moment().startOf("month").format("YYYY-MM-DD");
-      endDate = moment().endOf("month").format("YYYY-MM-DD");
-    } else if (sort === "month") {
-      startDate = moment().startOf("year").format("YYYY-MM-DD");
-      endDate = moment().endOf("year").format("YYYY-MM-DD");
-    } else if (sort === "year") {
-      startDate = moment().subtract(5, "years").startOf("year").format("YYYY-MM-DD");
-      endDate = moment().endOf("year").format("YYYY-MM-DD");
+    if (!startDate || !endDate) {
+        const defaults = require("../utils/analyticsDateRange").defaultRangeForGranularity(sort);
+        startDate = defaults.startDate;
+        endDate = defaults.endDate;
     }
-  }
 
-  const start = moment(startDate, "YYYY-MM-DD").startOf("day");
-  const end = moment(endDate, "YYYY-MM-DD").endOf("day");
-
-  if (!start.isValid() || !end.isValid()) {
-    return res.status(400).json(new ApiResponse(400, null, "Invalid date format. Use YYYY-MM-DD."));
-  }
-
-  if (end.isBefore(start)) {
-    return res.status(400).json(new ApiResponse(400, null, "End date must be after start date."));
-  }
-
-  // Dynamic group stage
-  const groupId = {
-    year: { $year: "$createdAt" }
-  };
-
-  if (sort === "month") {
-    groupId.month = { $month: "$createdAt" };
-  } else if (sort === "day") {
-    groupId.month = { $month: "$createdAt" };
-    groupId.day = { $dayOfMonth: "$createdAt" };
-  }
-
-  const pipeline = [
-    {
-      $match: {
-        createdAt: {
-          $gte: start.toDate(),
-          $lte: end.toDate()
-        }
-      }
-    },
-    {
-      $group: {
-        _id: groupId,
-        orderCount: { $sum: 1 }
-      }
-    },
-    {
-      $sort: {
-        "_id.year": 1,
-        ...(sort !== "year" && { "_id.month": 1 }),
-        ...(sort === "day" && { "_id.day": 1 })
-      }
+    const range = buildOrderDateMatch(startDate, endDate);
+    if (range.error) {
+        return res.status(400).json(new ApiResponse(400, null, range.error));
     }
-  ];
 
-  const result = await Order.aggregate(pipeline);
-
-  const labels = result.map((item) => {
-    if (sort === "day") {
-      return moment(`${item._id.year}-${item._id.month}-${item._id.day}`, "YYYY-M-D").format("DD MMM");
-    } else if (sort === "month") {
-      return moment(`${item._id.year}-${item._id.month}`, "YYYY-M").format("MMMM");
-    } else if (sort === "year") {
-      return `${item._id.year}`;
-    }
-  });
-
-  const data = result.map((item) => item.orderCount);
-
-  return res.status(200).json(
-    new ApiResponse(200, { labels, data }, "Order chart data fetched successfully")
-  );
+    const chart = await adminAnalytics.getOrderChart(sort, range.match);
+    return res.status(200).json(
+        new ApiResponse(200, chart, "Order chart data fetched successfully")
+    );
 });
 
 exports.totalRevenueData = asyncHandler(async (req, res) => {
     let { sort = "day", startDate, endDate } = req.query;
 
     if (!startDate || !endDate) {
-        if (sort === "day") {
-            startDate = moment().startOf("month").format("YYYY-MM-DD");
-            endDate = moment().endOf("month").format("YYYY-MM-DD");
-        } else if (sort === "month") {
-            startDate = moment().startOf("year").format("YYYY-MM-DD");
-            endDate = moment().endOf("year").format("YYYY-MM-DD");
-        } else if (sort === "year") {
-            startDate = moment().subtract(5, "years").startOf("year").format("YYYY-MM-DD");
-            endDate = moment().endOf("year").format("YYYY-MM-DD");
-        }
+        const defaults = require("../utils/analyticsDateRange").defaultRangeForGranularity(sort);
+        startDate = defaults.startDate;
+        endDate = defaults.endDate;
     }
 
-    const start = moment(startDate, "YYYY-MM-DD").startOf("day");
-    const end = moment(endDate, "YYYY-MM-DD").endOf("day");
-
-    if (!start.isValid() || !end.isValid()) {
-        return res.status(400).json(new ApiResponse(400, null, "Invalid date format. Use YYYY-MM-DD."));
+    const range = buildOrderDateMatch(startDate, endDate);
+    if (range.error) {
+        return res.status(400).json(new ApiResponse(400, null, range.error));
     }
 
-    const groupId = { year: { $year: "$createdAt" } };
-    if (sort === "month") {
-        groupId.month = { $month: "$createdAt" };
-    } else if (sort === "day") {
-        groupId.month = { $month: "$createdAt" };
-        groupId.day = { $dayOfMonth: "$createdAt" };
-    }
-
-    const pipeline = [
-        {
-            $match: {
-                createdAt: { $gte: start.toDate(), $lte: end.toDate() },
-            },
-        },
-        {
-            $group: {
-                _id: groupId,
-                revenue: { $sum: "$priceDetails.totalAmountToPay" },
-            },
-        },
-        {
-            $sort: {
-                "_id.year": 1,
-                ...(sort !== "year" && { "_id.month": 1 }),
-                ...(sort === "day" && { "_id.day": 1 }),
-            },
-        },
-    ];
-
-    const result = await Order.aggregate(pipeline);
-    const label = result.map((item) => {
-        if (sort === "day") {
-            return moment(`${item._id.year}-${item._id.month}-${item._id.day}`, "YYYY-M-D").format("DD MMM");
-        }
-        if (sort === "month") {
-            return moment(`${item._id.year}-${item._id.month}`, "YYYY-M").format("MMMM");
-        }
-        return `${item._id.year}`;
-    });
-    const data = result.map((item) => Number(item.revenue.toFixed(2)));
-
+    const chart = await adminAnalytics.getRevenueChart(sort, range.match);
     res.status(200).json(
-        new ApiResponse(200, { label, data }, responseMessage.userMessage.revenueChartData),
+        new ApiResponse(200, chart, responseMessage.userMessage.revenueChartData),
     );
 });
 
-const ORDER_STATUS_LABELS = {
-    0: "Received",
-    1: "Being Prepared",
-    2: "Delivery Assigned",
-    3: "Delivered",
-    4: "Accepted",
-    5: "Cancelled by Hotel",
-    6: "Pickup Confirmed",
-    7: "Cancelled by Customer",
-    8: "Rejected by Delivery Boy",
-};
-
 exports.orderStatusBreakdown = asyncHandler(async (req, res) => {
     const { startDate, endDate } = req.query;
-    const match = {};
+    let dateMatch = {};
     if (startDate && endDate) {
-        match.createdAt = {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
-        };
+        const range = buildOrderDateMatch(startDate, endDate);
+        if (range.error) {
+            return res.status(400).json(new ApiResponse(400, null, range.error));
+        }
+        dateMatch = range.match;
     }
 
-    const grouped = await Order.aggregate([
-        { $match: match },
-        { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-    ]);
-
-    const byStatus = grouped.map((g) => ({
-        status: g._id,
-        count: g.count,
-        label: ORDER_STATUS_LABELS[g._id] || `Status ${g._id}`,
-    }));
-
-    const cancellations = grouped
-        .filter((g) => [5, 7, 8].includes(g._id))
-        .map((g) => ({
-            status: g._id,
-            count: g.count,
-            label: ORDER_STATUS_LABELS[g._id],
-        }));
-
+    const breakdown = await adminAnalytics.getOrderStatusBreakdown(dateMatch);
     res.status(200).json(
-        new ApiResponse(200, { byStatus, cancellations }, "Order status breakdown fetched successfully"),
+        new ApiResponse(200, breakdown, "Order status breakdown fetched successfully"),
     );
 });
 
 exports.topPartners = asyncHandler(async (req, res) => {
-    const { startDate, endDate, limit = 10, sortBy = "revenue" } = req.query;
-    const match = {};
-    if (startDate && endDate) {
-        match.createdAt = {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
-        };
+    const { startDate, endDate, limit = 10 } = req.query;
+    if (!startDate || !endDate) {
+        return res.status(400).json(new ApiResponse(400, null, "startDate and endDate are required"));
     }
-
-    const pipeline = [
-        { $match: match },
-        {
-            $group: {
-                _id: "$hotelId",
-                orderCount: { $sum: 1 },
-                revenue: { $sum: "$priceDetails.totalAmountToPay" },
-            },
-        },
-        {
-            $lookup: {
-                from: "hotels",
-                localField: "_id",
-                foreignField: "_id",
-                as: "hotel",
-            },
-        },
-        { $unwind: { path: "$hotel", preserveNullAndEmptyArrays: true } },
-        {
-            $project: {
-                hotelId: "$_id",
-                hotelName: { $ifNull: ["$hotel.hotelName", "Unknown"] },
-                orderCount: 1,
-                revenue: { $round: ["$revenue", 2] },
-            },
-        },
-        { $sort: sortBy === "orders" ? { orderCount: -1 } : { revenue: -1 } },
-        { $limit: Math.min(Number(limit) || 10, 50) },
-    ];
-
-    const data = await Order.aggregate(pipeline);
+    const data = await adminAnalytics.getTopPartners(startDate, endDate, limit);
     res.status(200).json(new ApiResponse(200, data, "Top partners fetched successfully"));
 });
 
@@ -2220,76 +1884,9 @@ exports.updateDeliveryChargesData = asyncHandler(async (req, res) => {
 });
 
 exports.getMostSellingDishes = asyncHandler(async (req, res) => {
-    const { period = "monthly" } = req.query; // period can be 'daily', 'weekly', or 'monthly'
+    const { period = "monthly", startDate, endDate } = req.query;
 
-    // Define the date range based on the period
-    let startDate, endDate;
-    if (period === "daily") {
-        startDate = moment().startOf("day").toDate();
-        endDate = moment().endOf("day").toDate();
-    } else if (period === "weekly") {
-        startDate = moment().startOf("week").toDate();
-        endDate = moment().endOf("week").toDate();
-    } else if (period === "monthly") {
-        startDate = moment().startOf("month").toDate();
-        endDate = moment().endOf("month").toDate();
-    } else {
-        return res
-            .status(400)
-            .json(new ApiResponse(400, null, "Invalid period"));
-    }
-
-    const matchStage = {
-        createdAt: {
-            $gte: startDate,
-            $lte: endDate,
-        },
-    };
-
-    const aggregatePipeline = [
-        { $match: matchStage },
-        { $unwind: "$products" },
-        {
-            $group: {
-                _id: "$products.dishId",
-                totalOrders: { $sum: "$products.quantity" },
-            },
-        },
-        {
-            $lookup: {
-                from: "hoteldishes", // Assuming the collection name is "hoteldishes"
-                localField: "_id",
-                foreignField: "_id",
-                as: "dish",
-            },
-        },
-        { $unwind: "$dish" },
-        {
-            $lookup: {
-                from: "dishstars", // Assuming the collection name is "dishstars"
-                localField: "_id",
-                foreignField: "dishId",
-                as: "ratings",
-            },
-        },
-        {
-            $addFields: {
-                averageRating: { $avg: "$ratings.star" },
-            },
-        },
-        {
-            $project: {
-                _id: 0,
-                dish: 1,
-                totalOrders: 1,
-                averageRating: 1,
-            },
-        },
-        { $sort: { totalOrders: -1 } },
-        { $limit: 10 }, // Limit to top 10 products
-    ];
-
-    const result = await Order.aggregate(aggregatePipeline).exec();
+    const result = await adminAnalytics.getMostSellingDishes({ startDate, endDate, period });
 
     return res
         .status(200)
@@ -2482,13 +2079,59 @@ exports.uploadImage = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, image_url, "Image Uploaded Successfully"));
 });
 
-const { sendFirebaseNotification } = require("../utils/firebaseNotifier.utils");
-const { log } = require("winston");
+const { notifyCustomer } = require("../services/customerNotification.service");
 exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
-    const { userIds, notificationTitle, description } = req.body;
+    const {
+        userIds = [],
+        notificationTitle,
+        description,
+        type = "ADMIN_BROADCAST",
+        sendToAll = false,
+    } = req.body;
 
-    // Find users with the given user IDs
-    const users = await User.find({ _id: { $in: userIds } }).lean();
+    if (!notificationTitle?.trim() || !description?.trim()) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    "notificationTitle and description are required",
+                ),
+            );
+    }
+
+    let users = [];
+
+    if (sendToAll) {
+        users = await User.find({
+            firebaseToken: { $exists: true, $nin: [null, ""] },
+        })
+            .select("_id firebaseToken name")
+            .lean();
+    } else {
+        if (!Array.isArray(userIds) || userIds.length === 0) {
+            return res
+                .status(400)
+                .json(new ApiResponse(400, null, "userIds is required"));
+        }
+
+        if (userIds.length > 1000) {
+            return res
+                .status(400)
+                .json(
+                    new ApiResponse(
+                        400,
+                        null,
+                        "Maximum 1000 users can be notified per request",
+                    ),
+                );
+        }
+
+        users = await User.find({ _id: { $in: userIds } })
+            .select("_id firebaseToken name")
+            .lean();
+    }
 
     if (users.length === 0) {
         return res
@@ -2496,19 +2139,46 @@ exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
             .json(new ApiResponse(404, null, "No users found"));
     }
 
-    // Extract and filter valid Firebase tokens
-    const userFirebaseTokens = users
-        .map((user) => user.firebaseToken) // Extract firebaseToken
-        .filter((token) => token !== null && token !== undefined); // Filter out invalid tokens
-    if (userFirebaseTokens.length === 0) {
-        return res
-            .status(404)
-            .json(new ApiResponse(404, "No valid Firebase tokens found..."));
-    }
-    const data = await sendFirebaseNotification(
-        userFirebaseTokens,
-        notificationTitle,
-        description,
+    let sent = 0;
+    let failed = 0;
+    let noToken = 0;
+
+    await Promise.all(
+        users.map(async (user) => {
+            try {
+                const result = await notifyCustomer(user._id, {
+                    title: notificationTitle.trim(),
+                    body: description.trim(),
+                    type,
+                });
+
+                if (!result.hasToken) {
+                    noToken += 1;
+                }
+
+                if (result.fcm?.successCount > 0) {
+                    sent += 1;
+                } else if (result.hasToken) {
+                    failed += 1;
+                }
+            } catch (error) {
+                failed += 1;
+                console.error(
+                    `Admin notification failed for user ${user._id}:`,
+                    error.message,
+                );
+            }
+        }),
     );
-    res.status(200).json(new ApiResponse(200, data, "User Firebase Token"));
+
+    const stats = {
+        totalUsers: users.length,
+        sent,
+        failed,
+        noToken,
+    };
+
+    res.status(200).json(
+        new ApiResponse(200, stats, "Notifications processed successfully"),
+    );
 });

@@ -32,10 +32,11 @@ exports.createSettlement = async (orderData) => {
 // Fetch All Settlements - FULL POPULATE
 exports.getSettlements = async (req, res) => {
   try {
-    const { hotelId, isSettled } = req.query;
+    const { hotelId, isSettled, startDate, endDate } = req.query;
     const query = {};
     const mongoose = require('mongoose');
     const { Types } = mongoose;
+    const { buildOrderDateMatch, buildSettledDateMatch } = require('../../utils/analyticsDateRange');
 
     // Support both single hotelId and multiple hotelIds (comma-separated)
     if (hotelId) {
@@ -63,6 +64,21 @@ exports.getSettlements = async (req, res) => {
     }
     
     if (isSettled !== undefined) query.isSettled = isSettled === 'true';
+
+    if (startDate && endDate) {
+      const range =
+        isSettled === 'true'
+          ? buildSettledDateMatch(startDate, endDate)
+          : buildOrderDateMatch(startDate, endDate);
+      if (range.error) {
+        return res.status(400).json({ success: false, message: range.error });
+      }
+      if (isSettled === 'true') {
+        query.settledAt = range.match.settledAt || range.match.createdAt;
+      } else {
+        query.createdAt = range.match.createdAt;
+      }
+    }
 
     const settlements = await PartnerSettlement.find(query)
       .populate({
@@ -111,17 +127,13 @@ exports.markAsSettled = async (req, res) => {
 // Analytics for Admin
 exports.getEarningsAnalytics = async (req, res) => {
   try {
-    const result = await PartnerSettlement.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalPartnerEarnings: { $sum: "$totalPartnerEarning" },
-          totalAdminEarnings: { $sum: "$adminEarning" },
-        }
-      }
-    ]);
+    const { startDate, endDate } = req.query;
+    const data = await require('../../services/adminAnalytics.service').getSettlementAnalytics({
+      startDate,
+      endDate,
+    });
 
-    res.json({ success: true, data: result[0] || { totalPartnerEarnings: 0, totalAdminEarnings: 0 } });
+    res.json({ success: true, data });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server Error' });
