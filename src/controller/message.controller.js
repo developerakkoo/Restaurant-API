@@ -31,17 +31,31 @@ exports.getChatHistory = asyncHandler(async (req, res) => {
 });
 
 exports.getChatHistoryAdmin = asyncHandler(async (req, res) => {
-    const { userId , adminId} = req.params;
-    const messages = await ChatMessage.find({ userId, adminId })
-        .sort({ time: 1 })
-        .limit(50);
+    const { userId, adminId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const before = req.query.before ? new Date(req.query.before) : null;
 
-    if (!messages) {
-        throw new ApiError(404, "No chat history found");
+    const filter = { userId, adminId };
+    if (before && !isNaN(before.getTime())) {
+        filter.time = { $lt: before };
     }
-    getIO().to(`user_${userId}`).emit('chatHistory', messages);
+
+    const messages = await ChatMessage.find(filter)
+        .sort({ time: -1 })
+        .limit(limit + 1)
+        .lean();
+
+    const hasMore = messages.length > limit;
+    const slice = hasMore ? messages.slice(0, limit) : messages;
+    slice.reverse();
+
+    getIO().to(`user_${userId}`).emit('chatHistory', slice);
     return res.status(200).json(
-        new ApiResponse(200, messages, "Chat history retrieved successfully")
+        new ApiResponse(
+            200,
+            { messages: slice, hasMore },
+            "Chat history retrieved successfully"
+        )
     );
 });
 /**

@@ -54,6 +54,9 @@ router.get("/get/orderChartData", adminController.orderChartData);
 
 router.get("/get/revenueChartData", adminController.totalRevenueData);
 
+router.get("/analytics/order-status-breakdown", adminController.orderStatusBreakdown);
+router.get("/analytics/top-partners", adminController.topPartners);
+
 /*Partner */
 
 router.get("/get/all-partners", adminController.getAllPartner);

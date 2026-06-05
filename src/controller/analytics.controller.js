@@ -142,7 +142,6 @@ exports.getEarningsBreakdown = asyncHandler(async (req, res) => {
         }
     ]);
 
-    // Get admin earnings by hotel
     const adminEarningsByHotel = await PartnerSettlement.aggregate([
         { $match: { ...dateFilter, isSettled: true } },
         {
@@ -150,6 +149,23 @@ exports.getEarningsBreakdown = asyncHandler(async (req, res) => {
                 _id: "$hotelId",
                 total: { $sum: "$adminEarning" },
                 count: { $sum: 1 }
+            }
+        },
+        {
+            $lookup: {
+                from: "hotels",
+                localField: "_id",
+                foreignField: "_id",
+                as: "hotel"
+            }
+        },
+        { $unwind: { path: "$hotel", preserveNullAndEmptyArrays: true } },
+        {
+            $project: {
+                _id: 1,
+                total: 1,
+                count: 1,
+                hotelName: { $ifNull: ["$hotel.hotelName", "Unknown"] }
             }
         }
     ]);

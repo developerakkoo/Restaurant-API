@@ -1876,58 +1876,163 @@ exports.orderChartData = asyncHandler(async (req, res) => {
 });
 
 exports.totalRevenueData = asyncHandler(async (req, res) => {
-    const { sort = "dayOfMonth" } = req.query;
+    let { sort = "day", startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+        if (sort === "day") {
+            startDate = moment().startOf("month").format("YYYY-MM-DD");
+            endDate = moment().endOf("month").format("YYYY-MM-DD");
+        } else if (sort === "month") {
+            startDate = moment().startOf("year").format("YYYY-MM-DD");
+            endDate = moment().endOf("year").format("YYYY-MM-DD");
+        } else if (sort === "year") {
+            startDate = moment().subtract(5, "years").startOf("year").format("YYYY-MM-DD");
+            endDate = moment().endOf("year").format("YYYY-MM-DD");
+        }
+    }
+
+    const start = moment(startDate, "YYYY-MM-DD").startOf("day");
+    const end = moment(endDate, "YYYY-MM-DD").endOf("day");
+
+    if (!start.isValid() || !end.isValid()) {
+        return res.status(400).json(new ApiResponse(400, null, "Invalid date format. Use YYYY-MM-DD."));
+    }
+
+    const groupId = { year: { $year: "$createdAt" } };
+    if (sort === "month") {
+        groupId.month = { $month: "$createdAt" };
+    } else if (sort === "day") {
+        groupId.month = { $month: "$createdAt" };
+        groupId.day = { $dayOfMonth: "$createdAt" };
+    }
 
     const pipeline = [
         {
-            $project: {
-                totalPrice: "$priceDetails.totalAmountToPay",
-                sortField: {
-                    [`$${sort}`]: "$createdAt",
-                },
+            $match: {
+                createdAt: { $gte: start.toDate(), $lte: end.toDate() },
             },
         },
         {
             $group: {
-                _id: "$sortField",
-                revenue: {
-                    $sum: "$totalPrice",
-                },
+                _id: groupId,
+                revenue: { $sum: "$priceDetails.totalAmountToPay" },
             },
         },
         {
-            $project: {
-                _id: 0,
-                [sort]: "$_id",
-                revenue: 1,
+            $sort: {
+                "_id.year": 1,
+                ...(sort !== "year" && { "_id.month": 1 }),
+                ...(sort === "day" && { "_id.day": 1 }),
             },
         },
     ];
 
     const result = await Order.aggregate(pipeline);
     const label = result.map((item) => {
-        if (item.dayOfMonth) {
-            return moment().date(item.dayOfMonth).format("dddd");
+        if (sort === "day") {
+            return moment(`${item._id.year}-${item._id.month}-${item._id.day}`, "YYYY-M-D").format("DD MMM");
         }
-        if (item.week) {
-            return item.week;
+        if (sort === "month") {
+            return moment(`${item._id.year}-${item._id.month}`, "YYYY-M").format("MMMM");
         }
-        if (item.month) {
-            return moment().month(item.month).format("MMMM");
-        }
-        if (item.year) {
-            return item.year;
-        }
+        return `${item._id.year}`;
     });
-    const data = result.map((item) => item.revenue);
+    const data = result.map((item) => Number(item.revenue.toFixed(2)));
 
     res.status(200).json(
-        new ApiResponse(
-            200,
-            { label, data },
-            responseMessage.userMessage.revenueChartData,
-        ),
+        new ApiResponse(200, { label, data }, responseMessage.userMessage.revenueChartData),
     );
+});
+
+const ORDER_STATUS_LABELS = {
+    0: "Received",
+    1: "Being Prepared",
+    2: "Delivery Assigned",
+    3: "Delivered",
+    4: "Accepted",
+    5: "Cancelled by Hotel",
+    6: "Pickup Confirmed",
+    7: "Cancelled by Customer",
+    8: "Rejected by Delivery Boy",
+};
+
+exports.orderStatusBreakdown = asyncHandler(async (req, res) => {
+    const { startDate, endDate } = req.query;
+    const match = {};
+    if (startDate && endDate) {
+        match.createdAt = {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+        };
+    }
+
+    const grouped = await Order.aggregate([
+        { $match: match },
+        { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+    ]);
+
+    const byStatus = grouped.map((g) => ({
+        status: g._id,
+        count: g.count,
+        label: ORDER_STATUS_LABELS[g._id] || `Status ${g._id}`,
+    }));
+
+    const cancellations = grouped
+        .filter((g) => [5, 7, 8].includes(g._id))
+        .map((g) => ({
+            status: g._id,
+            count: g.count,
+            label: ORDER_STATUS_LABELS[g._id],
+        }));
+
+    res.status(200).json(
+        new ApiResponse(200, { byStatus, cancellations }, "Order status breakdown fetched successfully"),
+    );
+});
+
+exports.topPartners = asyncHandler(async (req, res) => {
+    const { startDate, endDate, limit = 10, sortBy = "revenue" } = req.query;
+    const match = {};
+    if (startDate && endDate) {
+        match.createdAt = {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+        };
+    }
+
+    const pipeline = [
+        { $match: match },
+        {
+            $group: {
+                _id: "$hotelId",
+                orderCount: { $sum: 1 },
+                revenue: { $sum: "$priceDetails.totalAmountToPay" },
+            },
+        },
+        {
+            $lookup: {
+                from: "hotels",
+                localField: "_id",
+                foreignField: "_id",
+                as: "hotel",
+            },
+        },
+        { $unwind: { path: "$hotel", preserveNullAndEmptyArrays: true } },
+        {
+            $project: {
+                hotelId: "$_id",
+                hotelName: { $ifNull: ["$hotel.hotelName", "Unknown"] },
+                orderCount: 1,
+                revenue: { $round: ["$revenue", 2] },
+            },
+        },
+        { $sort: sortBy === "orders" ? { orderCount: -1 } : { revenue: -1 } },
+        { $limit: Math.min(Number(limit) || 10, 50) },
+    ];
+
+    const data = await Order.aggregate(pipeline);
+    res.status(200).json(new ApiResponse(200, data, "Top partners fetched successfully"));
 });
 
 /***** Gst and platform fee data  *****/

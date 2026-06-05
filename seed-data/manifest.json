@@ -1,0 +1,57 @@
+{
+  "mode": "skip",
+  "admin": {
+    "email": "admin@dropeat.test",
+    "password": "Admin@12345"
+  },
+  "counts": {
+    "users": 10,
+    "partners": 5,
+    "drivers": 5,
+    "hotelsPerPartner": 1
+  },
+  "categories": [
+    { "slug": "pizza", "name": "Pizza" },
+    { "slug": "burgers", "name": "Burgers" },
+    { "slug": "biryani", "name": "Biryani" }
+  ],
+  "defaultPassword": "Test@12345",
+  "platform": {
+    "gstPercentage": 5,
+    "gstIsActive": true,
+    "platformFee": 10,
+    "deliveryBoyAllowance": 50,
+    "deliveryBoyIncentiveFor16delivery": 100,
+    "deliveryBoyIncentiveFor21delivery": 200,
+    "deliveryCharges": {
+      "range1Price": 30,
+      "range1MinKm": 0,
+      "range1MaxKm": 3,
+      "range2Price": 50,
+      "range2MinKm": 3,
+      "range2MaxKm": 6,
+      "range3Price": 80,
+      "range3MinKm": 6,
+      "range3MaxKm": 10
+    }
+  },
+  "pincodes": [
+    {
+      "pincode": "411001",
+      "address": "Pune, Maharashtra",
+      "lat": 18.5204,
+      "lng": 73.8567
+    },
+    {
+      "pincode": "411002",
+      "address": "Pune Camp, Maharashtra",
+      "lat": 18.5314,
+      "lng": 73.8746
+    }
+  ],
+  "location": {
+    "lat": 18.5204,
+    "lng": 73.8567,
+    "city": "Pune"
+  }
+}
