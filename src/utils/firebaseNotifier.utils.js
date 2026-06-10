@@ -75,12 +75,13 @@ exports.sendFirebaseNotification = async (
     );
 
     if (validTokens.length === 0) {
-        return { successCount: 0, failureCount: 0, invalidTokens: [] };
+        return { successCount: 0, failureCount: 0, invalidTokens: [], errors: [] };
     }
 
     let successCount = 0;
     let failureCount = 0;
     const invalidTokens = [];
+    const errors = [];
 
     try {
         for (let i = 0; i < validTokens.length; i += MULTICAST_BATCH_SIZE) {
@@ -97,6 +98,18 @@ exports.sendFirebaseNotification = async (
                 }
 
                 const errorCode = result.error?.code;
+                const errorMessage = result.error?.message;
+
+                errors.push({
+                    tokenPrefix: batch[index]?.slice(0, 20),
+                    code: errorCode || "unknown",
+                    message: errorMessage || "Unknown FCM error",
+                });
+
+                console.error(
+                    `FCM send failed [${errorCode}]: ${errorMessage}`,
+                );
+
                 if (errorCode && INVALID_TOKEN_CODES.has(errorCode)) {
                     invalidTokens.push(batch[index]);
                 }
@@ -107,13 +120,19 @@ exports.sendFirebaseNotification = async (
             await clearInvalidTokens(invalidTokens);
         }
 
-        return { successCount, failureCount, invalidTokens };
+        return { successCount, failureCount, invalidTokens, errors };
     } catch (error) {
         console.error("Error sending notification:", error);
         return {
             successCount,
             failureCount: failureCount + validTokens.length - successCount,
             invalidTokens,
+            errors: [
+                {
+                    code: error.code || "messaging/send-error",
+                    message: error.message || "Failed to send notification",
+                },
+            ],
             error: error.message,
         };
     }

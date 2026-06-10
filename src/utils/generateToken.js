@@ -12,11 +12,32 @@ const Partner = require("../models/partner.model");
  * @returns {Promise<{accessToken: string, refreshToken: string}>} - Promise resolving to an object with accessToken and refreshToken.
  * @throws {Error} - Throws an error if token generation or saving fails.
  */
-const generateTokens = async (user, userType) => {
+const generateTokens = async (userOrId, userType) => {
     try {
+        const userId = userOrId?._id ?? userOrId;
+
+        let phoneNumber = userOrId?.phoneNumber;
+
+        if (!phoneNumber && userType == 1) {
+            const admin = await Admin.findById(userId).select("phoneNumber");
+            phoneNumber = admin?.phoneNumber;
+        }
+        if (!phoneNumber && userType == 2) {
+            const customer = await User.findById(userId).select("phoneNumber");
+            phoneNumber = customer?.phoneNumber;
+        }
+        if (!phoneNumber && userType == 3) {
+            const driver = await DeliverBoy.findById(userId).select("phoneNumber");
+            phoneNumber = driver?.phoneNumber;
+        }
+        if (!phoneNumber && userType == 4) {
+            const partner = await Partner.findById(userId).select("phoneNumber");
+            phoneNumber = partner?.phoneNumber;
+        }
+
         let payload = {
-            userId: user._id,
-            phoneNumber: user.phoneNumber,
+            userId,
+            phoneNumber,
             userType,
         };
 

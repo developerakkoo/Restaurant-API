@@ -2303,6 +2303,7 @@ exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
     let sent = 0;
     let failed = 0;
     let noToken = 0;
+    const errors = [];
 
     await Promise.all(
         users.map(async (user) => {
@@ -2322,8 +2323,24 @@ exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
                 } else if (result.hasToken) {
                     failed += 1;
                 }
+
+                if (result.fcm?.errors?.length) {
+                    result.fcm.errors.forEach((entry) => {
+                        errors.push({
+                            userId: user._id,
+                            userName: user.name,
+                            ...entry,
+                        });
+                    });
+                }
             } catch (error) {
                 failed += 1;
+                errors.push({
+                    userId: user._id,
+                    userName: user.name,
+                    code: "notify/customer-error",
+                    message: error.message,
+                });
                 console.error(
                     `Admin notification failed for user ${user._id}:`,
                     error.message,
@@ -2337,6 +2354,7 @@ exports.sendFirebaseNotificationToUser = asyncHandler(async (req, res) => {
         sent,
         failed,
         noToken,
+        errors,
     };
 
     res.status(200).json(
