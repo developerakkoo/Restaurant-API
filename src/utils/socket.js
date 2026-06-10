@@ -1,15 +1,21 @@
 let io;
+const { corsOrigin } = require("../config/cors.config");
 
 module.exports = {
     init: (httpServer) => {
         io = require("socket.io")(httpServer, {
             cors: {
-                origin: "*", // Allow all origins
-                methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+                origin: corsOrigin,
+                methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
                 credentials: true,
-                allowedHeaders: ["*"]
+                allowedHeaders: [
+                    "Content-Type",
+                    "Authorization",
+                    "x-access-token",
+                    "x-refresh-token",
+                ],
             },
-            transports: ['websocket', 'polling'],
+            transports: ["websocket", "polling"],
             allowEIO3: true,
             pingTimeout: 60000,
             pingInterval: 25000,

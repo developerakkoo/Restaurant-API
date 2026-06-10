@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const { corsOptions } = require("./config/cors.config");
 const app = express();
 
 const { BASE_URL, API_VERSION } = require("./constant");
@@ -14,16 +15,14 @@ const { setupPassports } = require("./passport");
 const passport = require("passport");
 const path = require("path");
 
+app.set("trust proxy", 1);
+
 app.use(express.urlencoded({ limit:'50mb', extended: true }));
 app.use(express.json({limit:'50mb'}));
 
-// CORS configuration - Allow all origins
-app.use(cors({
-    origin: '*', // Allow all origins
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'x-refresh-token']
-}));
+// CORS must run before routes; reflects allowed admin/app origins (not wildcard + credentials).
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(cookieParser());
 
@@ -41,30 +40,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-/**
- * Sets the response headers to allow cross-origin requests (CORS)
- * @param {import('express').Request} req - The request object
- * @param {import('express').Response} res - The response object
- * @param {Function} next - The next middleware function in the stack
- */
-app.use(function (req, res, next) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "OPTIONS, GET, POST, PUT, PATCH, DELETE",
-    );
-    res.setHeader("Access-Control-Allow-Headers", "*");
-    res.setHeader("Access-Control-Allow-Credentials", true);
-    //res.setHeader("Cross-Origin-Resource-Policy", 'cross-origin');
-    next();
-});
-
-/**
- * Sets the response headers to allow cross-origin requests (CORS)
- * @param {import('express').Request} req - The request object
- * @param {import('express').Response} res - The response object
- * @param {Function} next - The next middleware function in the stack
- */
 app.use(
     helmet({
         contentSecurityPolicy: {
