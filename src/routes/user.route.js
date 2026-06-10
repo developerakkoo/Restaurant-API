@@ -12,6 +12,9 @@ const {
     getPromoCode,
     getAllPromoCodes,
 } = require("../controller/promoCode.controller");
+const {
+    verify_access_token,
+} = require("../middleware/verifyJwtToken.middleware");
 
 router.post("/logout/:userId/:userType", authController.logoutUser);
 
@@ -21,6 +24,12 @@ router.get("/get/profile-stats/:id", userController.getUserProfileStats);
 
 router.get('/coordinates/:userId/:hotelId',userController.getCoordinatesForCalculations);
 router.put("/update/:userId", userController.updateUserProfile);
+
+router.put(
+    "/register-device-token",
+    verify_access_token,
+    userController.registerDeviceToken,
+);
 
 router.post("/add-address", userController.addAddresses);
 

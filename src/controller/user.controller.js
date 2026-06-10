@@ -174,15 +174,86 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
     if (firebaseToken !== undefined) updateFields.firebaseToken = firebaseToken;
     if (isOnline !== undefined) updateFields.isOnline = isOnline;
 
+    if (Object.keys(updateFields).length === 0) {
+        return res
+            .status(400)
+            .json(new ApiResponse(400, null, "No fields to update"));
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
         req.params.userId,
         { $set: updateFields },
         { new: true },
-    ).select("-password");
+    ).select("-password -refreshToken");
+
+    if (!updatedUser) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "User not found"));
+    }
+
+    if (firebaseToken !== undefined) {
+        console.log(
+            `FCM token updated for user ${req.params.userId}: ${String(firebaseToken).slice(0, 20)}...`,
+        );
+    }
 
     return res
         .status(200)
         .json(new ApiResponse(200, updatedUser, "User profile updated"));
+});
+
+exports.registerDeviceToken = asyncHandler(async (req, res) => {
+    const { firebaseToken } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+        return res
+            .status(401)
+            .json(new ApiResponse(401, null, "Invalid session"));
+    }
+
+    if (typeof firebaseToken !== "string" || firebaseToken.length > 512) {
+        return res
+            .status(400)
+            .json(
+                new ApiResponse(
+                    400,
+                    null,
+                    "firebaseToken must be a string (max 512 chars)",
+                ),
+            );
+    }
+
+    const token = firebaseToken.trim();
+
+    const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $set: { firebaseToken: token } },
+        { new: true },
+    ).select("_id firebaseToken name phoneNumber");
+
+    if (!updatedUser) {
+        return res
+            .status(404)
+            .json(new ApiResponse(404, null, "User not found"));
+    }
+
+    console.log(
+        `FCM token registered for user ${userId}: ${token.slice(0, 20)}...`,
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                userId: updatedUser._id,
+                firebaseTokenSaved: true,
+                tokenPrefix: token.slice(0, 20),
+            },
+            "Device token registered successfully",
+        ),
+    );
 });
 
 exports.addAddresses = asyncHandler(async (req, res) => {
