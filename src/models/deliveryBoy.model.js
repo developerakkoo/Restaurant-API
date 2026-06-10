@@ -79,6 +79,50 @@ const deliveryBoySchema = new Schema(
             default: 0,
             enum: [0, 1, 2, 3], // pending,blocked, approved, rejected,
         },
+        verificationStatus: {
+            type: String,
+            enum: [
+                "not_submitted",
+                "pending_review",
+                "verified",
+                "rejected_reupload",
+                "permanently_rejected",
+            ],
+            default: "not_submitted",
+        },
+        rejectionReason: {
+            type: String,
+            default: null,
+        },
+        rejectionType: {
+            type: String,
+            enum: ["reupload", "permanent", null],
+            default: null,
+        },
+        documentsSubmittedAt: {
+            type: Date,
+        },
+        verifiedAt: {
+            type: Date,
+        },
+        verifiedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "Admin",
+        },
+        rejectedAt: {
+            type: Date,
+        },
+        rejectedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "Admin",
+        },
+        verificationSubmitCount: {
+            type: Number,
+            default: 0,
+        },
+        lastVerificationSubmitAt: {
+            type: Date,
+        },
     },
     { timestamps: true },
 );

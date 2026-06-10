@@ -132,13 +132,18 @@ exports.updateOnlineStatus = asyncHandler(async (req, res) => {
     }
 
     if (parseInt(userType) === 3 && isOnline === true) {
-        const existingDriver = await DeliveryBoy.findById(userId).select("status");
+        const existingDriver = await DeliveryBoy.findById(userId).select(
+            "status verificationStatus",
+        );
         if (!existingDriver) {
             return res.status(404).json(
                 new ApiResponse(404, null, "Delivery boy not found")
             );
         }
-        if (existingDriver.status !== 2) {
+        if (
+            existingDriver.status !== 2 ||
+            existingDriver.verificationStatus !== "verified"
+        ) {
             return res.status(403).json(
                 new ApiResponse(403, null, "Only approved delivery boys can go online")
             );

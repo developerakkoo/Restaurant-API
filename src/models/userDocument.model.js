@@ -31,7 +31,13 @@ const userDocumentSchema = new Schema(
             required: true,
             default: 0,
             enum:[0,1,2] // pending, approved, rejected
-        }
+        },
+        mimeType: {
+            type: String,
+        },
+        originalFileName: {
+            type: String,
+        },
     },
     { timestamps: true },
 );

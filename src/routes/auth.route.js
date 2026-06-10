@@ -6,7 +6,7 @@ const partnerController = require("../controller/partner.controller");
 const userDataValidator = require("../validators/user.validator");
 const userController = require("../controller/user.controller");
 const authController = require("../controller/auth.controller");
-const { upload } = require("../middleware/fileHandler.middleware");
+const { verify_access_token } = require("../middleware/verifyJwtToken.middleware");
 const { dataValidationResult } = require("../validators/validationResult");
 const passport = require("passport");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
@@ -52,6 +52,7 @@ router.post("/delivery-boy/login", deliveryBoyController.loginDeliveryBoy);
 
 router.post(
     "/delivery-boy/upload/document",
+    verify_access_token,
     upload.single("document"),
     deliveryBoyController.uploadDocument,
 );

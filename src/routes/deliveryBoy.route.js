@@ -30,4 +30,16 @@ router.get("/get/leave-requests", deliveryBoyController.getAllLeaveRequests);
 
 router.get("/earnings/:deliveryBoyId", deliveryBoyController.getEarnings);
 
+router.get(
+    "/verification/status",
+    verify_access_token,
+    deliveryBoyController.getVerificationStatus,
+);
+
+router.post(
+    "/verification/submit",
+    verify_access_token,
+    deliveryBoyController.submitVerification,
+);
+
 module.exports = { deliverBoyRoutes: router };

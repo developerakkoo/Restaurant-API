@@ -12,6 +12,22 @@ const moment = require("moment");
 const { Types } = require("mongoose");
 const { getIO } = require("../utils/socket");
 const { setDriverOffline } = require("../utils/driverStatus.util");
+const {
+    REQUIRED_VERIFICATION_DOC_TYPES,
+    UPLOAD_ALLOWED_VERIFICATION_STATUSES,
+    MAX_VERIFICATION_SUBMITS_PER_HOUR,
+} = require("../constants/driverVerification.constants");
+
+const ALLOWED_DOC_MIMES = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+];
+
+const buildPublicUploadUrl = (req, filename) =>
+    `https://${req.hostname}/upload/${filename}`;
 
 /**
  *  @function registerDeliveryBoy
@@ -109,6 +125,43 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
     //     throw new ApiError(401, responseMessage.userMessage.incorrectPassword);
     // }
 
+    // Block login for admin-blocked or permanently rejected drivers
+    if (user.status === 1) {
+        return res.status(403).json(
+            new ApiResponse(
+                403,
+                {
+                    isRegistered: true,
+                    status: user.status,
+                    verificationStatus: user.verificationStatus || "not_submitted",
+                    rejectionReason:
+                        user.rejectionReason ||
+                        "Your account has been blocked by admin.",
+                },
+                "Your account has been blocked by admin.",
+            ),
+        );
+    }
+
+    if (user.verificationStatus === "permanently_rejected" || user.status === 3) {
+        return res.status(403).json(
+            new ApiResponse(
+                403,
+                {
+                    isRegistered: true,
+                    status: user.status,
+                    verificationStatus: "permanently_rejected",
+                    rejectionReason:
+                        user.rejectionReason ||
+                        "Your application has been permanently rejected.",
+                    rejectionType: user.rejectionType || "permanent",
+                },
+                user.rejectionReason ||
+                    "Your application has been permanently rejected.",
+            ),
+        );
+    }
+
     // Generate access and refresh tokens for the logged-in user
     const { accessToken, refreshToken } = await generateTokens(user._id, 3);
 
@@ -132,6 +185,10 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
                 {
                     userId: loggedInUser._id,
                     status: user.status,
+                    verificationStatus:
+                        user.verificationStatus || "not_submitted",
+                    rejectionReason: user.rejectionReason || null,
+                    rejectionType: user.rejectionType || null,
                     isRegistered: true,
                     accessToken,
                     refreshToken,
@@ -244,35 +301,87 @@ exports.deletedImage = asyncHandler(async (req, res) => {
 
 exports.uploadDocument = asyncHandler(async (req, res) => {
     const { userId, documentType, documentNumber } = req.body;
-    // console.log(req.file);
-    const { filename } = req.file;
-    const local_filePath = `upload/${filename}`;
-    let document_url = `https://${req.hostname}/upload/${filename}`;
-    if (process.env.NODE_ENV !== "production") {
-        document_url = `https://${req.hostname}/upload/${filename}`;
+    const authUserId = req.user?.userId?.toString();
+    const requestedUserId = userId?.toString();
+
+    if (!authUserId || authUserId !== requestedUserId) {
+        throw new ApiError(403, "You can only upload documents for your own account.");
     }
 
+    if (!req.file) {
+        throw new ApiError(400, "Document file is required.");
+    }
+
+    const parsedDocType = Number(documentType);
+    if (!REQUIRED_VERIFICATION_DOC_TYPES.includes(parsedDocType)) {
+        deleteFile(`upload/${req.file.filename}`);
+        throw new ApiError(
+            400,
+            "Invalid document type. Allowed: Aadhar, PAN, Driving License.",
+        );
+    }
+
+    if (
+        req.file.mimetype &&
+        !ALLOWED_DOC_MIMES.includes(req.file.mimetype.toLowerCase())
+    ) {
+        deleteFile(`upload/${req.file.filename}`);
+        throw new ApiError(
+            400,
+            "Invalid file type. Allowed: JPEG, PNG, WebP, PDF.",
+        );
+    }
+
+    const driver = await DeliverBoy.findById(userId);
+    if (!driver) {
+        deleteFile(`upload/${req.file.filename}`);
+        throw new ApiError(404, responseMessage.userMessage.deliveryBoyNotFound);
+    }
+
+    if (
+        !UPLOAD_ALLOWED_VERIFICATION_STATUSES.includes(driver.verificationStatus)
+    ) {
+        deleteFile(`upload/${req.file.filename}`);
+        throw new ApiError(
+            403,
+            "Document upload is not allowed in your current verification state.",
+        );
+    }
+
+    const { filename, mimetype, originalname } = req.file;
+    const local_filePath = `upload/${filename}`;
+    const document_url = buildPublicUploadUrl(req, filename);
+
     let userDocument;
-    const existDoc = await DeliverBoyDocument.findOne({ userId, documentType });
+    const existDoc = await DeliverBoyDocument.findOne({
+        userId,
+        documentType: parsedDocType,
+    });
     if (existDoc) {
         deleteFile(existDoc.local_filePath);
         userDocument = await DeliverBoyDocument.findByIdAndUpdate(
             existDoc._id,
             {
-                documentType,
+                documentType: parsedDocType,
                 documentNumber,
                 document_url,
                 local_filePath,
+                documentStatus: 0,
+                mimeType: mimetype || null,
+                originalFileName: originalname || null,
             },
             { new: true },
         );
     } else {
         userDocument = await DeliverBoyDocument.create({
             userId,
-            documentType,
+            documentType: parsedDocType,
             documentNumber,
             document_url,
             local_filePath,
+            documentStatus: 0,
+            mimeType: mimetype || null,
+            originalFileName: originalname || null,
         });
     }
 
@@ -766,5 +875,141 @@ exports.updateDeliveredOrders = asyncHandler(async (req, res) => {
                 "Delivered Orders Updated Successfully"
             ),
         );
+});
+
+exports.getVerificationStatus = asyncHandler(async (req, res) => {
+    const userId = req.query.userId || req.user?.userId;
+    const authUserId = req.user?.userId?.toString();
+
+    if (!userId) {
+        throw new ApiError(400, "User ID is required.");
+    }
+
+    if (authUserId && authUserId !== userId.toString()) {
+        throw new ApiError(403, "Access denied.");
+    }
+
+    const driver = await DeliverBoy.findById(userId).select(
+        "status verificationStatus rejectionReason rejectionType documentsSubmittedAt verifiedAt rejectedAt",
+    );
+
+    if (!driver) {
+        throw new ApiError(404, responseMessage.userMessage.deliveryBoyNotFound);
+    }
+
+    const documents = await DeliverBoyDocument.find({
+        userId,
+        documentType: { $in: REQUIRED_VERIFICATION_DOC_TYPES },
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                status: driver.status,
+                verificationStatus: driver.verificationStatus,
+                rejectionReason: driver.rejectionReason,
+                rejectionType: driver.rejectionType,
+                documentsSubmittedAt: driver.documentsSubmittedAt,
+                verifiedAt: driver.verifiedAt,
+                rejectedAt: driver.rejectedAt,
+                documents,
+                requiredDocumentTypes: REQUIRED_VERIFICATION_DOC_TYPES,
+            },
+            "Verification status fetched successfully.",
+        ),
+    );
+});
+
+exports.submitVerification = asyncHandler(async (req, res) => {
+    const { userId } = req.body;
+    const authUserId = req.user?.userId?.toString();
+
+    if (!userId || !authUserId || authUserId !== userId.toString()) {
+        throw new ApiError(403, "You can only submit verification for your own account.");
+    }
+
+    const driver = await DeliverBoy.findById(userId);
+    if (!driver) {
+        throw new ApiError(404, responseMessage.userMessage.deliveryBoyNotFound);
+    }
+
+    if (
+        !UPLOAD_ALLOWED_VERIFICATION_STATUSES.includes(driver.verificationStatus)
+    ) {
+        throw new ApiError(
+            403,
+            "Verification cannot be submitted in your current state.",
+        );
+    }
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    if (
+        driver.lastVerificationSubmitAt &&
+        driver.lastVerificationSubmitAt > oneHourAgo &&
+        (driver.verificationSubmitCount || 0) >= MAX_VERIFICATION_SUBMITS_PER_HOUR
+    ) {
+        throw new ApiError(
+            429,
+            "Too many verification submissions. Please try again later.",
+        );
+    }
+
+    const documents = await DeliverBoyDocument.find({
+        userId,
+        documentType: { $in: REQUIRED_VERIFICATION_DOC_TYPES },
+    });
+
+    const uploadedTypes = documents.map((doc) => doc.documentType);
+    const missingTypes = REQUIRED_VERIFICATION_DOC_TYPES.filter(
+        (type) => !uploadedTypes.includes(type),
+    );
+
+    if (missingTypes.length > 0) {
+        throw new ApiError(
+            400,
+            "Please upload all required documents before submitting.",
+        );
+    }
+
+    const submitCount =
+        driver.lastVerificationSubmitAt &&
+        driver.lastVerificationSubmitAt > oneHourAgo
+            ? (driver.verificationSubmitCount || 0) + 1
+            : 1;
+
+    const updatedDriver = await DeliverBoy.findByIdAndUpdate(
+        userId,
+        {
+            $set: {
+                verificationStatus: "pending_review",
+                documentsSubmittedAt: new Date(),
+                status: 0,
+                rejectionReason: null,
+                rejectionType: null,
+                rejectedAt: null,
+                rejectedBy: null,
+                lastVerificationSubmitAt: new Date(),
+                verificationSubmitCount: submitCount,
+            },
+        },
+        { new: true },
+    );
+
+    await DeliverBoyDocument.updateMany(
+        { userId, documentType: { $in: REQUIRED_VERIFICATION_DOC_TYPES } },
+        { $set: { documentStatus: 0 } },
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                verificationStatus: updatedDriver.verificationStatus,
+                documentsSubmittedAt: updatedDriver.documentsSubmittedAt,
+            },
+            "Verification submitted successfully. Admin will review your documents.",
+        ),
+    );
 });
 

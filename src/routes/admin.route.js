@@ -153,6 +153,18 @@ router.put(
     adminController.updateDeliveryBoyDocumentStatus,
 );
 
+router.put(
+    "/delivery-boy/verification/approve",
+    adminPrivilegesRequired,
+    adminController.approveDriverVerification,
+);
+
+router.put(
+    "/delivery-boy/verification/reject",
+    adminPrivilegesRequired,
+    adminController.rejectDriverVerification,
+);
+
 /* Category Routes*/
 
 router.post(

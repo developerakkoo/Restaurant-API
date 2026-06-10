@@ -336,7 +336,7 @@ exports.getAllPartner = asyncHandler(async (req, res) => {
 
 exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
     let dbQuery = {};
-    const { q, startDate, populate, status, isOnline } = req.query;
+    const { q, startDate, populate, status, isOnline, verificationStatus } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
     const pageNumber = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
@@ -376,6 +376,10 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
         } else if (isOnline === "false" || isOnline === false || isOnline === "0" || isOnline === 0) {
             dbQuery.isOnline = false;
         }
+    }
+
+    if (verificationStatus) {
+        dbQuery.verificationStatus = verificationStatus;
     }
 
     const dataCount = await DeliveryBoy.countDocuments(dbQuery);
@@ -478,6 +482,28 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
                     $size: { $ifNull: ["$activeOrders", []] }
                 }
             }
+        },
+        {
+            $lookup: {
+                as: "verificationDocuments",
+                from: "userdocuments",
+                foreignField: "userId",
+                localField: "_id",
+                pipeline: [
+                    {
+                        $match: {
+                            documentType: { $in: [11, 22, 33] },
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $addFields: {
+                verificationDocumentCount: {
+                    $size: { $ifNull: ["$verificationDocuments", []] },
+                },
+            },
         }
     );
     const deliveryBoys = await DeliveryBoy.aggregate(
@@ -603,6 +629,132 @@ exports.updateDeliveryBoyDocumentStatus = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.documentStatusUpdatedSuccessfully,
             ),
         );
+});
+
+exports.approveDriverVerification = asyncHandler(async (req, res) => {
+    const { deliveryBoyId } = req.body;
+    const adminId = req.user?.userId;
+
+    const driver = await DeliveryBoy.findById(deliveryBoyId);
+    if (!driver) {
+        throw new ApiError(404, responseMessage.userMessage.deliveryBoyNotFound);
+    }
+
+    if (driver.verificationStatus !== "pending_review") {
+        throw new ApiError(
+            400,
+            "Only drivers with pending verification can be approved.",
+        );
+    }
+
+    const updatedDriver = await DeliveryBoy.findByIdAndUpdate(
+        deliveryBoyId,
+        {
+            $set: {
+                verificationStatus: "verified",
+                status: 2,
+                verifiedAt: new Date(),
+                verifiedBy: adminId || null,
+                rejectionReason: null,
+                rejectionType: null,
+                rejectedAt: null,
+                rejectedBy: null,
+            },
+        },
+        { new: true },
+    );
+
+    await DeliverBoyDocument.updateMany(
+        { userId: deliveryBoyId },
+        { $set: { documentStatus: 1 } },
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            updatedDriver,
+            "Driver verification approved successfully.",
+        ),
+    );
+});
+
+exports.rejectDriverVerification = asyncHandler(async (req, res) => {
+    const { deliveryBoyId, rejectionType, reason } = req.body;
+    const adminId = req.user?.userId;
+
+    if (!reason || String(reason).trim().length < 10) {
+        throw new ApiError(
+            400,
+            "Rejection reason is required (minimum 10 characters).",
+        );
+    }
+
+    if (!["reupload", "permanent"].includes(rejectionType)) {
+        throw new ApiError(
+            400,
+            "Invalid rejection type. Use reupload or permanent.",
+        );
+    }
+
+    const driver = await DeliveryBoy.findById(deliveryBoyId);
+    if (!driver) {
+        throw new ApiError(404, responseMessage.userMessage.deliveryBoyNotFound);
+    }
+
+    if (driver.verificationStatus !== "pending_review") {
+        throw new ApiError(
+            400,
+            "Only drivers with pending verification can be rejected.",
+        );
+    }
+
+    const trimmedReason = String(reason).trim();
+    const updatePayload =
+        rejectionType === "permanent"
+            ? {
+                  verificationStatus: "permanently_rejected",
+                  status: 3,
+                  rejectionType: "permanent",
+                  rejectionReason: trimmedReason,
+                  rejectedAt: new Date(),
+                  rejectedBy: adminId || null,
+                  isOnline: false,
+              }
+            : {
+                  verificationStatus: "rejected_reupload",
+                  status: 0,
+                  rejectionType: "reupload",
+                  rejectionReason: trimmedReason,
+                  rejectedAt: new Date(),
+                  rejectedBy: adminId || null,
+              };
+
+    const updatedDriver = await DeliveryBoy.findByIdAndUpdate(
+        deliveryBoyId,
+        { $set: updatePayload },
+        { new: true },
+    );
+
+    if (rejectionType === "permanent") {
+        const { setDriverOffline } = require("../utils/driverStatus.util");
+        const io = getIO();
+        await setDriverOffline(deliveryBoyId, io);
+    }
+
+    await DeliverBoyDocument.updateMany(
+        { userId: deliveryBoyId },
+        { $set: { documentStatus: 2 } },
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            updatedDriver,
+            rejectionType === "permanent"
+                ? "Driver permanently rejected."
+                : "Driver rejected. They can re-upload documents.",
+        ),
+    );
 });
 
 exports.updateUserStatus = asyncHandler(async (req, res) => {

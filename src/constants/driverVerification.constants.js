@@ -1,0 +1,21 @@
+const REQUIRED_VERIFICATION_DOC_TYPES = [11, 22, 33];
+
+const VERIFICATION_DOC_LABELS = {
+    11: "Aadhar Card",
+    22: "PAN Card",
+    33: "Driving License",
+};
+
+const UPLOAD_ALLOWED_VERIFICATION_STATUSES = [
+    "not_submitted",
+    "rejected_reupload",
+];
+
+const MAX_VERIFICATION_SUBMITS_PER_HOUR = 3;
+
+module.exports = {
+    REQUIRED_VERIFICATION_DOC_TYPES,
+    VERIFICATION_DOC_LABELS,
+    UPLOAD_ALLOWED_VERIFICATION_STATUSES,
+    MAX_VERIFICATION_SUBMITS_PER_HOUR,
+};
