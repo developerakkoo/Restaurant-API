@@ -10,7 +10,8 @@
         "seed:local": "SEED_ENV=local node src/seeders/run-seed.js",
         "seed:prod": "SEED_ENV=production node src/seeders/run-seed.js",
         "seed:reset": "SEED_RESET=true node src/seeders/run-seed.js",
-        "test:analytics": "node --test tests/analytics/*.test.js"
+        "test:analytics": "node --test tests/analytics/*.test.js",
+        "test:pricing": "node --test tests/pricing/*.test.js"
     },
     "keywords": [],
     "author": "",

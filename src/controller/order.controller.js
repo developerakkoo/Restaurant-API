@@ -34,6 +34,12 @@ const {
 } = require("../utils/invoice");
 const { createSettlement } = require("./Partner-Settlement/partner-settlement");
 const { createEarningInternal } = require("./Delivery-Boy/delivery-boy-earnings");
+const userAddressModel = require("../models/userAddress.model");
+const {
+    calculateOrderPricing,
+    geoCoordsToLatLng,
+    priceDetailsMatch,
+} = require("../services/orderPricing.service");
 
 
 let instance = new razorpay({
@@ -325,179 +331,51 @@ exports.rejectOrderByDeliveryBoy = asyncHandler(async (req, res) => {
 });
 
 exports.CalculateAmountToPay = asyncHandler(async (req, res) => {
-    if (!data || data.length === 0) {
-        return res
-            .status(500)
-            .json(
-                new ApiResponse(
-                    500,
-                    null,
-                    "Server error: Missing configuration data",
-                ),
-            );
+    const {
+        userId,
+        code,
+        userLat,
+        userLong,
+        shopLat,
+        shopLong,
+        products: bodyProducts,
+    } = req.body;
+
+    let products = bodyProducts;
+    if (!products || products.length === 0) {
+        const cart = await Cart.findOne({ userId });
+        if (!cart || cart.products.length === 0) {
+            return res
+                .status(400)
+                .json(new ApiResponse(400, null, "Your cart is empty."));
+        }
+        products = cart.products;
     }
-
-    const { gstPercentage, gstIsActive, deliveryBoyAllowance } = data[0];
-    const { userId, code, userLat, userLong, shopLat, shopLong } = req.body;
-
-    // Find the user's cart
-    const cart = await Cart.findOne({ userId });
-    if (!cart || cart.products.length === 0) {
-        return res
-            .status(400)
-            .json(new ApiResponse(400, null, "Your cart is empty."));
-    }
-
-    // Calculate the subtotal (total product cost)
-    const subtotal = (
-        await Promise.all(
-            cart.products.map(async (product) => {
-                const dish = await dishModel.findById(product.dishId);
-                return dish.userPrice * product.quantity;
-            }),
-        )
-    ).reduce((total, price) => total + price, 0);
-
-    // Calculate GST
-    let gstAmount = 0;
-    if (gstIsActive) {
-        gstAmount = (subtotal * gstPercentage) / 100;
-    }
-
-    // Calculate the distance using Google Maps API
-    let distanceInKm;
-    try {
-        distanceInKm = await getDistance(userLat, userLong, shopLat, shopLong);
-    } catch (error) {
-        return res.status(500).json(new ApiResponse(500, null, error.message));
-    }
-
-    // Fetch delivery charges from the database
-    const deliveryChargesConfig = await deliveryChargesModel.findOne();
-    let deliveryCharges = 0;
-    let deliveryBoyCompensationAmount = 0;
 
     if (
-        distanceInKm >= deliveryChargesConfig.range1MinKm &&
-        distanceInKm <= deliveryChargesConfig.range1MaxKm
+        userLat == null ||
+        userLong == null ||
+        shopLat == null ||
+        shopLong == null
     ) {
-        deliveryCharges = deliveryChargesConfig.range1Price;
-        deliveryBoyCompensationAmount = deliveryChargesConfig.range1Price;
-    } else if (
-        distanceInKm > deliveryChargesConfig.range2MinKm &&
-        distanceInKm <= deliveryChargesConfig.range2MaxKm
-    ) {
-        deliveryCharges = deliveryChargesConfig.range2Price;
-        deliveryBoyCompensationAmount = deliveryChargesConfig.range2Price;
-    } else if (
-        distanceInKm > deliveryChargesConfig.range3MinKm &&
-        distanceInKm <= deliveryChargesConfig.range3MaxKm
-    ) {
-        deliveryCharges = deliveryChargesConfig.range3Price;
-        deliveryBoyCompensationAmount = deliveryChargesConfig.range3Price;
-    } else {
-        deliveryCharges = deliveryChargesConfig.range3Price;
-        deliveryBoyCompensationAmount = deliveryChargesConfig.range3Price;
-    }
-    if (subtotal >= 500) {
-        deliveryCharges = 0; // Free delivery for orders above 500
+        throw new ApiError(400, "Delivery coordinates are required");
     }
 
-    // Calculate platform fee as a percentage of the subtotal
-    const platformFee = (subtotal * data[0].platformFee) / 100;
+    const breakdown = await calculateOrderPricing({
+        products,
+        userLat,
+        userLong,
+        shopLat,
+        shopLong,
+        code,
+        userId,
+        dishModel,
+        deliveryChargesModel,
+        Data,
+        promoCodeModel,
+        Order,
+    });
 
-    // Calculate the initial total amount to pay
-    let totalAmountToPay = subtotal + gstAmount + deliveryCharges + platformFee;
-
-    let discount = 0;
-    let promoCodeId = null;
-    let promoCodeDetails = null;
-    let promoCodeData;
-    let deliveryBoyCompensation = 0;
-
-    // If a promo code is provided, validate and apply it
-    if (code) {
-        const promoCode = await promoCodeModel.findOne({ code });
-        if (!promoCode || !promoCode.isActive) {
-            throw new ApiError(400, "Invalid promo code");
-        }
-        if (
-            moment(promoCode.expiry, "DD-MM-YYYY").isBefore(
-                moment(),
-                "DD-MM-YYYY",
-            )
-        ) {
-            throw new ApiError(400, "Promo code expired");
-        }
-        if (subtotal < promoCode.minOrderAmount) {
-            throw new ApiError(
-                400,
-                "Order total needs to be greater than the minimum order amount",
-            );
-        }
-
-        switch (promoCode.codeType) {
-            case 1: // FREE_DELIVERY
-                discount = deliveryCharges;
-                promoCodeDetails = "FREE_DELIVERY";
-                totalAmountToPay -= deliveryCharges;
-                break;
-            case 2: // GET_OFF
-                discount = promoCode.discountAmount;
-                promoCodeDetails = "GET_OFF";
-                totalAmountToPay -= promoCode.discountAmount;
-                break;
-            case 3: // NEW_USER
-                const userOrderExist = await Order.findOne({ userId });
-                if (userOrderExist) {
-                    throw new ApiError(
-                        400,
-                        "This code is only valid on the first order",
-                    );
-                }
-                discount = promoCode.discountAmount;
-                promoCodeDetails = "NEW_USER";
-                totalAmountToPay -= promoCode.discountAmount;
-                break;
-            default:
-                throw new ApiError(400, "Invalid promo code type");
-        }
-
-        promoCodeId = promoCode._id;
-        promoCodeData = promoCode;
-    }
-
-    // Adjust totalAmountToPay in case it goes negative
-    if (totalAmountToPay < 0) {
-        totalAmountToPay = 0;
-    }
-    // Round the total amount to the nearest integer
-    const roundedAmount = Math.ceil(totalAmountToPay);
-
-    // Calculate the round-off value
-    const roundOffValue = roundedAmount - totalAmountToPay;
-
-    // Construct the detailed breakdown
-    const breakdown = {
-        subtotal,
-        gstAmount,
-        distanceInKm,
-        deliveryCharges:
-            promoCodeDetails && promoCodeDetails.startsWith("FREE_DELIVERY")
-                ? 0
-                : deliveryCharges,
-        platformFee,
-        discount,
-        total: Number(totalAmountToPay.toFixed(2)),
-        roundOffValue: Number(roundOffValue.toFixed(2)),
-        totalAmountToPay: roundedAmount,
-        promoCodeId,
-        promoCodeDetails: promoCodeData,
-        deliveryBoyCompensation:
-            deliveryBoyCompensationAmount + deliveryBoyAllowance,
-    };
-
-    // Return the calculated amounts and breakdown
     return res
         .status(200)
         .json(
@@ -515,8 +393,61 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         paymentId,
         paymentMode,
         hotelId,
-        products
+        products,
     } = req.body;
+
+    if (!products?.length) {
+        throw new ApiError(400, "Order must include at least one product");
+    }
+
+    const hotel = await hotelModel.findById(hotelId);
+    if (!hotel) {
+        throw new ApiError(404, "Hotel not found");
+    }
+
+    const address = await userAddressModel.findById(addressId);
+    if (!address) {
+        throw new ApiError(404, "Delivery address not found");
+    }
+
+    const shopCoords = geoCoordsToLatLng(hotel.location?.coordinates);
+    const userCoords = geoCoordsToLatLng(address.location?.coordinates);
+    if (!shopCoords || !userCoords) {
+        throw new ApiError(400, "Invalid delivery coordinates");
+    }
+
+    let promoCodeStr = null;
+    if (priceDetails?.promoCodeId) {
+        const promo = await promoCodeModel.findById(priceDetails.promoCodeId);
+        promoCodeStr = promo?.code ?? null;
+    }
+
+    const serverPriceDetails = await calculateOrderPricing({
+        products,
+        userLat: userCoords.lat,
+        userLong: userCoords.lng,
+        shopLat: shopCoords.lat,
+        shopLong: shopCoords.lng,
+        code: promoCodeStr,
+        userId,
+        dishModel,
+        deliveryChargesModel,
+        Data,
+        promoCodeModel,
+        Order,
+    });
+
+    if (priceDetails && !priceDetailsMatch(priceDetails, serverPriceDetails)) {
+        throw new ApiError(
+            400,
+            "Order total has changed. Please refresh your cart and try again.",
+        );
+    }
+
+    const authoritativePriceDetails = {
+        ...serverPriceDetails,
+        promoCodeId: serverPriceDetails.promoCodeId,
+    };
 
     // Generate UUIDv4
     const uuid = uuidv4();
@@ -535,9 +466,9 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         userId,
         hotelId: hotelId,
         products: products,
-        priceDetails,
+        priceDetails: authoritativePriceDetails,
         address: addressId,
-        promoCode: priceDetails.promoCodeId,
+        promoCode: authoritativePriceDetails.promoCodeId,
         paymentId,
         paymentMode,
         phone,
@@ -553,14 +484,13 @@ exports.placeOrder = asyncHandler(async (req, res) => {
 
     //Send Notifications To User About Order is Placed
     
-    // Get hotel details to find the partner
-    const hotel = await hotelModel.findById(hotelId).populate({
+    const hotelWithPartner = await hotelModel.findById(hotelId).populate({
         path: "userId",
         select: "name phoneNumber"
     });
 
-    if (hotel && hotel.userId) {
-        const partnerId = hotel.userId._id;
+    if (hotelWithPartner && hotelWithPartner.userId) {
+        const partnerId = hotelWithPartner.userId._id;
         
         // Populate order details for partner notification
         const populatedOrder = await Order.findById(order._id)
@@ -601,8 +531,8 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         io.to("admin_dashboard").emit("newOrder", {
             ...partnerNotificationPayload,
             partnerId: partnerId,
-            partnerName: hotel.userId.name,
-            hotelName: hotel.hotelName
+            partnerName: hotelWithPartner.userId.name,
+            hotelName: hotelWithPartner.hotelName
         });
 
         // Emit to customer room
@@ -621,7 +551,7 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         
         console.log(`New order notification sent to partner: ${partnerId}`);
         console.log(`New order notification sent to customer: ${userId}`);
-        console.log(`Order placed: ${order.orderId} for hotel: ${hotel.hotelName}`);
+        console.log(`Order placed: ${order.orderId} for hotel: ${hotelWithPartner.hotelName}`);
         console.log(`Order will be visible to delivery boys only after admin assignment`);
 
         notifyCustomerOrderStatusAsync(userId, populatedOrder, 0);

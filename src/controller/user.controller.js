@@ -271,8 +271,12 @@ exports.getCoordinatesForCalculations = asyncHandler(async (req,res) =>
         res.status(200).json({
           success: true,
           data: {
-            hotelCoordinates: hotel.location.coordinates, // [lat, lng]
-            userCoordinates: user.location.coordinates, // [lat, lng]
+            hotelCoordinates: hotel.location.coordinates,
+            userCoordinates: user.location.coordinates,
+            shopLat: hotel.location.coordinates[1],
+            shopLng: hotel.location.coordinates[0],
+            userLat: user.location.coordinates[1],
+            userLng: user.location.coordinates[0],
           },
         });
       } catch (error) {
