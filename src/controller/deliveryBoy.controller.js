@@ -10,6 +10,8 @@ const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
 const moment = require("moment");
 const { Types } = require("mongoose");
+const { getIO } = require("../utils/socket");
+const { setDriverOffline } = require("../utils/driverStatus.util");
 
 /**
  *  @function registerDeliveryBoy
@@ -110,6 +112,10 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
     // Generate access and refresh tokens for the logged-in user
     const { accessToken, refreshToken } = await generateTokens(user._id, 3);
 
+    await DeliverBoy.findByIdAndUpdate(user._id, {
+        $set: { isOnline: false, lastSeen: new Date() },
+    });
+
     // Retrieve the logged-in user details excluding password and refreshToken
     const loggedInUser = await DeliverBoy.findById(user._id).select(
         "-password -refreshToken",
@@ -133,6 +139,33 @@ exports.loginDeliveryBoy = asyncHandler(async (req, res) => {
                 responseMessage.userMessage.loginSuccessful,
             ),
         );
+});
+
+exports.logoutDeliveryBoy = asyncHandler(async (req, res) => {
+    const userId = req.body.userId || req.user?.userId;
+
+    if (!userId) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "Delivery boy ID is required")
+        );
+    }
+
+    const io = getIO();
+    await setDriverOffline(userId, io);
+
+    await DeliverBoy.findByIdAndUpdate(
+        userId,
+        {
+            $unset: {
+                refreshToken: 1,
+            },
+        },
+        { new: true }
+    );
+
+    return res.status(200).json(
+        new ApiResponse(200, null, responseMessage.userMessage.logoutSuccessful)
+    );
 });
 
 exports.uploadProfileImage = asyncHandler(async (req, res) => {

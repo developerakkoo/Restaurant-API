@@ -1,9 +1,9 @@
 const router = require("express").Router();
 const deliveryBoyController = require("../controller/deliveryBoy.controller");
 const { updateOrder } = require("../controller/order.controller");
-const authController = require("../controller/auth.controller");
+const { verify_access_token } = require("../middleware/verifyJwtToken.middleware");
 
-router.post("/logout", authController.logoutUser);
+router.post("/logout", verify_access_token, deliveryBoyController.logoutDeliveryBoy);
 
 router.delete("/delete/document", deliveryBoyController.deletedDocument);
 

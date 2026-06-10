@@ -336,7 +336,7 @@ exports.getAllPartner = asyncHandler(async (req, res) => {
 
 exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
     let dbQuery = {};
-    const { q, startDate, populate, status } = req.query;
+    const { q, startDate, populate, status, isOnline } = req.query;
     const endDate = req.query.endDate || moment().format("YYYY-MM-DD");
     const pageNumber = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 10;
@@ -368,6 +368,14 @@ exports.getAllDeliveryBoy = asyncHandler(async (req, res) => {
             $gte: sDate,
             $lte: eDate,
         };
+    }
+
+    if (isOnline !== undefined && isOnline !== "" && isOnline !== null) {
+        if (isOnline === "true" || isOnline === true || isOnline === "1" || isOnline === 1) {
+            dbQuery.isOnline = true;
+        } else if (isOnline === "false" || isOnline === false || isOnline === "0" || isOnline === 0) {
+            dbQuery.isOnline = false;
+        }
     }
 
     const dataCount = await DeliveryBoy.countDocuments(dbQuery);
@@ -1241,14 +1249,15 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
         // Validate delivery boys exist and are active
         const deliveryBoysList = await DeliveryBoy.find({ 
             _id: { $in: deliveryBoysArray },
-            status: 2 // 2 = approved status
+            status: 2,
+            isOnline: true,
         });
 
         if (deliveryBoysList.length !== deliveryBoysArray.length) {
             const foundIds = deliveryBoysList.map(db => db._id.toString());
             const missingIds = deliveryBoysArray.filter(id => !foundIds.includes(id.toString()));
             return res.status(400).json(
-                new ApiResponse(400, null, `Some delivery boys not found or inactive: ${missingIds.join(', ')}`)
+                new ApiResponse(400, null, `Some delivery boys not found, inactive, or offline: ${missingIds.join(', ')}`)
             );
         }
 

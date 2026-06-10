@@ -823,13 +823,25 @@ exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
             .json(new ApiResponse(404, null, "Order not found"));
     }
 
-    // Convert delivery boy IDs to ObjectIds and update order
+    // Convert delivery boy IDs to ObjectIds and validate online status
     const deliveryBoyObjectIds = deliveryBoyIds.map(id => {
         if (id instanceof Types.ObjectId) {
             return id;
         }
         return new Types.ObjectId(id.toString());
     });
+
+    const onlineDeliveryBoys = await DeliverBoy.find({
+        _id: { $in: deliveryBoyObjectIds },
+        status: 2,
+        isOnline: true,
+    });
+
+    if (onlineDeliveryBoys.length !== deliveryBoyIds.length) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "One or more drivers are offline or inactive")
+        );
+    }
 
     // Update order with assignedDeliveryBoys array
     const updatedOrder = await Order.findByIdAndUpdate(
@@ -1268,6 +1280,11 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         if (deliveryBoy.status !== 2) { // 2 = approved status
             return res.status(400).json(
                 new ApiResponse(400, null, "Delivery boy is not active")
+            );
+        }
+        if (deliveryBoy.isOnline !== true) {
+            return res.status(400).json(
+                new ApiResponse(400, null, "Driver is offline")
             );
         }
     }

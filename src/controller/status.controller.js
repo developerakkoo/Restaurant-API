@@ -5,34 +5,33 @@ const Admin = require("../models/admin.model");
 const Partner = require("../models/partner.model");
 const DeliveryBoy = require("../models/deliveryBoy.model");
 const { getIO } = require("../utils/socket");
+const { emitDriverStatusChange } = require("../utils/driverStatus.util");
 
 /**
  * Get online status of a specific user
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 exports.getOnlineStatus = asyncHandler(async (req, res) => {
     const { userId, userType } = req.params;
 
     let userModel;
     switch (parseInt(userType)) {
-        case 1: // Admin
+        case 1:
             userModel = Admin;
             break;
-        case 2: // User
+        case 2:
             userModel = User;
             break;
-        case 3: // Delivery Boy
+        case 3:
             userModel = DeliveryBoy;
             break;
-        case 4: // Partner
+        case 4:
             userModel = Partner;
             break;
         default:
             throw new Error("Invalid user type");
     }
 
-    const user = await userModel.findById(userId).select("isOnline name email phoneNumber");
+    const user = await userModel.findById(userId).select("isOnline name email phoneNumber lastSeen firstName lastName");
     if (!user) {
         return res.status(404).json(
             new ApiResponse(404, null, "User not found")
@@ -40,12 +39,15 @@ exports.getOnlineStatus = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new ApiResponse(200, { 
+        new ApiResponse(200, {
             isOnline: user.isOnline,
+            lastSeen: user.lastSeen,
             userDetails: {
                 name: user.name,
                 email: user.email,
-                phoneNumber: user.phoneNumber
+                phoneNumber: user.phoneNumber,
+                firstName: user.firstName,
+                lastName: user.lastName,
             }
         }, "Status retrieved successfully")
     );
@@ -53,8 +55,6 @@ exports.getOnlineStatus = asyncHandler(async (req, res) => {
 
 /**
  * Get list of online users by type
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 exports.getOnlineUsers = asyncHandler(async (req, res) => {
     const { userType } = req.params;
@@ -64,16 +64,16 @@ exports.getOnlineUsers = asyncHandler(async (req, res) => {
 
     let userModel;
     switch (parseInt(userType)) {
-        case 1: // Admin
+        case 1:
             userModel = Admin;
             break;
-        case 2: // User
+        case 2:
             userModel = User;
             break;
-        case 3: // Delivery Boy
+        case 3:
             userModel = DeliveryBoy;
             break;
-        case 4: // Partner
+        case 4:
             userModel = Partner;
             break;
         default:
@@ -82,7 +82,7 @@ exports.getOnlineUsers = asyncHandler(async (req, res) => {
 
     const [users, total] = await Promise.all([
         userModel.find({ isOnline: true })
-            .select("name email phoneNumber isOnline lastSeen")
+            .select("name email phoneNumber isOnline lastSeen firstName lastName")
             .skip(skip)
             .limit(limit)
             .sort({ lastSeen: -1 }),
@@ -101,40 +101,60 @@ exports.getOnlineUsers = asyncHandler(async (req, res) => {
 
 /**
  * Update user's online status
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 exports.updateOnlineStatus = asyncHandler(async (req, res) => {
     const { userId, userType, isOnline } = req.body;
 
+    if (!userId || userType === undefined || isOnline === undefined) {
+        return res.status(400).json(
+            new ApiResponse(400, null, "userId, userType, and isOnline are required")
+        );
+    }
+
     let userModel;
     switch (parseInt(userType)) {
-        case 1: // Admin
+        case 1:
             userModel = Admin;
             break;
-        case 2: // User
+        case 2:
             userModel = User;
             break;
-        case 3: // Delivery Boy
+        case 3:
             userModel = DeliveryBoy;
             break;
-        case 4: // Partner
+        case 4:
             userModel = Partner;
             break;
         default:
-            throw new Error("Invalid user type");
+            return res.status(400).json(
+                new ApiResponse(400, null, "Invalid user type")
+            );
+    }
+
+    if (parseInt(userType) === 3 && isOnline === true) {
+        const existingDriver = await DeliveryBoy.findById(userId).select("status");
+        if (!existingDriver) {
+            return res.status(404).json(
+                new ApiResponse(404, null, "Delivery boy not found")
+            );
+        }
+        if (existingDriver.status !== 2) {
+            return res.status(403).json(
+                new ApiResponse(403, null, "Only approved delivery boys can go online")
+            );
+        }
     }
 
     const user = await userModel.findByIdAndUpdate(
         userId,
-        { 
-            $set: { 
+        {
+            $set: {
                 isOnline,
                 lastSeen: new Date()
-            } 
+            }
         },
         { new: true }
-    ).select("name email phoneNumber isOnline lastSeen");
+    ).select("name email phoneNumber isOnline lastSeen firstName lastName");
 
     if (!user) {
         return res.status(404).json(
@@ -142,14 +162,23 @@ exports.updateOnlineStatus = asyncHandler(async (req, res) => {
         );
     }
 
-    // Broadcast status change to all connected clients
     const io = getIO();
-    io.emit("userStatusChanged", {
-        userId,
-        userType,
-        isOnline,
-        lastSeen: user.lastSeen
-    });
+    if (parseInt(userType) === 3) {
+        emitDriverStatusChange(io, user, isOnline);
+    } else {
+        io.emit("userStatusChanged", {
+            userId,
+            userType: parseInt(userType),
+            isOnline,
+            lastSeen: user.lastSeen,
+        });
+        io.to("admin_dashboard").emit("userStatusChanged", {
+            userId,
+            userType: parseInt(userType),
+            isOnline,
+            lastSeen: user.lastSeen,
+        });
+    }
 
     return res.status(200).json(
         new ApiResponse(200, user, "Status updated successfully")
@@ -158,31 +187,29 @@ exports.updateOnlineStatus = asyncHandler(async (req, res) => {
 
 /**
  * Get user's last seen timestamp
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
  */
 exports.getLastSeen = asyncHandler(async (req, res) => {
     const { userId, userType } = req.params;
 
     let userModel;
     switch (parseInt(userType)) {
-        case 1: // Admin
+        case 1:
             userModel = Admin;
             break;
-        case 2: // User
+        case 2:
             userModel = User;
             break;
-        case 3: // Delivery Boy
+        case 3:
             userModel = DeliveryBoy;
             break;
-        case 4: // Partner
+        case 4:
             userModel = Partner;
             break;
         default:
             throw new Error("Invalid user type");
     }
 
-    const user = await userModel.findById(userId).select("lastSeen name");
+    const user = await userModel.findById(userId).select("lastSeen name firstName lastName");
     if (!user) {
         return res.status(404).json(
             new ApiResponse(404, null, "User not found")
@@ -192,7 +219,7 @@ exports.getLastSeen = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, {
             lastSeen: user.lastSeen,
-            name: user.name
+            name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         }, "Last seen retrieved successfully")
     );
-}); 
+});

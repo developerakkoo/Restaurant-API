@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { app } = require("./app");
 const { connectDB } = require("./db/index.db");
-const User = require("./models/user.model");
+const DeliveryBoy = require("./models/deliveryBoy.model");
 const Chat = require("./models/message.model");
 const Notification = require("./models/notification.model");
 const jwt = require("jsonwebtoken");
@@ -83,32 +83,61 @@ connectDB()
                             return;
                         }
                         
-                        // Convert to string and trim to ensure consistent room naming
                         const deliveryBoyIdStr = deliveryBoyId.toString().trim();
                         const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
+                        socket.data.deliveryBoyId = deliveryBoyIdStr;
                         
                         console.log(`📡 [SERVER] Joining room: ${roomName}`);
-                        console.log(`   Original deliveryBoyId: ${deliveryBoyId}`);
-                        console.log(`   Normalized deliveryBoyId: ${deliveryBoyIdStr}`);
-                        console.log(`   Socket ID: ${socket.id} (will change on reconnect)`);
-                        console.log(`   Room name: ${roomName} (MUST stay consistent)`);
                         
                         socket.join(roomName);
-                        // Also join the all_delivery_boys room for new order notifications
-                        socket.join("all_delivery_boys");
-                        console.log(`✅ Delivery boy ${deliveryBoyIdStr} joined room: ${roomName} and all_delivery_boys`);
+
+                        const driver = await DeliveryBoy.findById(deliveryBoyIdStr).select("isOnline firstName lastName");
+                        if (driver?.isOnline === true) {
+                            socket.join("all_delivery_boys");
+                            console.log(`✅ Delivery boy ${deliveryBoyIdStr} joined ${roomName} and all_delivery_boys`);
+                        } else {
+                            console.log(`✅ Delivery boy ${deliveryBoyIdStr} joined ${roomName} only (offline for broadcast)`);
+                        }
                         
-                        // Verify room was joined
-                        const room = io.sockets.adapter.rooms.get(roomName);
-                        const roomSize = room ? room.size : 0;
-                        console.log(`   Room verification: ${roomName} has ${roomSize} socket(s)`);
-                        
-                        // Send confirmation back to client
                         socket.emit("deliveryBoyJoined", {
                             deliveryBoyId: deliveryBoyIdStr,
                             room: roomName,
+                            isOnline: driver?.isOnline === true,
                             timestamp: new Date()
                         });
+                    });
+
+                    socket.on("deliveryBoyLeave", async (data) => {
+                        const deliveryBoyId = data?.deliveryBoyId || socket.data.deliveryBoyId;
+                        if (!deliveryBoyId) {
+                            return;
+                        }
+
+                        const deliveryBoyIdStr = deliveryBoyId.toString().trim();
+                        const roomName = `deliveryBoy_${deliveryBoyIdStr}`;
+
+                        if (data?.broadcastOnly) {
+                            socket.leave("all_delivery_boys");
+                            console.log(`📡 Delivery boy ${deliveryBoyIdStr} left broadcast room only`);
+                            return;
+                        }
+
+                        socket.leave(roomName);
+                        socket.leave("all_delivery_boys");
+                        delete socket.data.deliveryBoyId;
+                        console.log(`📡 Delivery boy ${deliveryBoyIdStr} left all socket rooms`);
+                    });
+
+                    socket.on("driverHeartbeat", async (data) => {
+                        const deliveryBoyId = data?.deliveryBoyId || socket.data.deliveryBoyId;
+                        if (!deliveryBoyId) {
+                            return;
+                        }
+
+                        await DeliveryBoy.findByIdAndUpdate(
+                            deliveryBoyId,
+                            { $set: { lastSeen: new Date() } }
+                        );
                     });
 
                     // Admin dashboard room joining handler

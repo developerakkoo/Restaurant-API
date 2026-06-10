@@ -64,6 +64,10 @@ const deliveryBoySchema = new Schema(
         },
         isOnline: {
             type: Boolean,
+            default: false,
+        },
+        lastSeen: {
+            type: Date,
         },
         deliveredOrders: [{
             type: Schema.Types.ObjectId,
