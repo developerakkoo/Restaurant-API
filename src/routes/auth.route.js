@@ -7,6 +7,7 @@ const userDataValidator = require("../validators/user.validator");
 const userController = require("../controller/user.controller");
 const authController = require("../controller/auth.controller");
 const { verify_access_token } = require("../middleware/verifyJwtToken.middleware");
+const { upload } = require("../middleware/fileHandler.middleware");
 const { dataValidationResult } = require("../validators/validationResult");
 const passport = require("passport");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
