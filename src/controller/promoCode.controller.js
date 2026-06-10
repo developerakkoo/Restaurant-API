@@ -1,91 +1,92 @@
-const moment = require("moment");
 const promoCode = require("../models/promoCode.model");
+const Order = require("../models/order.model");
 const { ApiError } = require("../utils/ApiErrorHandler");
 const { ApiResponse } = require("../utils/ApiResponseHandler");
 const { asyncHandler } = require("../utils/asyncHandler");
+const {
+    formatPromoExpiryForStorage,
+    isPromoExpired,
+    enrichPromoRecord,
+    buildPromoNotificationMessage,
+} = require("../utils/promoDate.util");
+const { notifyCustomer } = require("../services/customerNotification.service");
+
+function isCustomerPromoRequest(req) {
+    return String(req.originalUrl || "").includes("/user/promoCode");
+}
+
+function normalizePromoPayload(body) {
+    const payload = { ...body };
+
+    if (payload.expiry != null && payload.expiry !== "") {
+        payload.expiry = formatPromoExpiryForStorage(payload.expiry);
+    }
+
+    if (payload.isActive === undefined || payload.isActive === null) {
+        payload.isActive = true;
+    }
+
+    if (payload.codeType != null) {
+        payload.codeType = Number(payload.codeType);
+    }
+
+    if (payload.discountAmount != null) {
+        payload.discountAmount = Number(payload.discountAmount);
+    }
+
+    if (payload.minOrderAmount != null) {
+        payload.minOrderAmount = Number(payload.minOrderAmount);
+    }
+
+    return payload;
+}
 
 exports.addPromoCode = asyncHandler(async (req, res) => {
-    const {
-        name,
-        code,
-        codeType,
-        discountAmount,
-        minOrderAmount,
-        description,
-        expiry,
-        isActive,
-    } = req.body;
+    const payload = normalizePromoPayload(req.body);
+    const { name, code } = payload;
 
     const isCodExist = await promoCode.findOne({
-        $or: [{ name, code }],
+        $or: [{ name }, { code }],
     });
-    if (isCodExist)
+    if (isCodExist) {
         throw new ApiError(
             400,
             "Promo code already exist with this name or code ",
         );
+    }
 
-    const createdPromoCode = await promoCode.create({
-        name,
-        code,
-        codeType,
-        discountAmount,
-        minOrderAmount,
-        description,
-        expiry,
-        isActive,
-    });
+    const createdPromoCode = await promoCode.create(payload);
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                createdPromoCode,
+                enrichPromoRecord(createdPromoCode),
                 "Promo code added successfully",
             ),
         );
 });
 
 exports.updatedPromoCode = asyncHandler(async (req, res) => {
-    const {
-        name,
-        code,
-        codeType,
-        discountAmount,
-        minOrderAmount,
-        description,
-        expiry,
-        isActive,
-    } = req.body;
+    const payload = normalizePromoPayload(req.body);
 
     const isCodExist = await promoCode.findById(req.params.promoCodeId);
     if (!isCodExist) {
         throw new ApiError(404, "Promo code not found");
     }
+
     const updatedPromoCode = await promoCode.findByIdAndUpdate(
         req.params.promoCodeId,
-        {
-            $set: {
-                name,
-                code,
-                codeType,
-                discountAmount,
-                minOrderAmount,
-                description,
-                expiry,
-                isActive,
-            },
-        },
-        {
-            new: true,
-        },
+        { $set: payload },
+        { new: true },
     );
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                updatedPromoCode,
+                enrichPromoRecord(updatedPromoCode),
                 "Promo code updated successfully",
             ),
         );
@@ -102,7 +103,7 @@ exports.getPromoCode = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                isPromoCode,
+                enrichPromoRecord(isPromoCode),
                 "Promo code fetched successfully",
             ),
         );
@@ -112,16 +113,36 @@ exports.getAllPromoCodes = asyncHandler(async (req, res) => {
     let dbQuery = {};
     const { isActive, codeType } = req.query;
 
-    if (isActive) dbQuery.isActive = isActive;
-    if (codeType) dbQuery.codeType = codeType;
+    if (isActive !== undefined && isActive !== "") {
+        dbQuery.isActive = isActive === "true" || isActive === true;
+    }
+    if (codeType) {
+        dbQuery.codeType = Number(codeType);
+    }
 
-    const allPromoCodes = await promoCode.find(dbQuery).sort({ createdAt: -1 });
+    let allPromoCodes = await promoCode.find(dbQuery).sort({ createdAt: -1 });
+
+    if (isCustomerPromoRequest(req)) {
+        allPromoCodes = allPromoCodes.filter(
+            (promo) => promo.isActive && !isPromoExpired(promo.expiry),
+        );
+    }
+
+    const enriched = allPromoCodes
+        .map(enrichPromoRecord)
+        .sort((a, b) => {
+            if (a.isExpired !== b.isExpired) {
+                return a.isExpired ? 1 : -1;
+            }
+            return String(b.expiry).localeCompare(String(a.expiry));
+        });
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                allPromoCodes,
+                enriched,
                 "All promo codes fetched successfully",
             ),
         );
@@ -138,6 +159,48 @@ exports.deletePromoCode = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, null, "Promo code deleted successfully"));
 });
 
+exports.notifyPromoToUser = asyncHandler(async (req, res) => {
+    const promo = await promoCode.findById(req.params.promoCodeId);
+    if (!promo) {
+        throw new ApiError(404, "Promo code not found");
+    }
+
+    if (!promo.isActive || isPromoExpired(promo.expiry)) {
+        throw new ApiError(
+            409,
+            "Cannot send an inactive or expired promo code",
+        );
+    }
+
+    const { userId } = req.body;
+    if (!userId) {
+        throw new ApiError(400, "userId is required");
+    }
+
+    const body = buildPromoNotificationMessage(promo);
+    const result = await notifyCustomer(userId, {
+        title: "Special offer for you!",
+        body,
+        type: "PROMO",
+        extraData: {
+            promoCode: String(promo.code).toUpperCase(),
+            promoId: promo._id.toString(),
+            codeType: String(promo.codeType),
+            discountAmount: String(promo.discountAmount),
+            minOrderAmount: String(promo.minOrderAmount),
+            expiryDate: String(promo.expiry),
+        },
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            result,
+            "Promo notification sent successfully",
+        ),
+    );
+});
+
 exports.applyPromoCode = asyncHandler(async (req, res) => {
     const { code, orderAmount, userId } = req.body;
 
@@ -145,16 +208,10 @@ exports.applyPromoCode = asyncHandler(async (req, res) => {
     if (!isPromoCodeExist || !isPromoCodeExist.isActive) {
         throw new ApiError(400, "Invalid promo code");
     }
-    if (
-        moment(isPromoCodeExist.expiry, "DD-MM-YYYY").isBefore(
-            moment(),
-            "DD-MM-YYYY",
-        )
-    ) {
+    if (isPromoExpired(isPromoCodeExist.expiry)) {
         throw new ApiError(400, "Promo code expired");
     }
 
-    let offer;
     if (orderAmount < isPromoCodeExist.minOrderAmount) {
         throw new ApiError(
             400,
@@ -162,6 +219,7 @@ exports.applyPromoCode = asyncHandler(async (req, res) => {
         );
     }
 
+    let offer;
     switch (isPromoCodeExist.codeType) {
         case 1:
             offer = {
@@ -175,7 +233,7 @@ exports.applyPromoCode = asyncHandler(async (req, res) => {
                 offerData: isPromoCodeExist.offer,
             };
             break;
-        case 3:
+        case 3: {
             const userOrderExist = await Order.findOne({ userId });
             if (userOrderExist) {
                 throw new ApiError(
@@ -188,17 +246,19 @@ exports.applyPromoCode = asyncHandler(async (req, res) => {
                 offerData: isPromoCodeExist.offer,
             };
             break;
+        }
         default:
             throw new ApiError(400, "Invalid promo code type");
     }
 
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                { isPromoCodeExist, offerYouGet: offer },
-                "Promo code applied successfully",
-            ),
-        );
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                isPromoCodeExist: enrichPromoRecord(isPromoCodeExist),
+                offerYouGet: offer,
+            },
+            "Promo code applied successfully",
+        ),
+    );
 });

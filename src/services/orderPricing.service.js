@@ -1,6 +1,6 @@
 const { getDistance } = require("../utils/getDistance.utils");
-const moment = require("moment");
 const { ApiError } = require("../utils/ApiErrorHandler");
+const { isPromoExpired } = require("../utils/promoDate.util");
 
 const FREE_DELIVERY_ABOVE = 500;
 
@@ -169,12 +169,7 @@ async function validatePromoCode(promoCodeModel, code, subtotal, userId, Order) 
     if (!promoCode || !promoCode.isActive) {
         throw new ApiError(400, "Invalid promo code");
     }
-    if (
-        moment(promoCode.expiry, "DD-MM-YYYY").isBefore(
-            moment(),
-            "DD-MM-YYYY",
-        )
-    ) {
+    if (isPromoExpired(promoCode.expiry)) {
         throw new ApiError(400, "Promo code expired");
     }
     if (subtotal < promoCode.minOrderAmount) {
@@ -264,6 +259,7 @@ module.exports = {
     geoCoordsToLatLng,
     resolveSubtotalFromProducts,
     buildBreakdown,
+    validatePromoCode,
     calculateOrderPricing,
     priceDetailsMatch,
 };

@@ -40,8 +40,8 @@ exports.getAllNotificationsByUserId = asyncHandler(async (req, res) => {
     });
     if (notifications.length === 0) {
         return res
-            .status(404)
-            .json(new ApiResponse(404, {}, "No notifications found"));
+            .status(200)
+            .json(new ApiResponse(200, [], "No notifications found"));
     }
     return res
         .status(200)

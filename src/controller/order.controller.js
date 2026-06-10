@@ -903,6 +903,32 @@ exports.sendOrderToAllDeliveryBoy = asyncHandler(async (req, res) => {
         }),
     );
 
+    const customerUserId = populatedOrder.userId?._id || populatedOrder.userId;
+    if (customerUserId) {
+        const statusUpdatePayload = {
+            type: "ORDER_STATUS_UPDATE",
+            orderId: populatedOrder.orderId,
+            order: populatedOrder,
+            newStatus: 2,
+            timestamp: new Date(),
+        };
+
+        io.to(`user_${customerUserId}`).emit("orderStatusUpdate", statusUpdatePayload);
+        io.to(`user_${customerUserId}`).emit("orderAssigned", {
+            type: "ORDER_ASSIGNED_TO_DELIVERY_BOY",
+            orderId: populatedOrder.orderId,
+            order: populatedOrder,
+            timestamp: new Date(),
+            message: `Delivery partner assigned to your order ${populatedOrder.orderId}`,
+        });
+
+        notifyCustomerOrderStatusAsync(
+            customerUserId,
+            populatedOrder,
+            2,
+        );
+    }
+
     console.log(`📊 Summary: Sent orderAssigned events to ${successCount}/${deliveryBoyIds.length} delivery boys`);
 
     return res

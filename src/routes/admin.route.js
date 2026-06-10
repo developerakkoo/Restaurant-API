@@ -203,6 +203,11 @@ router.delete(
     promoCodeController.deletePromoCode,
 );
 
+router.post(
+    "/promoCode/notify/:promoCodeId",
+    promoCodeController.notifyPromoToUser,
+);
+
 /* Order Routes*/
 
 router.get('/get/populated-order',adminController.getOrderWithPopulatedFields);

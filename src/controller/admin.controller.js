@@ -26,6 +26,9 @@ const { Types } = require("mongoose");
 const { v4: uuidV4 } = require("uuid");
 const adminAnalytics = require("../services/adminAnalytics.service");
 const { buildOrderDateMatch } = require("../utils/analyticsDateRange");
+const {
+    notifyCustomerOrderStatusAsync,
+} = require("../services/customerNotification.service");
 
 /**
  *  @function registerAdmin
@@ -1633,6 +1636,15 @@ exports.sendOrderPickUpRequestToDeliveryBoys = asyncHandler(
             timestamp: new Date(),
             message: `Delivery partner assigned to your order ${order.orderId}`,
         });
+
+        const customerUserId = order.userId?._id || order.userId;
+        if (customerUserId) {
+            notifyCustomerOrderStatusAsync(
+                customerUserId,
+                populatedOrder || order,
+                2,
+            );
+        }
 
         // Notify partner/hotel
         if (assignedHotel && assignedHotel.userId) {

@@ -11,7 +11,8 @@
         "seed:prod": "SEED_ENV=production node src/seeders/run-seed.js",
         "seed:reset": "SEED_RESET=true node src/seeders/run-seed.js",
         "test:analytics": "node --test tests/analytics/*.test.js",
-        "test:pricing": "node --test tests/pricing/*.test.js"
+        "test:pricing": "node --test tests/pricing/*.test.js",
+        "test:promo": "node --test tests/promo/*.test.js"
     },
     "keywords": [],
     "author": "",

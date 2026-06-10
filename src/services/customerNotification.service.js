@@ -34,6 +34,7 @@ exports.notifyCustomer = async (
         orderId = "",
         orderStatus = "",
         mongoOrderId = "",
+        extraData = {},
     },
 ) => {
     if (!userId) {
@@ -61,6 +62,12 @@ exports.notifyCustomer = async (
                 orderId: String(orderId),
                 orderStatus: String(orderStatus),
                 mongoOrderId: String(mongoOrderId),
+                ...Object.fromEntries(
+                    Object.entries(extraData).map(([key, value]) => [
+                        key,
+                        String(value ?? ""),
+                    ]),
+                ),
             },
         );
     }
