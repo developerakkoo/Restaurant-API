@@ -1937,6 +1937,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
             {
                 $unwind: {
                     path: "$user",
+                    preserveNullAndEmptyArrays: true,
                 },
             },
             {
@@ -1958,6 +1959,7 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
             {
                 $unwind: {
                     path: "$userAddress",
+                    preserveNullAndEmptyArrays: true,
                 },
             },
             {
