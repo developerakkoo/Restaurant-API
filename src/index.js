@@ -14,26 +14,23 @@ const PORT = process.env.PORT || 8000;
 const chatController = require("./controller/message.controller");
 const { generateSeed } = require("./constant");
 let server;
-connectDB()
-    .then(() => {
-        server = app.listen(PORT, () => {
-            // /*Seeders to create dummy data*/
-            // if (generateSeed === true) {
-            //     createUser(10);
-            //     createPartner(10);
-            //     createDeliveryBoy(10);
-            // }
-            console.log(
-                `Server is running at port : ${PORT} in ${process.env.NODE_ENV} environment`,
-            );
+server = app.listen(PORT, () => {
+    // /*Seeders to create dummy data*/
+    // if (generateSeed === true) {
+    //     createUser(10);
+    //     createPartner(10);
+    //     createDeliveryBoy(10);
+    // }
+    console.log(
+        `Server is running at port : ${PORT} in ${process.env.NODE_ENV} environment`,
+    );
 
-            console.log(process.env.KEY_ID);
-            console.log(process.env.KEY_SECRET);
-            console.log(process.env.SESSION_SECRET);
+    console.log(process.env.KEY_ID);
+    console.log(process.env.KEY_SECRET);
+    console.log(process.env.SESSION_SECRET);
 
-            
-            const io = require("./utils/socket").init(server);
-            io.on("connection", async (socket) => {
+    const io = require("./utils/socket").init(server);
+    io.on("connection", async (socket) => {
                 console.log("User Connected");
                 
                 try {
@@ -226,8 +223,8 @@ connectDB()
                     socket.disconnect();
                 }
             });
-        });
-    })
-    .catch((err) => {
-        console.log("MONGODB connection error", err);
-    });
+});
+
+connectDB().catch((err) => {
+    console.log("MONGODB connection error", err);
+});
