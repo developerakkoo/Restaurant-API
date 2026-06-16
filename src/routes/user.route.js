@@ -23,6 +23,12 @@ router.get("/get/user/:userId", userController.getUserById);
 router.get("/get/profile-stats/:id", userController.getUserProfileStats);
 
 router.get('/coordinates/:userId/:hotelId',userController.getCoordinatesForCalculations);
+
+router.get(
+    "/reverse-geocode",
+    verify_access_token,
+    userController.reverseGeocode,
+);
 router.put("/update/:userId", userController.updateUserProfile);
 
 router.put(

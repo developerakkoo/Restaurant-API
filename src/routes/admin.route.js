@@ -225,6 +225,8 @@ router.put(
     orderController.updateOrder,
 );
 
+router.put("/order/:orderId/refund", orderController.updateOrderRefund);
+
 router.post(
     "/order/send-pickup-request/deliveryBoy",
     adminController.sendOrderPickUpRequestToDeliveryBoys,

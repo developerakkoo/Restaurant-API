@@ -2,6 +2,9 @@ const router = require("express").Router();
 const orderController = require("../controller/order.controller");
 const { applyPromoCode } = require("../controller/promoCode.controller");
 const { upload } = require("../middleware/fileHandler.middleware");
+const {
+    verify_access_token,
+} = require("../middleware/verifyJwtToken.middleware");
 
 router.post("/initiate/payment", orderController.initiatePayment);
 
@@ -30,7 +33,17 @@ router.post("/apply/promoCode", applyPromoCode);
 
 router.get("/get/invoice/:orderId", orderController.generateInvoice);
 
-router.post("/cancel/order", orderController.cancelOrder);
+router.get(
+    "/cancel-eligibility/:orderId",
+    verify_access_token,
+    orderController.getCancelEligibility,
+);
+
+router.post(
+    "/cancel/order",
+    verify_access_token,
+    orderController.cancelOrder,
+);
 
 router.post("/reject-by-delivery-boy", orderController.rejectOrderByDeliveryBoy);
 

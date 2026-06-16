@@ -148,6 +148,42 @@ const orderSchema = new Schema(
             default: 0,
             enum: [0, 1, 2, 3, 4, 5, 6, 7, 8], // received = 0, being prepared = 1, delivery assigned = 2, delivered = 3, accepted = 4, cancel order by hotel = 5, pickup confirmed = 6, cancelled by customer = 7, rejected by delivery boy = 8
         },
+        cancelWindowExpiresAt: {
+            type: Date,
+        },
+        cancelledAt: {
+            type: Date,
+        },
+        cancelledBy: {
+            type: String,
+            enum: ["customer", "hotel", "admin"],
+        },
+        refundStatus: {
+            type: String,
+            enum: [
+                "NOT_APPLICABLE",
+                "PENDING",
+                "PROCESSING",
+                "COMPLETED",
+                "FAILED",
+            ],
+            default: "NOT_APPLICABLE",
+        },
+        refundAmount: {
+            type: Number,
+            default: 0,
+        },
+        refundMessage: {
+            type: String,
+            default: "",
+        },
+        refundUpdatedAt: {
+            type: Date,
+        },
+        refundUpdatedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "Admin",
+        },
     },
     { timestamps: true },
 );

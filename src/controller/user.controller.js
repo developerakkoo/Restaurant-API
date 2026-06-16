@@ -15,6 +15,7 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { generateTokens } = require("../utils/generateToken");
 const { deleteFile } = require("../utils/deleteFile");
 const moment = require("moment");
+const axios = require("axios");
 
 
 /**
@@ -319,6 +320,69 @@ exports.getAllAddressesByUserId = asyncHandler(async (req, res) => {
         );
 });
 
+
+exports.reverseGeocode = asyncHandler(async (req, res) => {
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        throw new ApiError(
+            400,
+            "Valid lat and lng query parameters are required",
+        );
+    }
+
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+        throw new ApiError(500, "Geocoding service is not configured");
+    }
+
+    const response = await axios.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        {
+            params: {
+                latlng: `${lat},${lng}`,
+                key: apiKey,
+            },
+        },
+    );
+
+    const { status, results } = response.data;
+
+    if (status !== "OK" || !results?.length) {
+        return res.status(422).json(
+            new ApiResponse(
+                422,
+                {
+                    status: status || "UNKNOWN",
+                    formattedAddress: null,
+                    pincode: null,
+                    lat,
+                    lng,
+                },
+                "Could not resolve address",
+            ),
+        );
+    }
+
+    const formattedAddress = results[0].formatted_address;
+    const pincodeMatch = formattedAddress.match(/\b\d{6}\b/);
+    const location = results[0].geometry.location;
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                formattedAddress,
+                pincode: pincodeMatch ? pincodeMatch[0] : null,
+                lat: location.lat,
+                lng: location.lng,
+                status,
+            },
+            "Address resolved successfully",
+        ),
+    );
+});
 
 exports.getCoordinatesForCalculations = asyncHandler(async (req,res) =>
 {

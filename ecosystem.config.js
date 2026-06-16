@@ -11,6 +11,7 @@ module.exports = {
             env: {
                 NODE_ENV: "production",
                 PORT: "8000",
+                // Set GOOGLE_MAPS_API_KEY in server .env — see deploy/GOOGLE_MAPS_SETUP.md
             },
         },
     ],

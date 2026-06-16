@@ -40,6 +40,16 @@ const {
     geoCoordsToLatLng,
     priceDetailsMatch,
 } = require("../services/orderPricing.service");
+const {
+    REFUND_STATUS,
+    CANCEL_WINDOW_SECONDS,
+    DEFAULT_REFUND_PENDING_MESSAGE,
+    CANCELLED_BY,
+    isPaidOnlineMode,
+    canCustomerCancelOrder,
+    getCancelSecondsRemaining,
+    getCancelWindowExpiresAt,
+} = require("../constants/refund.constants");
 
 
 let instance = new razorpay({
@@ -55,29 +65,8 @@ const generateOTP = () => {
     return Math.floor(1000 + Math.random() * 9000).toString();
 };
 
-
-
-exports.cancelOrder = asyncHandler(async (req, res) => {
-    const { orderId } = req.body;
-    const order = await Order.findById(orderId);
-    if (!order) {
-        return res.status(404).json(new ApiResponse(404, null, "Order not found"));
-    }
-
-    const oldStatus = order.orderStatus;
-    order.orderStatus = 7; // Cancelled status
-    
-    // Add timeline entry
-    order.orderTimeline.push({
-        title: "Order Cancelled",
-        dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
-        status: "CANCELLED_BY_CUSTOMER",
-    });
-    
-    await order.save();
-
-    // Populate order for socket events
-    const populatedOrder = await Order.findById(orderId)
+const populateOrderForEvents = (orderId) =>
+    Order.findById(orderId)
         .populate({
             path: "hotelId",
             select: "hotelName address phoneNumber userId",
@@ -88,21 +77,117 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
         })
         .populate({
             path: "address",
-            select: "address location",
+            select: "address location type",
         })
         .populate({
             path: "products.dishId",
-            select: "dishName userPrice partnerPrice",
+            select: "dishName userPrice partnerPrice name",
         });
 
+exports.getCancelEligibility = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    if (
+        req.user?.userId &&
+        order.userId.toString() !== req.user.userId.toString()
+    ) {
+        throw new ApiError(403, "You are not allowed to view this order");
+    }
+
+    const secondsRemaining = getCancelSecondsRemaining(order);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                canCancel: canCustomerCancelOrder(order),
+                secondsRemaining,
+                cancelWindowExpiresAt: getCancelWindowExpiresAt(order),
+                orderStatus: order.orderStatus,
+                refundStatus: order.refundStatus,
+                paymentMode: order.paymentMode,
+            },
+            "Cancel eligibility fetched successfully",
+        ),
+    );
+});
+
+exports.cancelOrder = asyncHandler(async (req, res) => {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+        throw new ApiError(400, "orderId is required");
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    if (
+        req.user?.userId &&
+        order.userId.toString() !== req.user.userId.toString()
+    ) {
+        throw new ApiError(403, "You are not allowed to cancel this order");
+    }
+
+    if (order.orderStatus === 7) {
+        const populatedExisting = await populateOrderForEvents(order._id);
+        return res.status(200).json(
+            new ApiResponse(200, populatedExisting, "Order already cancelled"),
+        );
+    }
+
+    if (order.orderStatus !== 0) {
+        throw new ApiError(
+            400,
+            "Order can no longer be cancelled because the restaurant has already started processing it",
+        );
+    }
+
+    if (!canCustomerCancelOrder(order)) {
+        throw new ApiError(
+            400,
+            "Cancellation window has expired. Orders can only be cancelled within 1 minute of placement",
+        );
+    }
+
+    const oldStatus = order.orderStatus;
+    order.orderStatus = 7;
+    order.cancelledAt = new Date();
+    order.cancelledBy = CANCELLED_BY.CUSTOMER;
+
+    if (isPaidOnlineMode(order.paymentMode)) {
+        order.refundStatus = REFUND_STATUS.PENDING;
+        order.refundAmount = order.priceDetails?.totalAmountToPay || 0;
+        order.refundMessage = DEFAULT_REFUND_PENDING_MESSAGE;
+    } else {
+        order.refundStatus = REFUND_STATUS.NOT_APPLICABLE;
+        order.refundAmount = 0;
+        order.refundMessage = "";
+    }
+
+    order.orderTimeline.push({
+        title: "Order Cancelled",
+        dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+        status: "CANCELLED_BY_CUSTOMER",
+    });
+
+    await order.save();
+
+    const populatedOrder = await populateOrderForEvents(order._id);
     const io = getIO();
 
-    // Emit generic orderStatusUpdate event
     const statusUpdatePayload = {
         type: "ORDER_STATUS_UPDATE",
         orderId: order.orderId,
         order: populatedOrder || order,
-        oldStatus: oldStatus,
+        oldStatus,
         newStatus: 7,
         timestamp: new Date(),
     };
@@ -110,28 +195,147 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
     io.to(`user_${order.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
     io.to("admin_dashboard").emit("orderStatusUpdate", statusUpdatePayload);
 
-    // Emit orderCancelled event
     const cancelledPayload = {
         type: "ORDER_CANCELLED",
         orderId: order.orderId,
         order: populatedOrder || order,
-        cancelledBy: "customer",
+        cancelledBy: CANCELLED_BY.CUSTOMER,
         timestamp: new Date(),
     };
 
     io.to(`user_${order.userId}`).emit("orderCancelled", cancelledPayload);
     io.to("admin_dashboard").emit("orderCancelled", cancelledPayload);
 
-    // Notify partner if hotel exists
+    if (isPaidOnlineMode(order.paymentMode)) {
+        const refundPayload = {
+            type: "REFUND_REQUIRED",
+            orderId: order.orderId,
+            paymentMode: order.paymentMode,
+            paymentId: order.paymentId,
+            refundAmount: order.refundAmount,
+            order: populatedOrder || order,
+            timestamp: new Date(),
+        };
+
+        io.to("admin_dashboard").emit("refundRequired", refundPayload);
+    }
+
     const hotel = await hotelModel.findById(order.hotelId);
     if (hotel && hotel.userId) {
         io.to(`partner_${hotel.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
         io.to(`partner_${hotel.userId}`).emit("orderCancelled", cancelledPayload);
     }
 
-    notifyCustomerOrderStatusAsync(order.userId, populatedOrder || order, 7);
+    notifyCustomerOrderStatusAsync(order.userId, populatedOrder || order, 7, {
+        refundStatus: order.refundStatus,
+        refundRequired: isPaidOnlineMode(order.paymentMode),
+    });
 
-    return res.status(200).json(new ApiResponse(200, order, "Order cancelled successfully"));
+    return res.status(200).json(
+        new ApiResponse(200, populatedOrder || order, "Order cancelled successfully"),
+    );
+});
+
+exports.updateOrderRefund = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+    const { refundStatus, refundMessage } = req.body;
+
+    if (!orderId) {
+        throw new ApiError(400, "orderId is required");
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    if (![5, 7].includes(order.orderStatus)) {
+        throw new ApiError(
+            400,
+            "Refund can only be updated for cancelled orders",
+        );
+    }
+
+    if (!isPaidOnlineMode(order.paymentMode)) {
+        throw new ApiError(
+            400,
+            "Refund updates apply only to online payment orders",
+        );
+    }
+
+    const allowedStatuses = [
+        REFUND_STATUS.PENDING,
+        REFUND_STATUS.PROCESSING,
+        REFUND_STATUS.COMPLETED,
+        REFUND_STATUS.FAILED,
+    ];
+
+    if (!allowedStatuses.includes(refundStatus)) {
+        throw new ApiError(400, "Invalid refund status");
+    }
+
+    if (
+        [REFUND_STATUS.COMPLETED, REFUND_STATUS.FAILED].includes(refundStatus) &&
+        !String(refundMessage || "").trim()
+    ) {
+        throw new ApiError(
+            400,
+            "Customer refund message is required for completed or failed refunds",
+        );
+    }
+
+    order.refundStatus = refundStatus;
+    order.refundMessage = String(refundMessage || order.refundMessage || "").trim();
+    order.refundUpdatedAt = new Date();
+    if (req.user?.userId) {
+        order.refundUpdatedBy = req.user.userId;
+    }
+
+    order.orderTimeline.push({
+        title: `Refund ${refundStatus.toLowerCase()}`,
+        dateTime: moment().format("MMMM Do YYYY, h:mm:ss a"),
+        status: `REFUND_${refundStatus}`,
+    });
+
+    await order.save();
+
+    const populatedOrder = await populateOrderForEvents(order._id);
+    const io = getIO();
+
+    const statusUpdatePayload = {
+        type: "ORDER_STATUS_UPDATE",
+        orderId: order.orderId,
+        order: populatedOrder || order,
+        refundStatus: order.refundStatus,
+        refundMessage: order.refundMessage,
+        timestamp: new Date(),
+    };
+
+    io.to(`user_${order.userId}`).emit("orderStatusUpdate", statusUpdatePayload);
+    io.to("admin_dashboard").emit("orderStatusUpdate", statusUpdatePayload);
+
+    notifyCustomerAsync(order.userId, {
+        title: "Refund update",
+        body:
+            order.refundMessage ||
+            `Your refund status is now ${refundStatus.toLowerCase()}.`,
+        type: "REFUND_UPDATE",
+        orderId: order.orderId,
+        mongoOrderId: order._id.toString(),
+        orderStatus: String(order.orderStatus),
+        extraData: {
+            refundStatus: order.refundStatus,
+            refundMessage: order.refundMessage,
+        },
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            populatedOrder || order,
+            "Refund details updated successfully",
+        ),
+    );
 });
 
 exports.rejectOrderByDeliveryBoy = asyncHandler(async (req, res) => {
@@ -460,6 +664,9 @@ exports.placeOrder = asyncHandler(async (req, res) => {
     const otp = generateOTP();
 
     const orderId = `${orderIdPrefix}-${hotelId.substring(0, 3).toUpperCase()}`;
+    const cancelWindowExpiresAt = new Date(
+        Date.now() + CANCEL_WINDOW_SECONDS * 1000,
+    );
     const order = await Order.create({
         orderId,
         otp, // Add OTP to order
@@ -473,6 +680,8 @@ exports.placeOrder = asyncHandler(async (req, res) => {
         paymentMode,
         phone,
         description,
+        cancelWindowExpiresAt,
+        refundStatus: REFUND_STATUS.NOT_APPLICABLE,
         orderTimeline: [
             {
                 title: "Order Placed",
