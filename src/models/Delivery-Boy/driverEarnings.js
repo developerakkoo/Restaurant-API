@@ -28,6 +28,10 @@ const driverEarningSchema = new Schema({
     type: Number,
     default: 0,
   },
+  deliveryCharges: {
+    type: Number,
+    default: 0,
+  },
   bonus: {
     type: Number,
     default: 0,

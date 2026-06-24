@@ -23,6 +23,10 @@ const driverSettlementSchema = new Schema({
     type: Number,
     default: 0,
   },
+  deliveryChargesTotal: {
+    type: Number,
+    default: 0,
+  },
   ordersSettled: [{
     type: Schema.Types.ObjectId,
     ref: 'DriverEarning',

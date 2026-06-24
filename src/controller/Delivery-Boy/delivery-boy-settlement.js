@@ -36,6 +36,10 @@ exports.settleDriver = asyncHandler(async (req, res) => {
     (total, earning) => total + (earning.petrolExpense ?? 0),
     0
   );
+  const deliveryChargesTotal = earnings.reduce(
+    (total, earning) => total + (earning.deliveryCharges ?? 0),
+    0
+  );
   const amountPaid = earnings.reduce((total, earning) => total + earning.amount, 0);
 
   const settlement = new DriverSettlement({
@@ -44,6 +48,7 @@ exports.settleDriver = asyncHandler(async (req, res) => {
     amountPaid,
     commissionTotal,
     petrolTotal,
+    deliveryChargesTotal,
     ordersSettled: earningIds,
     note: note || '',
   });

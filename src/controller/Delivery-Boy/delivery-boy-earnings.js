@@ -72,10 +72,11 @@ const createEarningInternal = async (driverId, orderId) => {
         bonus = settings.bonus21stDelivery;
     }
 
-    // Calculate total amount: per-delivery commission (incl. bonus) + petrol expense
+    // Calculate total amount: per-delivery commission (incl. bonus) + petrol expense + delivery charges
     const commissionAmount = settings.perDeliveryAmount + bonus;
     const petrolExpense = settings.petrolExpensePerOrder ?? 5;
-    const amount = commissionAmount + petrolExpense;
+    const deliveryCharges = order?.priceDetails?.deliveryCharges ?? 0;
+    const amount = commissionAmount + petrolExpense + deliveryCharges;
 
     // Note: Partner settlement should already be created when order status changes to 3
     // This is handled in order.controller.js to ensure it's created even without a driver
@@ -96,13 +97,14 @@ const createEarningInternal = async (driverId, orderId) => {
         amount,
         commissionAmount,
         petrolExpense,
+        deliveryCharges,
         bonus,
         deliveryNumber,
     });
 
     await earning.save();
     console.log(
-        `✅ Earning created: Driver ${driverId}, Order ${orderId}, Commission: ${commissionAmount}, Petrol: ${petrolExpense}, Total: ${amount}, Bonus: ${bonus}`,
+        `✅ Earning created: Driver ${driverId}, Order ${orderId}, Commission: ${commissionAmount}, Petrol: ${petrolExpense}, Delivery Charges: ${deliveryCharges}, Total: ${amount}, Bonus: ${bonus}`,
     );
 
     return { existing: false, earning };
