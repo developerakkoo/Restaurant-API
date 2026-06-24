@@ -27,12 +27,23 @@ exports.settleDriver = asyncHandler(async (req, res) => {
     throw new ApiError(400, `Some earnings are already settled: ${alreadySettled.map(e => e._id).join(', ')}`);
   }
 
+  const commissionTotal = earnings.reduce(
+    (total, earning) =>
+      total + (earning.commissionAmount ?? earning.amount ?? 0),
+    0
+  );
+  const petrolTotal = earnings.reduce(
+    (total, earning) => total + (earning.petrolExpense ?? 0),
+    0
+  );
   const amountPaid = earnings.reduce((total, earning) => total + earning.amount, 0);
 
   const settlement = new DriverSettlement({
     driverId,
     settlementDate: new Date(),
     amountPaid,
+    commissionTotal,
+    petrolTotal,
     ordersSettled: earningIds,
     note: note || '',
   });

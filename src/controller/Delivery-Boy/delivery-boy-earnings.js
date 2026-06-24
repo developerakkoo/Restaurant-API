@@ -35,6 +35,11 @@ const createEarningInternal = async (driverId, orderId) => {
         throw new ApiError(400, "Driver settings not configured");
     }
 
+    if (settings.petrolExpensePerOrder == null) {
+        settings.petrolExpensePerOrder = 5;
+        await settings.save();
+    }
+
     // Verify order exists and is delivered (status 3)
     const order = await Order.findById(orderId);
     if (!order) {
@@ -67,13 +72,10 @@ const createEarningInternal = async (driverId, orderId) => {
         bonus = settings.bonus21stDelivery;
     }
 
-    // Calculate total amount
-    // const amount = settings.perDeliveryAmount + bonus;
-    // Customer delivery charge
-    const deliveryCharge = order.priceDetails?.deliveryCharges || 0;
-
-    // Driver earning = Delivery Charge + Bonus
-    const amount = deliveryCharge + bonus;
+    // Calculate total amount: per-delivery commission (incl. bonus) + petrol expense
+    const commissionAmount = settings.perDeliveryAmount + bonus;
+    const petrolExpense = settings.petrolExpensePerOrder ?? 5;
+    const amount = commissionAmount + petrolExpense;
 
     // Note: Partner settlement should already be created when order status changes to 3
     // This is handled in order.controller.js to ensure it's created even without a driver
@@ -92,13 +94,15 @@ const createEarningInternal = async (driverId, orderId) => {
         orderId,
         date: new Date(),
         amount,
+        commissionAmount,
+        petrolExpense,
         bonus,
         deliveryNumber,
     });
 
     await earning.save();
     console.log(
-        `✅ Earning created: Driver ${driverId}, Order ${orderId}, Amount: ${amount}, Bonus: ${bonus}`,
+        `✅ Earning created: Driver ${driverId}, Order ${orderId}, Commission: ${commissionAmount}, Petrol: ${petrolExpense}, Total: ${amount}, Bonus: ${bonus}`,
     );
 
     return { existing: false, earning };
@@ -343,6 +347,14 @@ exports.getEarningsStatistics = asyncHandler(async (req, res) => {
     const completedDeliveries = earnings.length;
     const totalAmount = earnings.reduce((sum, e) => sum + e.amount, 0);
     const totalBonus = earnings.reduce((sum, e) => sum + (e.bonus || 0), 0);
+    const totalPetrol = earnings.reduce(
+        (sum, e) => sum + (e.petrolExpense || 0),
+        0,
+    );
+    const totalCommission = earnings.reduce(
+        (sum, e) => sum + (e.commissionAmount ?? e.amount ?? 0),
+        0,
+    );
     const averagePerDelivery =
         completedDeliveries > 0 ? totalAmount / completedDeliveries : 0;
 
@@ -350,11 +362,21 @@ exports.getEarningsStatistics = asyncHandler(async (req, res) => {
     const breakdown = earnings.reduce((acc, earning) => {
         const dateKey = earning.date.toISOString().split("T")[0];
         if (!acc[dateKey]) {
-            acc[dateKey] = { date: dateKey, count: 0, amount: 0, bonus: 0 };
+            acc[dateKey] = {
+                date: dateKey,
+                count: 0,
+                amount: 0,
+                bonus: 0,
+                commission: 0,
+                petrol: 0,
+            };
         }
         acc[dateKey].count += 1;
         acc[dateKey].amount += earning.amount;
         acc[dateKey].bonus += earning.bonus || 0;
+        acc[dateKey].commission +=
+            earning.commissionAmount ?? earning.amount ?? 0;
+        acc[dateKey].petrol += earning.petrolExpense || 0;
         return acc;
     }, {});
 
@@ -365,6 +387,8 @@ exports.getEarningsStatistics = asyncHandler(async (req, res) => {
                 completedDeliveries,
                 averagePerDelivery: Math.round(averagePerDelivery * 100) / 100, // Round to 2 decimal places
                 totalBonus,
+                totalCommission,
+                totalPetrol,
                 breakdown: Object.values(breakdown),
             },
             "Earnings statistics retrieved successfully",
@@ -403,12 +427,14 @@ exports.getRecentEarnings = asyncHandler(async (req, res) => {
         .limit(limit);
 
     // Format response
-    const formattedEarnings = earnings.map(earning => ({
+    const formattedEarnings = earnings.map((earning) => ({
         _id: earning._id,
         orderId: earning.orderId?.orderId || "N/A",
         hotelName: earning.orderId?.hotelId?.hotelName || "N/A",
         date: earning.date,
         amount: earning.amount,
+        commissionAmount: earning.commissionAmount ?? earning.amount ?? 0,
+        petrolExpense: earning.petrolExpense ?? 0,
         bonus: earning.bonus || 0,
         isSettled: earning.isSettled,
     }));

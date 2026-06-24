@@ -15,6 +15,14 @@ const driverSettlementSchema = new Schema({
     type: Number,
     required: true,
   },
+  commissionTotal: {
+    type: Number,
+    default: 0,
+  },
+  petrolTotal: {
+    type: Number,
+    default: 0,
+  },
   ordersSettled: [{
     type: Schema.Types.ObjectId,
     ref: 'DriverEarning',

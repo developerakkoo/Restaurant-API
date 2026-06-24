@@ -283,6 +283,21 @@ exports.addAddresses = asyncHandler(async (req, res) => {
 
 exports.selectAddresses = asyncHandler(async (req, res) => {
     const { addressId, selected } = req.body;
+    const existingAddress = await userAddress.findById(addressId);
+    if (!existingAddress) {
+        throw new ApiError(404, responseMessage.userMessage.addressNotFound);
+    }
+
+    if (selected) {
+        await userAddress.updateMany(
+            {
+                userId: existingAddress.userId,
+                _id: { $ne: addressId },
+            },
+            { $set: { selected: false } },
+        );
+    }
+
     const selectedAddress = await userAddress.findByIdAndUpdate(
         addressId,
         {

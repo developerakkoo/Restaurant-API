@@ -14,6 +14,11 @@ const driverSettingsSchema = new Schema({
     type: Number,
     required: true,
   },
+  petrolExpensePerOrder: {
+    type: Number,
+    required: true,
+    default: 5,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('DriverSettings', driverSettingsSchema);

@@ -3,7 +3,12 @@ const DriverSettings = require('../../models/Delivery-Boy/driverSettings');
 // Create initial settings (only once)
 exports.createDriverSettings = async (req, res) => {
   try {
-    const { perDeliveryAmount, bonus16thDelivery, bonus21stDelivery } = req.body;
+    const {
+      perDeliveryAmount,
+      bonus16thDelivery,
+      bonus21stDelivery,
+      petrolExpensePerOrder,
+    } = req.body;
 
     // Check if already exists
     const existing = await DriverSettings.findOne();
@@ -14,7 +19,9 @@ exports.createDriverSettings = async (req, res) => {
     const settings = new DriverSettings({
       perDeliveryAmount,
       bonus16thDelivery,
-      bonus21stDelivery
+      bonus21stDelivery,
+      petrolExpensePerOrder:
+        petrolExpensePerOrder !== undefined ? petrolExpensePerOrder : 5,
     });
 
     await settings.save();
@@ -28,7 +35,12 @@ exports.createDriverSettings = async (req, res) => {
 // Update settings
 exports.updateDriverSettings = async (req, res) => {
   try {
-    const { perDeliveryAmount, bonus16thDelivery, bonus21stDelivery } = req.body;
+    const {
+      perDeliveryAmount,
+      bonus16thDelivery,
+      bonus21stDelivery,
+      petrolExpensePerOrder,
+    } = req.body;
 
     const settings = await DriverSettings.findOne();
     if (!settings) {
@@ -38,6 +50,9 @@ exports.updateDriverSettings = async (req, res) => {
     if (perDeliveryAmount !== undefined) settings.perDeliveryAmount = perDeliveryAmount;
     if (bonus16thDelivery !== undefined) settings.bonus16thDelivery = bonus16thDelivery;
     if (bonus21stDelivery !== undefined) settings.bonus21stDelivery = bonus21stDelivery;
+    if (petrolExpensePerOrder !== undefined) {
+      settings.petrolExpensePerOrder = petrolExpensePerOrder;
+    }
 
     await settings.save();
     res.status(200).json({ message: 'Driver settings updated successfully', settings });
@@ -50,9 +65,14 @@ exports.updateDriverSettings = async (req, res) => {
 // Get settings (used by app logic)
 exports.getDriverSettings = async (req, res) => {
   try {
-    const settings = await DriverSettings.findOne();
+    let settings = await DriverSettings.findOne();
     if (!settings) {
       return res.status(404).json({ message: 'Driver settings not found' });
+    }
+
+    if (settings.petrolExpensePerOrder == null) {
+      settings.petrolExpensePerOrder = 5;
+      await settings.save();
     }
 
     res.status(200).json(settings);

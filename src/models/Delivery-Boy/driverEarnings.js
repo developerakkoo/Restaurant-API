@@ -20,6 +20,14 @@ const driverEarningSchema = new Schema({
     type: Number,
     required: true,
   },
+  commissionAmount: {
+    type: Number,
+    default: 0,
+  },
+  petrolExpense: {
+    type: Number,
+    default: 0,
+  },
   bonus: {
     type: Number,
     default: 0,
