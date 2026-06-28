@@ -1888,14 +1888,30 @@ exports.topPartners = asyncHandler(async (req, res) => {
 
 exports.updateData = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { gstPercentage, platformFee } = req.body;
+    const {
+        gstPercentage,
+        gstIsActive,
+        platformFee,
+        deliveryBoyIncentiveFor16delivery,
+        deliveryBoyIncentiveFor21delivery,
+    } = req.body;
+
+    const updates = {};
+    if (gstPercentage !== undefined) updates.gstPercentage = gstPercentage;
+    if (gstIsActive !== undefined) updates.gstIsActive = gstIsActive;
+    if (platformFee !== undefined) updates.platformFee = platformFee;
+    if (deliveryBoyIncentiveFor16delivery !== undefined) {
+        updates.deliveryBoyIncentiveFor16delivery =
+            deliveryBoyIncentiveFor16delivery;
+    }
+    if (deliveryBoyIncentiveFor21delivery !== undefined) {
+        updates.deliveryBoyIncentiveFor21delivery =
+            deliveryBoyIncentiveFor21delivery;
+    }
+
     const data = await Data.findByIdAndUpdate(
         id,
-        {
-            gstPercentage,
-            deliveryCharges,
-            platformFee,
-        },
+        { $set: updates },
         { new: true },
     );
     if (!data) {
@@ -1939,36 +1955,6 @@ exports.getData = asyncHandler(async (req, res) => {
     }
     res.status(200).json(
         new ApiResponse(200, data, "Data fetched successfully"),
-    );
-});
-
-exports.updateData = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const {
-        gstPercentage,
-        gstIsActive,
-        platformFee,
-        deliveryBoyIncentiveFor16delivery,
-        deliveryBoyIncentiveFor21delivery,
-    } = req.body;
-    const data = await Data.findByIdAndUpdate(
-        id,
-        {
-            gstPercentage,
-            gstIsActive,
-            platformFee,
-            deliveryBoyIncentiveFor16delivery,
-            deliveryBoyIncentiveFor21delivery,
-        },
-        { new: true },
-    );
-    if (!data) {
-        return res
-            .status(404)
-            .json(new ApiResponse(404, null, "Data not found"));
-    }
-    res.status(200).json(
-        new ApiResponse(200, data, "Data updated successfully"),
     );
 });
 
@@ -2031,19 +2017,21 @@ exports.updateDeliveryChargesData = asyncHandler(async (req, res) => {
         range3MinKm,
         range3MaxKm,
     } = req.body;
+
+    const updates = {};
+    if (range1Price !== undefined) updates.range1Price = range1Price;
+    if (range1MinKm !== undefined) updates.range1MinKm = range1MinKm;
+    if (range1MaxKm !== undefined) updates.range1MaxKm = range1MaxKm;
+    if (range2Price !== undefined) updates.range2Price = range2Price;
+    if (range2MinKm !== undefined) updates.range2MinKm = range2MinKm;
+    if (range2MaxKm !== undefined) updates.range2MaxKm = range2MaxKm;
+    if (range3Price !== undefined) updates.range3Price = range3Price;
+    if (range3MinKm !== undefined) updates.range3MinKm = range3MinKm;
+    if (range3MaxKm !== undefined) updates.range3MaxKm = range3MaxKm;
+
     const data = await deliveryChargesModel.findByIdAndUpdate(
         id,
-        {
-            range1Price,
-            range1MinKm,
-            range1MaxKm,
-            range2Price,
-            range2MinKm,
-            range2MaxKm,
-            range3Price,
-            range3MinKm,
-            range3MaxKm,
-        },
+        { $set: updates },
         { new: true },
     );
     if (!data) {
