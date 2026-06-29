@@ -1610,7 +1610,8 @@ exports.getHotelsNearby = asyncHandler(async (req, res) => {
     }
 
     // Calculate road distances
-    const apiKey = process.env.GOOGLE_MAP_API_KEY; // Replace with your Google Maps API key
+    const apiKey =
+        process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAP_API_KEY;
     const origins = [`${latitude},${longitude}`];
     const destinations = hotels.map(
         (hotel) =>
