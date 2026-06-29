@@ -347,7 +347,13 @@ exports.reverseGeocode = asyncHandler(async (req, res) => {
         );
     }
 
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const {
+        getGeocodingApiKey,
+        extractPincodeFromGeocodeResult,
+        geocodeStatusMessage,
+    } = require("../utils/geocoding.util");
+
+    const apiKey = getGeocodingApiKey();
     if (!apiKey) {
         throw new ApiError(500, "Geocoding service is not configured");
     }
@@ -358,13 +364,21 @@ exports.reverseGeocode = asyncHandler(async (req, res) => {
             params: {
                 latlng: `${lat},${lng}`,
                 key: apiKey,
+                language: "en",
+                region: "in",
             },
         },
     );
 
-    const { status, results } = response.data;
+    const { status, results, error_message: googleErrorMessage } = response.data;
 
     if (status !== "OK" || !results?.length) {
+        console.warn(
+            `[reverseGeocode] Failed lat=${lat} lng=${lng} status=${status || "UNKNOWN"}${googleErrorMessage ? ` message=${googleErrorMessage}` : ""}`,
+        );
+
+        const message = geocodeStatusMessage(status);
+
         return res.status(422).json(
             new ApiResponse(
                 422,
@@ -374,22 +388,24 @@ exports.reverseGeocode = asyncHandler(async (req, res) => {
                     pincode: null,
                     lat,
                     lng,
+                    googleErrorMessage: googleErrorMessage || null,
                 },
-                "Could not resolve address",
+                message,
             ),
         );
     }
 
-    const formattedAddress = results[0].formatted_address;
-    const pincodeMatch = formattedAddress.match(/\b\d{6}\b/);
-    const location = results[0].geometry.location;
+    const topResult = results[0];
+    const formattedAddress = topResult.formatted_address;
+    const pincode = extractPincodeFromGeocodeResult(topResult);
+    const location = topResult.geometry.location;
 
     return res.status(200).json(
         new ApiResponse(
             200,
             {
                 formattedAddress,
-                pincode: pincodeMatch ? pincodeMatch[0] : null,
+                pincode,
                 lat: location.lat,
                 lng: location.lng,
                 status,

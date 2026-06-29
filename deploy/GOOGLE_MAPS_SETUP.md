@@ -26,8 +26,13 @@ Do **not** use the Android-restricted key for server-side Geocoding REST calls â
 Add to production `.env` on the server (never commit the value):
 
 ```bash
+# Server-only key â€” Geocoding API enabled, NOT Android-restricted
 GOOGLE_MAPS_API_KEY=your_server_geocoding_api_key
 ```
+
+**Important:** Do not reuse the Android Maps SDK key here. The mobile app key in `environment.apiKey` is for `@capacitor/google-maps` only. Using the Android-restricted key on the server causes `REQUEST_DENIED` and the app shows "Address lookup failed".
+
+Optional alias (also supported): `GOOGLE_MAP_API_KEY`
 
 Restart the API after updating:
 
@@ -50,7 +55,14 @@ Reverse geocoding in the app calls DropEat API (`user/reverse-geocode`), not Goo
 ```bash
 # Replace TOKEN, LAT, LNG
 curl -H "x-access-token: TOKEN" \
-  "https://dropeat.techlapse.co.in/user/reverse-geocode?lat=19.0330&lng=73.0297"
+  "https://dropeat.techlapse.co.in/api/v1/user/reverse-geocode?lat=19.0330&lng=73.0297"
+```
+
+Or use the helper script:
+
+```bash
+chmod +x scripts/verify-geocoding.sh
+ACCESS_TOKEN=your_jwt ./scripts/verify-geocoding.sh
 ```
 
 Expected: `200` with `formattedAddress` and `pincode` when Geocoding API + billing are enabled.
